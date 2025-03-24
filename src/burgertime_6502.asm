@@ -1,9 +1,94 @@
+;	map(0x0000, 0x07ff).ram().share("rambase");
+;	map(0x0c00, 0x0c0f).ram().w(m_palette, FUNC(palette_device::write8)).share("palette");
+;	map(0x1000, 0x13ff).ram().share("videoram");
+;	map(0x1400, 0x17ff).ram().share("colorram");
+;	map(0x1800, 0x1bff).rw(FUNC(btime_state::btime_mirrorvideoram_r), FUNC(btime_state::btime_mirrorvideoram_w));
+;	map(0x1c00, 0x1fff).rw(FUNC(btime_state::btime_mirrorcolorram_r), FUNC(btime_state::btime_mirrorcolorram_w));
+;	map(0x4000, 0x4000).portr("P1").nopw();
+;	map(0x4001, 0x4001).portr("P2");
+;	map(0x4002, 0x4002).portr("SYSTEM").w(FUNC(btime_state::btime_video_control_w));
+;	map(0x4003, 0x4003).portr("DSW1").w(m_soundlatch, FUNC(generic_latch_8_device::write));
+;	map(0x4004, 0x4004).portr("DSW2").w(FUNC(btime_state::bnj_scroll1_w));
+;	map(0xb000, 0xffff).rom();
+	
+;	PORT_START("P1")
+;	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT ) PORT_4WAY
+;	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT ) PORT_4WAY
+;	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_UP ) PORT_4WAY
+;	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN ) PORT_4WAY
+;	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 )
+;	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )
+;	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNUSED )
+;	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNUSED )
+;
+;	PORT_START("P2")
+;	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT ) PORT_4WAY PORT_COCKTAIL
+;	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT ) PORT_4WAY PORT_COCKTAIL
+;	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_UP ) PORT_4WAY PORT_COCKTAIL
+;	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN ) PORT_4WAY PORT_COCKTAIL
+;	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_COCKTAIL
+;	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )
+;	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNUSED )
+;	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNUSED )
+;
+;	PORT_START("SYSTEM")
+;	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_START1 )
+;	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_START2 )
+;	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_TILT )
+;	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )
+;	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNUSED )
+;	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNUSED )
+;	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_COIN1 ) PORT_CHANGED_MEMBER(DEVICE_SELF, btime_state,coin_inserted_irq_hi, 0)
+;	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_COIN2 ) PORT_CHANGED_MEMBER(DEVICE_SELF, btime_state,coin_inserted_irq_hi, 0)
+;
+;	PORT_START("DSW1") // At location 15D on sound PCB
+;	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Coin_A ) )     PORT_DIPLOCATION("SW1:1,2")
+;	PORT_DIPSETTING(    0x00, DEF_STR( 2C_1C ) )
+;	PORT_DIPSETTING(    0x03, DEF_STR( 1C_1C ) )
+;	PORT_DIPSETTING(    0x02, DEF_STR( 1C_2C ) )
+;	PORT_DIPSETTING(    0x01, DEF_STR( 1C_3C ) )
+;	PORT_DIPNAME( 0x0c, 0x0c, DEF_STR( Coin_B ) )     PORT_DIPLOCATION("SW1:3,4")
+;	PORT_DIPSETTING(    0x00, DEF_STR( 2C_1C ) )
+;	PORT_DIPSETTING(    0x0c, DEF_STR( 1C_1C ) )
+;	PORT_DIPSETTING(    0x08, DEF_STR( 1C_2C ) )
+;	PORT_DIPSETTING(    0x04, DEF_STR( 1C_3C ) )
+;	PORT_DIPNAME( 0x10, 0x10, "Leave Off" )           PORT_DIPLOCATION("SW1:5") // Must be OFF. No test mode in ROM
+;	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )                                  // so this locks up the game at boot-up if on
+;	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+;	PORT_DIPUNUSED_DIPLOC( 0x20, IP_ACTIVE_LOW, "SW1:6" )
+;	PORT_DIPNAME( 0x40, 0x00, DEF_STR( Cabinet ) )    PORT_DIPLOCATION("SW1:7")
+;	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
+;	PORT_DIPSETTING(    0x40, DEF_STR( Cocktail ) )
+;//  PORT_DIPNAME( 0x80, 0x00, "Screen" )              PORT_DIPLOCATION("SW1:8") // Manual states this is Screen Invert
+;//  PORT_DIPSETTING(    0x00, "Normal" )
+;//  PORT_DIPSETTING(    0x80, "Invert" )
+;	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_CUSTOM  ) PORT_VBLANK("screen")  // Schematics show this is connected to DIP SW2.8
+;
+;	PORT_START("DSW2") // At location 14D on sound PCB
+;	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Lives ) )      PORT_DIPLOCATION("SW2:1")
+;	PORT_DIPSETTING(    0x01, "3" )
+;	PORT_DIPSETTING(    0x00, "5" )
+;	PORT_DIPNAME( 0x06, 0x02, DEF_STR( Bonus_Life ) ) PORT_DIPLOCATION("SW2:2,3")
+;	PORT_DIPSETTING(    0x06, "10000" )
+;	PORT_DIPSETTING(    0x04, "15000" )
+;	PORT_DIPSETTING(    0x02, "20000"  )
+;	PORT_DIPSETTING(    0x00, "30000"  )
+;	PORT_DIPNAME( 0x08, 0x08, "Enemies" )             PORT_DIPLOCATION("SW2:4")
+;	PORT_DIPSETTING(    0x08, "4" )
+;	PORT_DIPSETTING(    0x00, "6" )
+;	PORT_DIPNAME( 0x10, 0x00, "End of Level Pepper" ) PORT_DIPLOCATION("SW2:5")
+;	PORT_DIPSETTING(    0x10, DEF_STR( No ) )
+;	PORT_DIPSETTING(    0x00, DEF_STR( Yes ) )
+;	PORT_DIPUNUSED_DIPLOC( 0x20, 0x20, "SW2:6" )  // should be OFF according to the manual
+;	PORT_DIPUNUSED_DIPLOC( 0x40, 0x40, "SW2:7" )  // should be OFF according to the manual
+;	PORT_DIPUNUSED_DIPLOC( 0x80, 0x80, "SW2:8" )  // should be OFF according to the manual
+
 C000: 4C 3C CF jmp $cf3c
 C003: 4C 0F C0 jmp $c00f
-C006: 85 F5    sta $f5
+C006: 85 F5    sta dummy_write_00f5
 C008: EA       nop
 C009: 4C 03 B0 jmp $b003
-C00C: 85 F5    sta $f5
+C00C: 85 F5    sta dummy_write_00f5
 C00E: EA       nop
 C00F: 78       sei
 C010: D8       cld
@@ -43,16 +128,16 @@ C05A: 20 78 C4 jsr $c478
 C05D: A2 3F    ldx #$3f
 C05F: 20 2C CA jsr $ca2c
 C062: 20 61 C5 jsr $c561
-C065: 85 F5    sta $f5
+C065: 85 F5    sta dummy_write_00f5
 C067: EA       nop
 C068: 20 0D C7 jsr $c70d
 C06B: 20 48 C7 jsr $c748
 C06E: A9 01    lda #$01
 C070: 85 1C    sta $1c
-C072: 85 F5    sta $f5
+C072: 85 F5    sta dummy_write_00f5
 C074: EA       nop
 C075: 20 67 C7 jsr $c767
-C078: 85 F5    sta $f5
+C078: 85 F5    sta dummy_write_00f5
 C07A: EA       nop
 C07B: AD 03 40 lda $4003
 C07E: 10 FB    bpl $c07b
@@ -68,7 +153,7 @@ C08C: E6 13    inc timer1_0013
 C08E: A5 13    lda timer1_0013
 C090: 29 3F    and #$3f
 C092: D0 03    bne $c097
-C094: 85 F5    sta $f5
+C094: 85 F5    sta dummy_write_00f5
 C096: EA       nop
 C097: E6 14    inc timer1_0014
 C099: D0 03    bne $c09e
@@ -79,7 +164,7 @@ C0A0: AD 00 40 lda $4000
 C0A3: 6D 01 40 adc $4001
 C0A6: 65 16    adc $16
 C0A8: 85 16    sta $16
-C0AA: 85 F5    sta $f5
+C0AA: 85 F5    sta dummy_write_00f5
 C0AC: EA       nop
 C0AD: AD 03 40 lda $4003
 C0B0: 30 FB    bmi $c0ad
@@ -92,7 +177,7 @@ C0C0: F0 0C    beq $c0ce
 C0C2: 20 28 DB jsr $db28
 C0C5: 20 BB DB jsr $dbbb
 C0C8: 20 77 DC jsr $dc77
-C0CB: 85 F5    sta $f5
+C0CB: 85 F5    sta dummy_write_00f5
 C0CD: EA       nop
 C0CE: 20 65 DD jsr $dd65
 C0D1: 20 8D EA jsr $ea8d
@@ -102,8 +187,8 @@ C0DA: 20 90 E1 jsr $e190
 C0DD: 20 35 E8 jsr $e835
 C0E0: 20 60 E7 jsr $e760
 C0E3: 20 6C E8 jsr $e86c
-C0E6: A6 1F    ldx $1f
-C0E8: B5 2B    lda $2b, x
+C0E6: A6 1F    ldx current_player_001f
+C0E8: B5 2B    lda player_pepper_002b, x
 C0EA: D0 2D    bne $c119
 C0EC: A5 13    lda timer1_0013
 C0EE: 29 3F    and #$3f
@@ -112,15 +197,15 @@ C0F2: A2 FC    ldx #$fc
 C0F4: A0 C0    ldy #$c0
 C0F6: 20 BC C9 jsr $c9bc
 C0F9: 4C 19 C1 jmp $c119
-C0FC: 3A       nop
-C0FD: 10 00    bpl $c0ff
-C0FF: 00       brk
-C100: 00       brk
-C101: FF 3A 10 isb $103a, x
-C104: 51 52    eor ($52), y
-C106: 53 FF    sre ($ff), y
-C108: 85 F6    sta $f6
-C10A: EA       nop
+C0FC: 3A       
+C0FD: 10 00    
+C0FF: 00       
+C100: 00       
+C101: FF 3A 10 
+C104: 51 52    
+C106: 53 FF    
+C108: 85 F6    
+C10A: EA       
 C10B: C9 0F    cmp #$0f
 C10D: D0 0A    bne $c119
 C10F: A2 02    ldx #$02
@@ -149,7 +234,7 @@ C13F: C8       iny
 C140: 20 E3 CB jsr $cbe3
 C143: A5 21    lda $21
 C145: D0 17    bne $c15e
-C147: A5 29    lda $29
+C147: A5 29    lda player_lives_0029
 C149: 30 0D    bmi $c158
 C14B: A9 01    lda #$01
 C14D: 85 20    sta $20
@@ -157,13 +242,13 @@ C14F: 08       php
 C150: 52       kil
 C151: C2 4C    nop #$4c
 C153: 75 C0    adc $c0, x
-C155: 85 F5    sta $f5
+C155: 85 F5    sta dummy_write_00f5
 C157: 6E 4C F1 ror $f14c
 C15A: C1 85    cmp ($85, x)
 C15C: F7 6E    isb $6e, x
-C15E: A6 1F    ldx $1f
+C15E: A6 1F    ldx current_player_001f
 C160: D0 4D    bne $c1af
-C162: A5 29    lda $29
+C162: A5 29    lda player_lives_0029
 C164: 25 2A    and $2a
 C166: 30 41    bmi $c1a9
 C168: A5 2A    lda $2a
@@ -174,7 +259,7 @@ C171: 85 20    sta $20
 C173: 4C 75 C0 jmp $c075
 C176: 85 F7    sta $f7
 C178: EA       nop
-C179: A5 29    lda $29
+C179: A5 29    lda player_lives_0029
 C17B: 10 09    bpl $c186
 C17D: 20 95 C2 jsr $c295
 C180: 20 A3 C8 jsr $c8a3
@@ -197,9 +282,9 @@ C1A6: 4C 75 C0 jmp $c075
 C1A9: 4C F1 C1 jmp $c1f1
 C1AC: 85 F7    sta $f7
 C1AE: 6E A5 2A ror $2aa5
-C1B1: 25 29    and $29
+C1B1: 25 29    and player_lives_0029
 C1B3: 30 3C    bmi $c1f1
-C1B5: A5 29    lda $29
+C1B5: A5 29    lda player_lives_0029
 C1B7: 10 0D    bpl $c1c6
 C1B9: A9 01    lda #$01
 C1BB: 85 20    sta $20
@@ -215,7 +300,7 @@ C1D0: 85 F7    sta $f7
 C1D2: EA       nop
 C1D3: 20 03 C3 jsr $c303
 C1D6: A9 00    lda #$00
-C1D8: 85 1F    sta $1f
+C1D8: 85 1F    sta current_player_001f
 C1DA: A9 01    lda #$01
 C1DC: 85 20    sta $20
 C1DE: 4D FE 8D eor $8dfe
@@ -275,11 +360,11 @@ C252: EA       nop
 C253: A2 E8    ldx #$e8
 C255: A0 C2    ldy #$c2
 C257: 20 BC C9 jsr $c9bc
-C25A: 85 F5    sta $f5
+C25A: 85 F5    sta dummy_write_00f5
 C25C: EA       nop
 C25D: A9 03    lda #$03
 C25F: 20 5D EA jsr $ea5d
-C262: 85 F5    sta $f5
+C262: 85 F5    sta dummy_write_00f5
 C264: EA       nop
 C265: A2 1F    ldx #$1f
 C267: 20 2C CA jsr $ca2c
@@ -309,7 +394,7 @@ C298: A2 D2    ldx #$d2
 C29A: A0 C2    ldy #$c2
 C29C: 20 BC C9 jsr $c9bc
 C29F: E6 C8    inc $c8
-C2A1: A2 F5    ldx #$f5
+C2A1: A2 F5    ldx #dummy_write_00f5
 C2A3: A0 C2    ldy #$c2
 C2A5: 20 BC C9 jsr $c9bc
 C2A8: 4C 65 C2 jmp $c265
@@ -320,37 +405,37 @@ C2B0: A2 DD    ldx #$dd
 C2B2: A0 C2    ldy #$c2
 C2B4: 20 BC C9 jsr $c9bc
 C2B7: E6 C8    inc $c8
-C2B9: A2 F5    ldx #$f5
+C2B9: A2 F5    ldx #dummy_write_00f5
 C2BB: A0 C2    ldy #$c2
 C2BD: 20 BC C9 jsr $c9bc
 C2C0: 4C 65 C2 jmp $c265
 C2C3: 85 F7    sta $f7
 C2C5: EA       nop
 C2C6: E6 C8    inc $c8
-C2C8: A2 F5    ldx #$f5
+C2C8: A2 F5    ldx #dummy_write_00f5
 C2CA: A0 C2    ldy #$c2
 C2CC: 20 BC C9 jsr $c9bc
 C2CF: 4C 65 C2 jmp $c265
-C2D2: CD 11 1A cmp $1a11
-C2D5: 16 0B    asl $0b, x
-C2D7: 23 0F    rla ($0f, x)
-C2D9: 1C 00 02 nop $0200, x
-C2DC: FF CD 11 isb $11cd, x
-C2DF: 1A       nop
-C2E0: 16 0B    asl $0b, x
-C2E2: 23 0F    rla ($0f, x)
-C2E4: 1C 00 03 nop $0300, x
-C2E7: FF 0C 12 isb $120c, x
-C2EA: 11 0B    ora ($0b), y
-C2EC: 17 0F    slo $0f, x
-C2EE: 00       brk
-C2EF: 1C 0F 0B nop $0b0f, x
-C2F2: 0E 23 FF asl $ff23
-C2F5: 0C 12 11 nop $1112
-C2F8: 0B 17    anc #$17
-C2FA: 0F 00 19 slo $1900
-C2FD: 20 0F 1C jsr $1c0f
-C300: FF 85 F7 isb $f785, x
+C2D2: CD 11 1A
+C2D5: 16 0B   
+C2D7: 23 0F   
+C2D9: 1C 00 02
+C2DC: FF CD 11
+C2DF: 1A      
+C2E0: 16 0B   
+C2E2: 23 0F   
+C2E4: 1C 00 03
+C2E7: FF 0C 12
+C2EA: 11 0B   
+C2EC: 17 0F   
+C2EE: 00      
+C2EF: 1C 0F 0B
+C2F2: 0E 23 FF
+C2F5: 0C 12 11
+C2F8: 0B 17   
+C2FA: 0F 00 19
+C2FD: 20 0F 1C
+C300: FF 85 F7
 C303: EA       nop
 C304: A0 00    ldy #$00
 C306: 85 F7    sta $f7
@@ -488,7 +573,7 @@ C40A: 8E D7 12 stx $12d7
 C40D: 8E D8 12 stx $12d8
 C410: 8E D9 12 stx $12d9
 C413: 60       rts
-C414: 85 F5    sta $f5
+C414: 85 F5    sta dummy_write_00f5
 C416: EA       nop
 C417: 20 A3 C8 jsr $c8a3
 C41A: 20 E3 CB jsr $cbe3
@@ -503,7 +588,7 @@ C42D: 85 03    sta $03
 C42F: A9 11    lda #$11
 C431: 85 04    sta $04
 C433: A2 12    ldx #$12
-C435: 85 F5    sta $f5
+C435: 85 F5    sta dummy_write_00f5
 C437: EA       nop
 C438: A0 00    ldy #$00
 C43A: B5 36    lda $36, x
@@ -537,11 +622,11 @@ C46D: 20 4E C9 jsr $c94e
 C470: A2 07    ldx #$07
 C472: 20 4E C9 jsr $c94e
 C475: 60       rts
-C476: 85 F5    sta $f5
+C476: 85 F5    sta dummy_write_00f5
 C478: EA       nop
 C479: A9 FF    lda #$ff
 C47B: 85 19    sta $19
-C47D: 85 F5    sta $f5
+C47D: 85 F5    sta dummy_write_00f5
 C47F: EA       nop
 C480: A9 01    lda #$01
 C482: 85 1C    sta $1c
@@ -571,14 +656,14 @@ C4B6: 85 AA    sta $aa
 C4B8: 85 AB    sta $ab
 C4BA: 85 B0    sta $b0
 C4BC: A9 04    lda #$04
-C4BE: 85 A8    sta $a8
+C4BE: 85 A8    sta game_speed_00a8
 C4C0: 85 BA    sta $ba
 C4C2: A9 18    lda #$18
 C4C4: 8D 1E 18 sta $181e
 C4C7: A9 1D    lda #$1d
 C4C9: 8D 1F 18 sta $181f
 C4CC: 20 65 DD jsr $dd65
-C4CF: 85 F5    sta $f5
+C4CF: 85 F5    sta dummy_write_00f5
 C4D1: EA       nop
 C4D2: A2 01    ldx #$01
 C4D4: 20 2C CA jsr $ca2c
@@ -587,7 +672,7 @@ C4D9: A2 07    ldx #$07
 C4DB: 20 C3 D3 jsr $d3c3
 C4DE: F0 04    beq $c4e4
 C4E0: 60       rts
-C4E1: 85 F5    sta $f5
+C4E1: 85 F5    sta dummy_write_00f5
 C4E3: EA       nop
 C4E4: A2 07    ldx #$07
 C4E6: 20 69 D2 jsr $d269
@@ -597,7 +682,7 @@ C4EF: 20 90 E1 jsr $e190
 C4F2: A5 19    lda $19
 C4F4: D0 06    bne $c4fc
 C4F6: 4C D2 C4 jmp $c4d2
-C4F9: 85 F5    sta $f5
+C4F9: 85 F5    sta dummy_write_00f5
 C4FB: EA       nop
 C4FC: A2 0F    ldx #$0f
 C4FE: A0 C5    ldy #$c5
@@ -611,65 +696,65 @@ C50E: C4 86    cpy $86
 C510: 11 3B    ora ($3b), y
 C512: 40       rti
 C513: 60       rts
-C514: 36 3D    rol $3d, x
-C516: 42       kil
-C517: 00       brk
-C518: 32       kil
-C519: 3D 35 61 and $6135, x
-C51C: 62       kil
-C51D: FE 86 15 inc $1586, x
-C520: 00       brk
-C521: 00       brk
-C522: 00       brk
-C523: 00       brk
-C524: 00       brk
-C525: 00       brk
-C526: 00       brk
-C527: 00       brk
-C528: 00       brk
-C529: 00       brk
-C52A: 00       brk
-C52B: 00       brk
-C52C: FE CE 10 inc $10ce, x
-C52F: 3B 40 60 rla $6040, y
-C532: 3E 37 31 rol $3137, x
-C535: 39 3A 33 and $333a, y
-C538: 61 62    adc ($62, x)
-C53A: FE CE 14 inc $14ce, x
-C53D: 00       brk
-C53E: 00       brk
-C53F: 00       brk
-C540: 00       brk
-C541: 00       brk
-C542: 00       brk
-C543: 00       brk
-C544: 00       brk
-C545: 00       brk
-C546: 00       brk
-C547: 00       brk
-C548: FE 56 11 inc $1156, x
-C54B: 3B 40 60 rla $6040, y
-C54E: 33 35    rla ($35), y
-C550: 35 61    and $61, x
-C552: 62       kil
-C553: FE 56 15 inc $1556, x
-C556: 00       brk
-C557: 00       brk
-C558: 00       brk
-C559: 00       brk
-C55A: 00       brk
-C55B: 00       brk
-C55C: 00       brk
-C55D: 00       brk
-C55E: FF 85 F5 isb $f585, x
+C514: 36 3D    
+C516: 42       
+C517: 00       
+C518: 32       
+C519: 3D 35 61 
+C51C: 62       
+C51D: FE 86 15 
+C520: 00       
+C521: 00       
+C522: 00       
+C523: 00       
+C524: 00       
+C525: 00       
+C526: 00       
+C527: 00       
+C528: 00       
+C529: 00       
+C52A: 00       
+C52B: 00       
+C52C: FE CE 10 
+C52F: 3B 40 60 
+C532: 3E 37 31 
+C535: 39 3A 33 
+C538: 61 62    
+C53A: FE CE 14 
+C53D: 00       
+C53E: 00       
+C53F: 00       
+C540: 00       
+C541: 00       
+C542: 00       
+C543: 00       
+C544: 00       
+C545: 00       
+C546: 00       
+C547: 00       
+C548: FE 56 11 
+C54B: 3B 40 60 
+C54E: 33 35    
+C550: 35 61    
+C552: 62       
+C553: FE 56 15 
+C556: 00       
+C557: 00       
+C558: 00       
+C559: 00       
+C55A: 00       
+C55B: 00       
+C55C: 00       
+C55D: 00       
+C55E: FF 85 F5 
 C561: EA       nop
 C562: 20 48 C7 jsr $c748
 C565: 20 67 C7 jsr $c767
 C568: A0 01    ldy #$01
 C56A: 84 68    sty $68
 C56C: C0 69    cpy #$69
-C56E: 64 84    nop $84
-C570: 6A       ror a
+C56E: 64       nop
+C56F: 84       sty $6a
 C571: 84 6B    sty $6b
 C573: C8       iny
 C574: 84 6C    sty $6c
@@ -683,7 +768,7 @@ C583: 8D 0F 18 sta $180f
 C586: C5 13    cmp timer1_0013
 C588: 18       clc
 C589: 8D 17 18 sta $1817
-C58C: C5 1F    cmp $1f
+C58C: C5 1F    cmp current_player_001f
 C58E: 18       clc
 C58F: 4D 40 85 eor $8540
 C592: A9 85    lda #$85
@@ -701,6 +786,22 @@ C5A7: 4D 60 8D eor $8d60
 C5AA: 0A       asl a
 C5AB: 18       clc
 C5AC: 4D 90 8D eor $8d90
+C5AE  sta $180e                                           8D 0E 18
+C5B1  lda #$97                                            A9 97
+C5B3  sta $1812                                           8D 12 18
+C5B6  eor $8d30                                           4D 30 8D
+C5B9  asl $18, x                                          16 18
+C5BB  lda #$18                                            A9 18
+C5BD  sta $181e                                           8D 1E 18
+C5C0  lda #$01                                            A9 01
+C5C2  sta $13                                             85 13
+C5C4  cmp ($14, x)                                        C1 14
+C5C6  php                                                 08
+C5C7  adc $dd                                             65 DD
+C5C9  sta dummy_write_00f5                                             85 F5
+C5CB  nop                                                 EA
+C5CC  ldx #$01                                            A2 01
+
 C5AF: 0E 18 A9 asl $a918
 C5B2: 97 8D    sax $8d, y
 C5B4: 12       kil
@@ -715,7 +816,7 @@ C5C4: C1 14    cmp ($14, x)
 C5C6: 08       php
 C5C7: 65 DD    adc $dd
 
-C5C9: 85 F5    sta $f5
+C5C9: 85 F5    sta dummy_write_00f5
 C5CB: EA       nop
 C5CC: A2 01    ldx #$01
 C5CE: 20 2C CA jsr $ca2c
@@ -736,7 +837,7 @@ C5EE: 20 2C CA jsr $ca2c
 C5F1: A2 40    ldx #$40
 C5F3: 20 2C CA jsr $ca2c
 C5F6: 60       rts
-C5F7: 85 F5    sta $f5
+C5F7: 85 F5    sta dummy_write_00f5
 C5F9: EA       nop
 C5FA: A5 6E    lda $6e
 C5FC: 10 23    bpl $c621
@@ -749,173 +850,174 @@ C60A: C9 4A    cmp #$4a
 C60C: F0 07    beq $c615
 C60E: C9 82    cmp #$82
 C610: D0 0F    bne $c621
-C612: 85 F5    sta $f5
+C612: 85 F5    sta dummy_write_00f5
 C614: EA       nop
 C615: 20 AD D1 jsr $d1ad
 C618: EE 1E 18 inc $181e
 C61B: EE 1E 18 inc $181e
-C61E: 85 F5    sta $f5
+C61E: 85 F5    sta dummy_write_00f5
 C620: EA       nop
 C621: 20 96 D7 jsr $d796
 C624: 20 98 D8 jsr $d898
 C627: 20 DF E6 jsr $e6df
 C62A: 20 90 E1 jsr $e190
 C62D: 4C CC C5 jmp $c5cc
-C630: C7 10    dcp $10
-C632: 32       kil
-C633: 3D 3C 64 and $643c, x
-C636: 42       kil
-C637: 00       brk
-C638: 45 2F    eor $2f
-C63A: 41 42    eor ($42, x)
-C63C: 33 00    rla ($00), y
-C63E: 3E 33 3E rol $3e33, x
-C641: 3E 33 40 rol $4033, x
-C644: 41 FE    eor ($fe, x)
-C646: C7 14    dcp timer1_0014
-C648: 00       brk
-C649: 00       brk
-C64A: 00       brk
-C64B: 00       brk
-C64C: 00       brk
-C64D: 00       brk
-C64E: 00       brk
-C64F: 00       brk
-C650: 00       brk
-C651: 00       brk
-C652: 00       brk
-C653: 00       brk
-C654: 00       brk
-C655: 00       brk
-C656: 00       brk
-C657: 00       brk
-C658: 00       brk
-C659: 00       brk
-C65A: 00       brk
-C65B: FE 04 11 inc $1104, x
-C65E: 47 3D    sre $3d
-C660: 43 00    sre ($00, x)
-C662: 41 42    eor ($42, x)
-C664: 2F 40 42 rla $4240
-C667: 00       brk
-C668: 45 37    eor $37
-C66A: 42       kil
-C66B: 36 00    rol $00, x
-C66D: 3D 3C 3A and $3a3c, x
-C670: 47 00    sre $00
-C672: 34 37    nop $37, x
-C674: 44 33    nop $33
-C676: FE 04 15 inc $1504, x
-C679: 00       brk
-C67A: 00       brk
-C67B: 00       brk
-C67C: 00       brk
-C67D: 00       brk
-C67E: 00       brk
-C67F: 00       brk
-C680: 00       brk
-C681: 00       brk
-C682: 00       brk
-C683: 00       brk
-C684: 00       brk
-C685: 00       brk
-C686: 00       brk
-C687: 00       brk
-C688: 00       brk
-C689: 00       brk
-C68A: 00       brk
-C68B: 00       brk
-C68C: 00       brk
-C68D: 00       brk
-C68E: 00       brk
-C68F: 00       brk
-C690: 00       brk
-C691: FE 42 11 inc $1142, x
-C694: 33 2F    rla ($2f), y
-C696: 40       rti
-C697: 3C 00 33 nop $3300, x
-C69A: 46 42    lsr $42
-C69C: 40       rti
-C69D: 2F 00 3E rla $3e00
-C6A0: 33 3E    rla ($3e), y
-C6A2: 3E 33 40 rol $4033, x
-C6A5: 41 00    eor ($00, x)
-C6A7: 63 00    rra ($00, x)
-C6A9: 30 3D    bmi $c6e8
-C6AB: 3C 43 41 nop $4143, x
-C6AE: 33 41    rla ($41), y
-C6B0: FE 42 15 inc $1542, x
-C6B3: 00       brk
-C6B4: 00       brk
-C6B5: 00       brk
-C6B6: 00       brk
-C6B7: 00       brk
-C6B8: 00       brk
-C6B9: 00       brk
-C6BA: 00       brk
-C6BB: 00       brk
-C6BC: 00       brk
-C6BD: 00       brk
-C6BE: 00       brk
-C6BF: 00       brk
-C6C0: 00       brk
-C6C1: 00       brk
-C6C2: 00       brk
-C6C3: 00       brk
-C6C4: 00       brk
-C6C5: 00       brk
-C6C6: 00       brk
-C6C7: 00       brk
-C6C8: 00       brk
-C6C9: 00       brk
-C6CA: 00       brk
-C6CB: 00       brk
-C6CC: 00       brk
-C6CD: 00       brk
-C6CE: 00       brk
-C6CF: FE 83 11 inc $1183, x
-C6D2: 31 3A    and ($3a), y
-C6D4: 2F 37 3B rla $3b37
-C6D7: 00       brk
-C6D8: 31 3D    and ($3d), y
-C6DA: 3C 33 41 nop $4133, x
-C6DD: 4A       lsr a
-C6DE: 31 3D    and ($3d), y
-C6E0: 34 34    nop $34, x
-C6E2: 33 33    rla ($33), y
-C6E4: 41 00    eor ($00, x)
-C6E6: 63 00    rra ($00, x)
-C6E8: 34 40    nop $40, x
-C6EA: 37 33    rla $33, x
-C6EC: 41 FE    eor ($fe, x)
-C6EE: 83 15    sax ($15, x)
-C6F0: 00       brk
-C6F1: 00       brk
-C6F2: 00       brk
-C6F3: 00       brk
-C6F4: 00       brk
-C6F5: 00       brk
-C6F6: 00       brk
-C6F7: 00       brk
-C6F8: 00       brk
-C6F9: 00       brk
-C6FA: 00       brk
-C6FB: 00       brk
-C6FC: 00       brk
-C6FD: 00       brk
-C6FE: 00       brk
-C6FF: 00       brk
-C700: 00       brk
-C701: 00       brk
-C702: 00       brk
-C703: 00       brk
-C704: 00       brk
-C705: 00       brk
-C706: 00       brk
-C707: 00       brk
-C708: 00       brk
-C709: 00       brk
-C70A: FF 85 F5 isb $f585, x
+C630: C7 10    
+C632: 32       
+C633: 3D 3C 64 
+C636: 42       
+C637: 00       
+C638: 45 2F    
+C63A: 41 42    
+C63C: 33 00    
+C63E: 3E 33 3E 
+C641: 3E 33 40 
+C644: 41 FE    
+C646: C7 14    
+C648: 00       
+C649: 00       
+C64A: 00       
+C64B: 00       
+C64C: 00       
+C64D: 00       
+C64E: 00       
+C64F: 00       
+C650: 00       
+C651: 00       
+C652: 00       
+C653: 00       
+C654: 00       
+C655: 00       
+C656: 00       
+C657: 00       
+C658: 00       
+C659: 00       
+C65A: 00       
+C65B: FE 04 11 
+C65E: 47 3D    
+C660: 43 00    
+C662: 41 42    
+C664: 2F 40 42 
+C667: 00       
+C668: 45 37    
+C66A: 42       
+C66B: 36 00    
+C66D: 3D 3C 3A 
+C670: 47 00    
+C672: 34 37    
+C674: 44 33    
+C676: FE 04 15 
+C679: 00       
+C67A: 00       
+C67B: 00       
+C67C: 00       
+C67D: 00       
+C67E: 00       
+C67F: 00       
+C680: 00       
+C681: 00       
+C682: 00       
+C683: 00       
+C684: 00       
+C685: 00       
+C686: 00       
+C687: 00       
+C688: 00       
+C689: 00       
+C68A: 00       
+C68B: 00       
+C68C: 00       
+C68D: 00       
+C68E: 00       
+C68F: 00       
+C690: 00       
+C691: FE 42 11 
+C694: 33 2F    
+C696: 40       
+C697: 3C 00 33 
+C69A: 46 42    
+C69C: 40       
+C69D: 2F 00 3E 
+C6A0: 33 3E    
+C6A2: 3E 33 40 
+C6A5: 41 00    
+C6A7: 63 00    
+C6A9: 30 3D    
+C6AB: 3C 43 41 
+C6AE: 33 41    
+C6B0: FE 42 15 
+C6B3: 00       
+C6B4: 00       
+C6B5: 00       
+C6B6: 00       
+C6B7: 00       
+C6B8: 00       
+C6B9: 00       
+C6BA: 00       
+C6BB: 00       
+C6BC: 00       
+C6BD: 00       
+C6BE: 00       
+C6BF: 00       
+C6C0: 00       
+C6C1: 00       
+C6C2: 00       
+C6C3: 00       
+C6C4: 00       
+C6C5: 00       
+C6C6: 00       
+C6C7: 00       
+C6C8: 00       
+C6C9: 00       
+C6CA: 00       
+C6CB: 00       
+C6CC: 00       
+C6CD: 00       
+C6CE: 00       
+C6CF: FE 83 11 
+C6D2: 31 3A    
+C6D4: 2F 37 3B 
+C6D7: 00       
+C6D8: 31 3D    
+C6DA: 3C 33 41 
+C6DD: 4A       
+C6DE: 31 3D    
+C6E0: 34 34    
+C6E2: 33 33    
+C6E4: 41 00    
+C6E6: 63 00    
+C6E8: 34 40    
+C6EA: 37 33    
+C6EC: 41 FE    
+C6EE: 83 15    
+C6F0: 00
+C6F1: 00
+C6F2: 00
+C6F3: 00
+C6F4: 00
+C6F5: 00
+C6F6: 00
+C6F7: 00
+C6F8: 00
+C6F9: 00
+C6FA: 00
+C6FB: 00
+C6FC: 00
+C6FD: 00
+C6FE: 00
+C6FF: 00
+C700: 00
+C701: 00
+C702: 00
+C703: 00
+C704: 00
+C705: 00
+C706: 00
+C707: 00
+C708: 00
+C709: 00
+C70A: FF 85 F5
+
 C70D: 6E AD 04 ror $04ad
 C710: 40       rti
 C711: 49 FF    eor #$ff
@@ -924,7 +1026,7 @@ C714: A2 02    ldx #$02
 C716: 29 01    and #$01
 C718: F0 05    beq $c71f
 C71A: A2 04    ldx #$04
-C71C: 85 F5    sta $f5
+C71C: 85 F5    sta dummy_write_00f5
 C71E: 6E 86 29 ror $2986
 C721: 86 2A    stx $2a
 C723: 98       tya
@@ -956,13 +1058,13 @@ C752: 5D EA A9 eor $a9ea, x
 C755: 00       brk
 C756: 85 65    sta $65
 C758: 85 66    sta $66
-C75A: 85 1F    sta $1f
+C75A: 85 1F    sta current_player_001f
 C75C: 08       php
 C75D: 0F CC 20 slo $20cc
 C760: 03 C3    slo ($c3, x)
 C762: C6 61    dec $61
 C764: 28       plp
-C765: 85 F5    sta $f5
+C765: 85 F5    sta dummy_write_00f5
 C767: 6E 20 A3 ror $a320
 C76A: C8       iny
 C76B: A5 20    lda $20
@@ -974,12 +1076,12 @@ C777: 29 10    and #$10
 C779: D0 12    bne $c78d
 C77B: A5 1B    lda $1b
 C77D: F0 0E    beq $c78d
-C77F: A6 1F    ldx $1f
-C781: B5 2B    lda $2b, x
+C77F: A6 1F    ldx current_player_001f
+C781: B5 2B    lda player_pepper_002b, x
 C783: 18       clc
 C784: F8       sed
 C785: 69 01    adc #$01
-C787: 95 2B    sta $2b, x
+C787: 95 2B    sta player_pepper_002b, x
 C789: D8       cld
 C78A: 85 F6    sta $f6
 C78C: 6E A6 1F ror $1fa6
@@ -993,10 +1095,10 @@ C79B: A9 00    lda #$00
 C79D: 85 20    sta $20
 C79F: 08       php
 C7A0: 64 CC    nop $cc
-C7A2: A6 1F    ldx $1f
+C7A2: A6 1F    ldx current_player_001f
 C7A4: B4 61    ldy $61, x
 C7A6: 88       dey
-C7A7: 85 F5    sta $f5
+C7A7: 85 F5    sta dummy_write_00f5
 C7A9: EA       nop
 C7AA: C0 06    cpy #$06
 C7AC: 90 0B    bcc $c7b9
@@ -1005,7 +1107,7 @@ C7AF: 38       sec
 C7B0: E9 06    sbc #$06
 C7B2: A8       tay
 C7B3: 4C AA C7 jmp $c7aa
-C7B6: 85 F5    sta $f5
+C7B6: 85 F5    sta dummy_write_00f5
 C7B8: EA       nop
 C7B9: 84 63    sty $63
 C7BB: B4 61    ldy $61, x
@@ -1013,7 +1115,7 @@ C7BD: 88       dey
 C7BE: C0 06    cpy #$06
 C7C0: 90 05    bcc $c7c7
 C7C2: A0 05    ldy #$05
-C7C4: 85 F5    sta $f5
+C7C4: 85 F5    sta dummy_write_00f5
 C7C6: 6E 84 64 ror $6484
 C7C9: A4 63    ldy $63
 C7CB: B9 EF CD lda $cdef, y
@@ -1026,33 +1128,33 @@ C7DD: 5D 07 CE eor $ce07, x
 C7E0: 8D 1F 18 sta $181f
 C7E3: A2 07    ldx #$07
 C7E5: A9 FF    lda #$ff
-C7E7: 85 F5    sta $f5
+C7E7: 85 F5    sta dummy_write_00f5
 C7E9: EA       nop
 C7EA: 95 68    sta $68, x
 C7EC: 66 10    ror $10
 C7EE: FB A2 07 isb $07a2, y
 C7F1: A9 01    lda #$01
-C7F3: 85 F5    sta $f5
+C7F3: 85 F5    sta dummy_write_00f5
 C7F5: 6E 95 99 ror $9995
 C7F8: CA       dex
 C7F9: 10 FB    bpl $c7f6
 C7FB: A2 07    ldx #$07
 C7FD: A9 04    lda #$04
-C7FF: 85 F5    sta $f5
+C7FF: 85 F5    sta dummy_write_00f5
 C801: EA       nop
 C802: 95 A1    sta $a1, x
 C804: CA       dex
 C805: 10 FB    bpl $c802
 C807: A2 07    ldx #$07
 C809: A9 00    lda #$00
-C80B: 85 F5    sta $f5
+C80B: 85 F5    sta dummy_write_00f5
 C80D: EA       nop
 C80E: 95 A9    sta $a9, x
 C810: CA       dex
 C811: 10 FB    bpl $c80e
-C813: 85 6F    sta $6f
+C813: 85 6F    sta game_state_006f
 C815: A9 03    lda #$03
-C817: 85 A8    sta $a8
+C817: 85 A8    sta game_speed_00a8
 C819: A9 00    lda #$00
 C81B: 85 C5    sta $c5
 C81D: 85 C4    sta $c4
@@ -1060,19 +1162,19 @@ C81F: 20 89 DA jsr $da89
 C822: 20 C6 C8 jsr $c8c6
 C825: A5 21    lda $21
 C827: F0 0B    beq $c834
-C829: A5 1F    lda $1f
+C829: A5 1F    lda current_player_001f
 C82B: 49 01    eor #$01
 C82D: AA       tax
 C82E: 20 4E C9 jsr $c94e
-C831: 85 F5    sta $f5
+C831: 85 F5    sta dummy_write_00f5
 C833: EA       nop
-C834: A6 1F    ldx $1f
+C834: A6 1F    ldx current_player_001f
 C836: 20 4E C9 jsr $c94e
 C839: A2 02    ldx #$02
 C83B: 20 4E C9 jsr $c94e
 C83E: 20 54 CA jsr $ca54
 C841: 20 94 CA jsr $ca94
-C844: A6 1F    ldx $1f
+C844: A6 1F    ldx current_player_001f
 C846: 20 C4 CA jsr $cac4
 C849: 20 1E CB jsr $cb1e
 C84C: A9 3E    lda #$3e
@@ -1080,7 +1182,7 @@ C84E: 85 13    sta timer1_0013
 C850: A5 1B    lda $1b
 C852: F0 04    beq $c858
 C854: 60       rts
-C855: 85 F5    sta $f5
+C855: 85 F5    sta dummy_write_00f5
 C857: EA       nop
 C858: A9 01    lda #$01
 C85A: 85 68    sta $68
@@ -1134,7 +1236,7 @@ C8BC: D0 F1    bne $c8af
 C8BE: A2 01    ldx #$01
 C8C0: 20 2C CA jsr $ca2c
 C8C3: 60       rts
-C8C4: 85 F5    sta $f5
+C8C4: 85 F5    sta dummy_write_00f5
 C8C6: EA       nop
 C8C7: A2 35    ldx #$35
 C8C9: A0 C9    ldy #$c9
@@ -1147,43 +1249,43 @@ C8D7: F0 0A    beq $c8e3
 C8D9: A2 40    ldx #$40
 C8DB: A0 C9    ldy #$c9
 C8DD: 20 BC C9 jsr $c9bc
-C8E0: 85 F5    sta $f5
+C8E0: 85 F5    sta dummy_write_00f5
 C8E2: EA       nop
 C8E3: 60       rts
-C8E4: 85 F5    sta $f5
+C8E4: 85 F5    sta dummy_write_00f5
 C8E6: EA       nop
 C8E7: A5 21    lda $21
 C8E9: F0 3D    beq $c928
 C8EB: A5 13    lda timer1_0013
 C8ED: 29 3F    and #$3f
 C8EF: D0 1A    bne $c90b
-C8F1: A5 1F    lda $1f
+C8F1: A5 1F    lda current_player_001f
 C8F3: D0 0B    bne $c900
 C8F5: A2 2F    ldx #$2f
 C8F7: A0 C9    ldy #$c9
 C8F9: 20 BC C9 jsr $c9bc
 C8FC: 60       rts
-C8FD: 85 F5    sta $f5
+C8FD: 85 F5    sta dummy_write_00f5
 C8FF: EA       nop
 C900: A2 46    ldx #$46
 C902: A0 C9    ldy #$c9
 C904: 20 BC C9 jsr $c9bc
 C907: 60       rts
-C908: 85 F5    sta $f5
+C908: 85 F5    sta dummy_write_00f5
 C90A: EA       nop
 C90B: C9 0F    cmp #$0f
 C90D: D0 19    bne $c928
-C90F: A5 1F    lda $1f
+C90F: A5 1F    lda current_player_001f
 C911: D0 0B    bne $c91e
 C913: A2 29    ldx #$29
 C915: A0 C9    ldy #$c9
 C917: 20 BC C9 jsr $c9bc
 C91A: 60       rts
-C91B: 85 F5    sta $f5
+C91B: 85 F5    sta dummy_write_00f5
 C91D: 6E A2 40 ror $40a2
 C920: A0 C9    ldy #$c9
 C922: 20 BC C9 jsr $c9bc
-C925: 85 F5    sta $f5
+C925: 85 F5    sta dummy_write_00f5
 C927: 6E 60 24 ror $2460
 C92A: 10 26    bpl $c952
 C92C: 43 3E    sre ($3e, x)
@@ -1211,7 +1313,7 @@ C953: A8       tay
 C954: 18       clc
 C955: 65 03    adc $03
 C957: AA       tax
-C958: 85 F5    sta $f5
+C958: 85 F5    sta dummy_write_00f5
 C95A: EA       nop
 C95B: B9 A0 C9 lda $c9a0, y
 C95E: 85 03    sta $03
@@ -1238,7 +1340,7 @@ C984: 03 6C    slo ($6c, x)
 C986: 88       dey
 C987: 10 E1    bpl $c96a
 C989: C8       iny
-C98A: 85 F5    sta $f5
+C98A: 85 F5    sta dummy_write_00f5
 C98C: 6E B1 03 ror $03b1
 C98F: C9 01    cmp #$01
 C991: D0 0C    bne $c99f
@@ -1350,16 +1452,16 @@ CA4C: 30 FB    bmi $ca49
 CA4E: CA       dex
 CA4F: D0 DC    bne $ca2d
 CA51: 60       rts
-CA52: 85 F5    sta $f5
+CA52: 85 F5    sta dummy_write_00f5
 CA54: EA       nop
-CA55: A6 1F    ldx $1f
+CA55: A6 1F    ldx current_player_001f
 CA57: 38       sec
 CA58: A9 5C    lda #$5c
-CA5A: F5 29    sbc $29, x
+CA5A: F5 29    sbc player_lives_0029, x
 CA5C: 85 F3    sta $f3
 CA5E: A9 18    lda #$18
 CA60: 85 F4    sta $f4
-CA62: B5 29    lda $29, x
+CA62: B5 29    lda player_lives_0029, x
 CA64: C9 09    cmp #$09
 CA66: B0 16    bcs $ca7e
 CA68: A0 10    ldy #$10
@@ -1367,7 +1469,7 @@ CA6A: A9 00    lda #$00
 CA6C: 99 4C 18 sta $184c, y
 CA6F: 88       dey
 CA70: D0 FA    bne $ca6c
-CA72: B4 29    ldy $29, x
+CA72: B4 29    ldy player_lives_0029, x
 CA74: F0 07    beq $ca7d
 CA76: A9 C8    lda #$c8
 CA78: 91 F3    sta ($f3), y
@@ -1385,7 +1487,7 @@ CA8C: D0 FB    bne $ca89
 CA8E: 85 F7    sta $f7
 CA90: EA       nop
 CA91: 60       rts
-CA92: 85 F5    sta $f5
+CA92: 85 F5    sta dummy_write_00f5
 CA94: EA       nop
 CA95: 98       tya
 CA96: 48       pha
@@ -1395,8 +1497,8 @@ CA9C: C8       iny
 CA9D: 8C 3B 10 sty $103b
 CAA0: C8       iny
 CAA1: 8C 3C 10 sty $103c
-CAA4: A6 1F    ldx $1f
-CAA6: B5 2B    lda $2b, x
+CAA4: A6 1F    ldx current_player_001f
+CAA6: B5 2B    lda player_pepper_002b, x
 CAA8: 4A       lsr a
 CAA9: 4A       lsr a
 CAAA: 4A       lsr a
@@ -1404,10 +1506,10 @@ CAAB: 4A       lsr a
 CAAC: A8       tay
 CAAD: F0 04    beq $cab3
 CAAF: C8       iny
-CAB0: 85 F5    sta $f5
+CAB0: 85 F5    sta dummy_write_00f5
 CAB2: EA       nop
 CAB3: 8C 5B 10 sty $105b
-CAB6: B5 2B    lda $2b, x
+CAB6: B5 2B    lda player_pepper_002b, x
 CAB8: 29 0F    and #$0f
 CABA: A8       tay
 CABB: C8       iny
@@ -1415,7 +1517,7 @@ CABC: 8C 5C 10 sty $105c
 CABF: 68       pla
 CAC0: A8       tay
 CAC1: 60       rts
-CAC2: 85 F5    sta $f5
+CAC2: 85 F5    sta dummy_write_00f5
 CAC4: EA       nop
 CAC5: B5 61    lda $61, x
 CAC7: 85 03    sta $03
@@ -1426,7 +1528,7 @@ CAD1: 85 05    sta $05
 CAD3: A9 04    lda #$04
 CAD5: 85 06    sta $06
 CAD7: A0 80    ldy #$80
-CAD9: 85 F5    sta $f5
+CAD9: 85 F5    sta dummy_write_00f5
 CADB: EA       nop
 CADC: A6 03    ldx $03
 CADE: E0 0A    cpx #$0a
@@ -1436,7 +1538,7 @@ CAE4: E9 0A    sbc #$0a
 CAE6: 85 03    sta $03
 CAE8: A9 C6    lda #$c6
 CAEA: D0 1F    bne $cb0b
-CAEC: 85 F5    sta $f5
+CAEC: 85 F5    sta dummy_write_00f5
 CAEE: EA       nop
 CAEF: E0 05    cpx #$05
 CAF1: 90 0D    bcc $cb00
@@ -1445,7 +1547,7 @@ CAF5: E9 05    sbc #$05
 CAF7: 85 03    sta $03
 CAF9: A9 C5    lda #$c5
 CAFB: D0 0E    bne $cb0b
-CAFD: 85 F5    sta $f5
+CAFD: 85 F5    sta dummy_write_00f5
 CAFF: EA       nop
 CB00: E0 01    cpx #$01
 CB02: 90 15    bcc $cb19
@@ -1458,7 +1560,7 @@ CB0F: E9 20    sbc #$20
 CB11: A8       tay
 CB12: C6 06    dec $06
 CB14: 10 C6    bpl $cadc
-CB16: 85 F5    sta $f5
+CB16: 85 F5    sta dummy_write_00f5
 CB18: EA       nop
 CB19: 60       rts
 CB1A: 1D 13 85 ora $8513, x
@@ -1477,7 +1579,7 @@ CB34: 4D 04 85 eor $8504
 CB37: 06 A2    asl $a2
 CB39: 68       pla
 CB3A: A0 00    ldy #$00
-CB3C: 85 F5    sta $f5
+CB3C: 85 F5    sta dummy_write_00f5
 CB3E: 6E B1 03 ror $03b1
 CB41: 29 F0    and #$f0
 CB43: 11 05    ora ($05), y
@@ -1507,7 +1609,7 @@ CB6A: 85 05    sta $05
 CB6C: C9 06    cmp #$06
 CB6E: 69 00    adc #$00
 CB70: 85 06    sta $06
-CB72: 85 F5    sta $f5
+CB72: 85 F5    sta dummy_write_00f5
 CB74: 6E B1 03 ror $03b1
 CB77: 29 F0    and #$f0
 CB79: 11 05    ora ($05), y
@@ -1523,7 +1625,7 @@ CB89: C6 05    dec $05
 CB8B: E6 03    inc $03
 CB8D: 70 05    bvs $cb94
 CB8F: E6 04    inc $04
-CB91: 85 F5    sta $f5
+CB91: 85 F5    sta dummy_write_00f5
 CB93: EA       nop
 CB94: CA       dex
 CB95: A5 05    lda $05
@@ -1546,16 +1648,16 @@ CBB4: 46 48    lsr $48
 CBB6: CD 03 40 cmp $4003
 CBB9: 29 40    and #$40
 CBBB: F0 07    beq $cbc4
-CBBD: A5 1F    lda $1f
+CBBD: A5 1F    lda current_player_001f
 CBBF: D0 13    bne $cbd4
-CBC1: 85 F5    sta $f5
+CBC1: 85 F5    sta dummy_write_00f5
 CBC3: EA       nop
 CBC4: A6 F3    ldx $f3
 CBC6: BD D9 CB lda $cbd9, x
 CBC9: 09 10    ora #$10
 CBCB: 8D 04 40 sta $4004
 CBCE: 2C AA 60 bit $60aa
-CBD1: 85 F5    sta $f5
+CBD1: 85 F5    sta dummy_write_00f5
 CBD3: EA       nop
 CBD4: A5 F3    lda $f3
 CBD6: 4C C9 CB jmp $cbc9
@@ -1563,14 +1665,14 @@ CBD9: 03 00    slo ($00, x)
 CBDB: 01 02    ora ($02, x)
 CBDD: 07 04    slo $04
 CBDF: 05 06    ora $06
-CBE1: 85 F5    sta $f5
+CBE1: 85 F5    sta dummy_write_00f5
 CBE3: EA       nop
 CBE4: A0 00    ldy #$00
 CBE6: A9 04    lda #$04
 CBE8: 85 04    sta $04
 CBEA: A9 00    lda #$00
 CBEC: 85 03    sta $03
-CBEE: C1 F5    cmp ($f5, x)
+CBEE: C1 F5    cmp (dummy_write_00f5, x)
 CBF0: EA       nop
 CBF1: B1 03    lda ($03), y
 CBF3: 29 0F    and #$0f
@@ -1586,12 +1688,12 @@ CC04: 8D 04 40 sta $4004
 CC07: A2 01    ldx #$01
 CC09: 20 2C CA jsr $ca2c
 CC0C: 60       rts
-CC0D: 85 F5    sta $f5
+CC0D: 85 F5    sta dummy_write_00f5
 CC0F: EA       nop
-CC10: A6 1F    ldx $1f
+CC10: A6 1F    ldx current_player_001f
 CC12: B4 61    ldy $61, x
 CC14: 88       dey
-CC15: 85 F5    sta $f5
+CC15: 85 F5    sta dummy_write_00f5
 CC17: EA       nop
 CC18: C0 06    cpy #$06
 CC1A: 90 0B    bcc $cc27
@@ -1600,7 +1702,7 @@ CC1D: 38       sec
 CC1E: E9 06    sbc #$06
 CC20: A8       tay
 CC21: 4C 18 CC jmp $cc18
-CC24: 85 F5    sta $f5
+CC24: 85 F5    sta dummy_write_00f5
 CC26: EA       nop
 CC27: 98       tya
 CC28: 0A       asl a
@@ -1611,7 +1713,7 @@ CC2F: B9 E4 CD lda $cde4, y
 CC32: 85 04    sta $04
 CC34: A0 00    ldy #$00
 CC36: A2 00    ldx #$00
-CC38: 85 F5    sta $f5
+CC38: 85 F5    sta dummy_write_00f5
 CC3A: EA       nop
 CC3B: B1 03    lda ($03), y
 CC3D: C9 FF    cmp #$ff
@@ -1627,7 +1729,7 @@ CC4D: E8       inx
 CC4E: A9 00    lda #$00
 CC50: 9D 02 02 sta $0202, x
 CC53: 4C 3B CC jmp $cc3b
-CC56: 85 F5    sta $f5
+CC56: 85 F5    sta dummy_write_00f5
 CC58: EA       nop
 CC59: A9 00    lda #$00
 CC5B: 9D 02 02 sta $0202, x
@@ -1663,12 +1765,12 @@ CC90: 4C 74 CC jmp $cc74
 CC93: 85 F7    sta $f7
 CC95: EA       nop
 CC96: 60       rts
-CC97: 85 F5    sta $f5
+CC97: 85 F5    sta dummy_write_00f5
 CC99: EA       nop
 CC9A: A9 00    lda #$00
 CC9C: 85 0E    sta $0e
 CC9E: F0 12    beq $ccb2
-CCA0: 85 F5    sta $f5
+CCA0: 85 F5    sta dummy_write_00f5
 CCA2: EA       nop
 CCA3: A9 00    lda #$00
 CCA5: 85 0E    sta $0e
@@ -1676,7 +1778,7 @@ CCA7: A5 05    lda $05
 CCA9: 29 F8    and #$f8
 CCAB: D0 05    bne $ccb2
 CCAD: E6 0E    inc $0e
-CCAF: 85 F5    sta $f5
+CCAF: 85 F5    sta dummy_write_00f5
 CCB1: EA       nop
 CCB2: 98       tya
 CCB3: 48       pha
@@ -1732,7 +1834,7 @@ CD10: 18       clc
 CD11: 69 1D    adc #$1d
 CD13: AA       tax
 CD14: 20 95 CD jsr $cd95
-CD17: 85 F5    sta $f5
+CD17: 85 F5    sta dummy_write_00f5
 CD19: EA       nop
 CD1A: 18       clc
 CD1B: A5 06    lda $06
@@ -1746,7 +1848,7 @@ CD2A: D0 64    bne $cd90
 CD2C: A0 20    ldy #$20
 CD2E: 20 AA CD jsr $cdaa
 CD31: 4C 90 CD jmp $cd90
-CD34: 85 F5    sta $f5
+CD34: 85 F5    sta dummy_write_00f5
 CD36: 6E 38 A5 ror $a538
 CD39: 05 E9    ora $e9
 CD3B: 21 85    and ($85, x)
@@ -1796,7 +1898,7 @@ CD85: 85 05    sta $05
 CD87: C9 06    cmp #$06
 CD89: 69 00    adc #$00
 CD8B: 85 06    sta $06
-CD8D: C1 F5    cmp ($f5, x)
+CD8D: C1 F5    cmp (dummy_write_00f5, x)
 CD8F: 6E 68 A8 ror $a868
 CD92: 60       rts
 CD93: 85 F7    sta $f7
@@ -2046,7 +2148,7 @@ CF31: 1A       nop
 CF32: 1E 1D FF asl $ff1d, x
 CF35: 68       pla
 CF36: 4C 00 B0 jmp $b000
-CF39: 85 F5    sta $f5
+CF39: 85 F5    sta dummy_write_00f5
 CF3B: EA       nop
 CF3C: 48       pha
 CF3D: CD 03 40 cmp $4003
@@ -2112,7 +2214,7 @@ CFB0: 06 26    asl $26
 CFB2: 90 05    bcc $cfb9
 CFB4: 4A       lsr a
 CFB5: 4A       lsr a
-CFB6: 85 F5    sta $f5
+CFB6: 85 F5    sta dummy_write_00f5
 CFB8: EA       nop
 CFB9: 29 03    and #$03
 CFBB: F0 46    beq $d003
@@ -2123,15 +2225,15 @@ CFC2: E8       inx
 CFC3: C9 02    cmp #$02
 CFC5: F0 31    beq $cff8
 CFC7: E8       inx
-CFC8: 85 F5    sta $f5
+CFC8: 85 F5    sta dummy_write_00f5
 CFCA: EA       nop
 CFCB: A5 1E    lda $1e
 CFCD: C9 02    cmp #$02
 CFCF: B0 1F    bcs $cff0
-CFD1: 85 F5    sta $f5
+CFD1: 85 F5    sta dummy_write_00f5
 CFD3: EA       nop
 CFD4: 60       rts
-CFD5: 85 F5    sta $f5
+CFD5: 85 F5    sta dummy_write_00f5
 CFD7: 6E A2 05 ror $05a2
 CFDA: A5 26    lda $26
 CFDC: C9 80    cmp #$80
@@ -2143,15 +2245,15 @@ CFE5: E8       inx
 CFE6: C9 C0    cmp #$c0
 CFE8: F0 19    beq $d003
 CFEA: 4C D4 CF jmp $cfd4
-CFED: 85 F5    sta $f5
+CFED: 85 F5    sta dummy_write_00f5
 CFEF: 6E C6 1E ror $1ec6
 CFF2: 4C 03 D0 jmp $d003
-CFF5: 85 F5    sta $f5
+CFF5: 85 F5    sta dummy_write_00f5
 CFF7: 6E A5 02 ror $02a5
 CFFA: C9 60    cmp #$60
 CFFC: D0 05    bne $d003
 CFFE: A2 04    ldx #$04
-D000: 85 F5    sta $f5
+D000: 85 F5    sta dummy_write_00f5
 D002: EA       nop
 D003: A5 1D    lda $1d
 D005: F8       sed
@@ -2160,7 +2262,7 @@ D007: 7D 5C D0 adc $d05c, x
 D00A: D9 64 D0 cmp $d064, y
 D00D: 90 06    bcc $d015
 D00F: B9 64 D0 lda $d064, y
-D012: 85 F5    sta $f5
+D012: 85 F5    sta dummy_write_00f5
 D014: EA       nop
 D015: 85 1D    sta $1d
 D017: D8       cld
@@ -2177,10 +2279,10 @@ D029: 4C 38 C0 jmp $c038
 D02C: 85 F6    sta $f6
 D02E: EA       nop
 D02F: 4C D4 CF jmp $cfd4
-D032: 85 F5    sta $f5
+D032: 85 F5    sta dummy_write_00f5
 D034: EA       nop
 D035: A2 E7    ldx #$e7
-D037: 85 F5    sta $f5
+D037: 85 F5    sta dummy_write_00f5
 D039: EA       nop
 D03A: A5 FF    lda $ff
 D03C: A5 FF    lda $ff
@@ -2209,7 +2311,7 @@ D064: 09 09    ora #$09
 D066: 09 09    ora #$09
 D068: 09 09    ora #$09
 D06A: 09 09    ora #$09
-D06C: 85 F5    sta $f5
+D06C: 85 F5    sta dummy_write_00f5
 D06E: EA       nop
 D06F: A5 1A    lda $1a
 D071: F0 1E    beq $d091
@@ -2217,7 +2319,7 @@ D073: A5 1C    lda $1c
 D075: D0 09    bne $d080
 D077: 20 11 D1 jsr $d111
 D07A: 20 3F D1 jsr $d13f
-D07D: 85 F5    sta $f5
+D07D: 85 F5    sta dummy_write_00f5
 D07F: EA       nop
 D080: AD 02 40 lda $4002
 D083: 29 01    and #$01
@@ -2225,10 +2327,10 @@ D085: F0 0E    beq $d095
 D087: AD 02 40 lda $4002
 D08A: 29 02    and #$02
 D08C: F0 32    beq $d0c0
-D08E: 85 F5    sta $f5
+D08E: 85 F5    sta dummy_write_00f5
 D090: EA       nop
 D091: 60       rts
-D092: 85 F5    sta $f5
+D092: 85 F5    sta dummy_write_00f5
 D094: EA       nop
 D095: 20 6E D1 jsr $d16e
 D098: A9 00    lda #$00
@@ -2247,7 +2349,7 @@ D0B2: 20 BC C9 jsr $c9bc
 D0B5: A2 1F    ldx #$1f
 D0B7: 20 2C CA jsr $ca2c
 D0BA: 4C FD D0 jmp $d0fd
-D0BD: 85 F5    sta $f5
+D0BD: 85 F5    sta dummy_write_00f5
 D0BF: EA       nop
 D0C0: A5 1D    lda $1d
 D0C2: C9 02    cmp #$02
@@ -2274,24 +2376,24 @@ D0F0: A0 C2    ldy #$c2
 D0F2: 20 BC C9 jsr $c9bc
 D0F5: A2 1F    ldx #$1f
 D0F7: 20 2C CA jsr $ca2c
-D0FA: 85 F5    sta $f5
+D0FA: 85 F5    sta dummy_write_00f5
 D0FC: EA       nop
 D0FD: A2 05    ldx #$05
 D0FF: A9 00    lda #$00
-D101: 85 F5    sta $f5
+D101: 85 F5    sta dummy_write_00f5
 D103: EA       nop
 D104: 95 2D    sta $2d, x
 D106: 66 10    ror $10
 D108: FB A2 FF isb $ffa2, y
 D10B: 9A       txs
 D10C: 4C 68 C0 jmp $c068
-D10F: 85 F5    sta $f5
+D10F: 85 F5    sta dummy_write_00f5
 D111: EA       nop
 D112: AD 67 13 lda $1367
 D115: CD 55 D1 cmp $d155
 D118: F0 3A    beq $d154
 D11A: A0 00    ldy #$00
-D11C: 85 F5    sta $f5
+D11C: 85 F5    sta dummy_write_00f5
 D11E: 6E B9 55 ror $55b9
 D121: D1 99    cmp ($99), y
 D123: 67 13    rra timer1_0013
@@ -2300,14 +2402,14 @@ D127: 11 D0    ora ($d0), y
 D129: F5 85    sbc $85, x
 D12B: F5 6E    sbc $6e, x
 D12D: A0 00    ldy #$00
-D12F: 85 F5    sta $f5
+D12F: 85 F5    sta dummy_write_00f5
 D131: EA       nop
 D132: B9 66 D1 lda $d166, y
 D135: 99 AB 13 sta $13ab, y
 D138: C8       iny
 D139: C0 06    cpy #$06
 D13B: D0 F5    bne $d132
-D13D: 85 F5    sta $f5
+D13D: 85 F5    sta dummy_write_00f5
 D13F: 6E A5 1D ror $1da5
 D142: 4A       lsr a
 D143: 4A       lsr a
@@ -2320,7 +2422,7 @@ D14A: 29 0F    and #$0f
 D14C: AA       tax
 D14D: E8       inx
 D14E: 8E B3 13 stx $13b3
-D151: 85 F5    sta $f5
+D151: 85 F5    sta dummy_write_00f5
 D153: EA       nop
 D154: 60       rts
 D155: 1A       nop
@@ -2332,24 +2434,24 @@ D160: 0C 1F 1E nop $1e1f
 D163: 1E 19 18 asl $1819, x
 D166: 0D 1C 0F ora $0f1c
 D169: 0E 13 1E asl $1e13
-D16C: 85 F5    sta $f5
+D16C: 85 F5    sta dummy_write_00f5
 D16E: 6E F8 38 ror $38f8
 D171: A5 1D    lda $1d
 D173: E9 01    sbc #$01
 D175: 85 1D    sta $1d
 D177: 74 60    nop $60, x
-D179: 85 F5    sta $f5
+D179: 85 F5    sta dummy_write_00f5
 D17B: EA       nop
-D17C: A5 6F    lda $6f
+D17C: A5 6F    lda game_state_006f
 D17E: 10 04    bpl $d184
-D180: 85 F5    sta $f5
+D180: 85 F5    sta dummy_write_00f5
 D182: EA       nop
 D183: 60       rts
 D184: A5 1B    lda $1b
 D186: D0 03    bne $d18b
 D188: 4C 36 D2 jmp $d236
-D18B: A6 1F    ldx $1f
-D18D: A4 1F    ldy $1f
+D18B: A6 1F    ldx current_player_001f
+D18D: A4 1F    ldy current_player_001f
 D18F: AD 03 40 lda $4003
 D192: 29 40    and #$40
 D194: D0 02    bne $d198
@@ -2360,10 +2462,10 @@ D19D: 29 10    and #$10
 D19F: F0 40    beq $d1e1
 D1A1: A5 B9    lda $b9
 D1A3: D0 43    bne $d1e8
-D1A5: B5 2B    lda $2b, x
+D1A5: B5 2B    lda player_pepper_002b, x
 D1A7: F0 2D    beq $d1d6
 D1A9: 85 B9    sta $b9
-D1AB: 85 F5    sta $f5
+D1AB: 85 F5    sta dummy_write_00f5
 D1AD: 6E A9 00 ror $00a9
 D1B0: 85 6E    sta $6e
 D1B2: A9 05    lda #$05
@@ -2380,15 +2482,15 @@ D1C7: 6D 1F 18 adc $181f
 D1CA: 8D 1B 18 sta $181b
 D1CD: 4D 0D 20 eor $200d
 D1D0: 5D EA 60 eor $60ea, x
-D1D3: 85 F5    sta $f5
+D1D3: 85 F5    sta dummy_write_00f5
 D1D5: 6E A9 0E ror $0ea9
 D1D8: 20 5D EA jsr $ea5d
 D1DB: 4C E8 D1 jmp $d1e8
-D1DE: 85 F5    sta $f5
+D1DE: 85 F5    sta dummy_write_00f5
 D1E0: EA       nop
 D1E1: A9 00    lda #$00
 D1E3: 85 B9    sta $b9
-D1E5: C1 F5    cmp ($f5, x)
+D1E5: C1 F5    cmp (dummy_write_00f5, x)
 D1E7: 6E B9 00 ror $00b9
 D1EA: 40       rti
 D1EB: 49 FF    eor #$ff
@@ -2403,20 +2505,20 @@ D1F9: 0A       asl a
 D1FA: 0A       asl a
 D1FB: 0A       asl a
 D1FC: 85 B0    sta $b0
-D1FE: C1 F5    cmp ($f5, x)
+D1FE: C1 F5    cmp (dummy_write_00f5, x)
 D200: EA       nop
 D201: 84 BB    sty $bb
 D203: 98       tya
 D204: F0 05    beq $d20b
 D206: 84 BA    sty $ba
-D208: 85 F5    sta $f5
+D208: 85 F5    sta dummy_write_00f5
 D20A: EA       nop
 D20B: A5 BB    lda $bb
 D20D: F0 0A    beq $d219
 D20F: A2 07    ldx #$07
 D211: 20 C3 D3 jsr $d3c3
 D214: D0 1C    bne $d232
-D216: 85 F5    sta $f5
+D216: 85 F5    sta dummy_write_00f5
 D218: EA       nop
 D219: A2 07    ldx #$07
 D21B: 20 69 D2 jsr $d269
@@ -2429,10 +2531,10 @@ D228: B0 01    bcs $d22b
 D22A: C8       iny
 D22B: 98       tya
 D22C: 20 5D EA jsr $ea5d
-D22F: 85 F5    sta $f5
+D22F: 85 F5    sta dummy_write_00f5
 D231: EA       nop
 D232: 60       rts
-D233: 85 F5    sta $f5
+D233: 85 F5    sta dummy_write_00f5
 D235: EA       nop
 D236: A2 07    ldx #$07
 D238: 20 C3 D3 jsr $d3c3
@@ -2440,7 +2542,7 @@ D23B: F0 0A    beq $d247
 D23D: A9 47    lda #$47
 D23F: 8D 1D 18 sta $181d
 D242: E6 C6    inc $c6
-D244: 85 F5    sta $f5
+D244: 85 F5    sta dummy_write_00f5
 D246: EA       nop
 D247: A2 07    ldx #$07
 D249: 20 69 D2 jsr $d269
@@ -2465,7 +2567,7 @@ D263: 00       brk
 D264: 00       brk
 D265: 00       brk
 D266: 00       brk
-D267: 85 F5    sta $f5
+D267: 85 F5    sta dummy_write_00f5
 D269: EA       nop
 D26A: B5 68    lda $68, x
 D26C: 10 01    bpl $d26f
@@ -2491,7 +2593,7 @@ D28C: 18       clc
 D28D: 65 03    adc $03
 D28F: 85 03    sta $03
 D291: 4C AC D2 jmp $d2ac
-D294: 85 F5    sta $f5
+D294: 85 F5    sta dummy_write_00f5
 D296: EA       nop
 D297: E0 07    cpx #$07
 D299: D0 11    bne $d2ac
@@ -2500,10 +2602,10 @@ D29D: A5 BA    lda $ba
 D29F: C9 06    cmp #$06
 D2A1: D0 04    bne $d2a7
 D2A3: C8       iny
-D2A4: 85 F5    sta $f5
+D2A4: 85 F5    sta dummy_write_00f5
 D2A6: EA       nop
 D2A7: 84 03    sty $03
-D2A9: 85 F5    sta $f5
+D2A9: 85 F5    sta dummy_write_00f5
 D2AB: EA       nop
 D2AC: 8A       txa
 D2AD: 0A       asl a
@@ -2559,7 +2661,7 @@ D309: 99 03 18 sta $1803, y
 D30C: CA       dex
 D30D: 08       php
 D30E: 4C 4A D3 jmp $d34a
-D311: 85 F5    sta $f5
+D311: 85 F5    sta dummy_write_00f5
 D313: EA       nop
 D314: A4 09    ldy $09
 D316: B5 A9    lda $a9, x
@@ -2569,16 +2671,16 @@ D31D: 85 0B    sta $0b
 D31F: EA       nop
 D320: 0B 4C    anc #$4c
 D322: 31 D3    and ($d3), y
-D324: 85 F5    sta $f5
+D324: 85 F5    sta dummy_write_00f5
 D326: 6E B9 03 ror $03b9
 D329: 18       clc
 D32A: 85 0B    sta $0b
 D32C: E2 0B    nop #$0b
-D32E: C1 F5    cmp ($f5, x)
+D32E: C1 F5    cmp (dummy_write_00f5, x)
 D330: EA       nop
 D331: A5 0B    lda $0b
 D333: 99 03 18 sta $1803, y
-D336: C1 F5    cmp ($f5, x)
+D336: C1 F5    cmp (dummy_write_00f5, x)
 D338: EA       nop
 D339: B5 A9    lda $a9, x
 D33B: 29 F0    and #$f0
@@ -2587,7 +2689,7 @@ D33F: F6 A9    inc $a9, x
 D341: B5 A9    lda $a9, x
 D343: 29 F3    and #$f3
 D345: 95 A9    sta $a9, x
-D347: C1 F5    cmp ($f5, x)
+D347: C1 F5    cmp (dummy_write_00f5, x)
 D349: EA       nop
 D34A: 60       rts
 D34B: 5B D3 6F sre $6fd3, y
@@ -2642,18 +2744,18 @@ D3A3: 74 FF    nop $ff, x
 D3A5: 75 FF    adc $ff, x
 D3A7: 72       kil
 D3A8: FF 73 FF isb $ff73, x
-D3AB: 85 F5    sta $f5
+D3AB: 85 F5    sta dummy_write_00f5
 D3AD: 6E 85 F5 ror $f585
 D3B0: EA       nop
-D3B1: 85 F5    sta $f5
+D3B1: 85 F5    sta dummy_write_00f5
 D3B3: EA       nop
-D3B4: 85 F5    sta $f5
+D3B4: 85 F5    sta dummy_write_00f5
 D3B6: 6E 00 00 ror $0000
 D3B9: FE 00 02 inc $0200, x
 D3BC: 00       brk
 D3BD: 00       brk
 D3BE: FD 00 03 sbc $0300, x
-D3C1: 85 F5    sta $f5
+D3C1: 85 F5    sta dummy_write_00f5
 D3C3: EA       nop
 D3C4: B5 A9    lda $a9, x
 D3C6: 4A       lsr a
@@ -2683,14 +2785,14 @@ D3F3: F5 6E    sbc $6e, x
 D3F5: A9 00    lda #$00
 D3F7: 85 67    sta $67
 D3F9: 60       rts
-D3FA: 85 F5    sta $f5
+D3FA: 85 F5    sta dummy_write_00f5
 D3FC: 6E A5 03 ror $03a5
 D3FF: C9 16    cmp #$16
 D401: B0 0A    bcs $d40d
 D403: A9 17    lda #$17
 D405: 99 02 18 sta $1802, y
 D408: D0 20    bne $d42a
-D40A: 85 F5    sta $f5
+D40A: 85 F5    sta dummy_write_00f5
 D40C: EA       nop
 D40D: 20 00 D5 jsr $d500
 D410: D0 18    bne $d42a
@@ -2704,10 +2806,10 @@ D41E: 09 0D    ora #$0d
 D420: 99 03 18 sta $1803, y
 D423: A9 00    lda #$00
 D425: 85 67    sta $67
-D427: 85 F5    sta $f5
+D427: 85 F5    sta dummy_write_00f5
 D429: EA       nop
 D42A: 60       rts
-D42B: 85 F5    sta $f5
+D42B: 85 F5    sta dummy_write_00f5
 D42D: EA       nop
 D42E: A5 03    lda $03
 D430: C9 D8    cmp #$d8
@@ -2715,7 +2817,7 @@ D432: 90 0A    bcc $d43e
 D434: A9 D8    lda #$d8
 D436: 99 02 18 sta $1802, y
 D439: D0 20    bne $d45b
-D43B: 85 F5    sta $f5
+D43B: 85 F5    sta dummy_write_00f5
 D43D: EA       nop
 D43E: 20 00 D5 jsr $d500
 D441: D0 18    bne $d45b
@@ -2729,10 +2831,10 @@ D44F: 09 0D    ora #$0d
 D451: 99 03 18 sta $1803, y
 D454: A9 00    lda #$00
 D456: 85 67    sta $67
-D458: 85 F5    sta $f5
+D458: 85 F5    sta dummy_write_00f5
 D45A: EA       nop
 D45B: 60       rts
-D45C: 85 F5    sta $f5
+D45C: 85 F5    sta dummy_write_00f5
 D45E: EA       nop
 D45F: A5 04    lda $04
 D461: C9 1D    cmp #$1d
@@ -2740,7 +2842,7 @@ D463: B0 0A    bcs $d46f
 D465: A9 1D    lda #$1d
 D467: 99 03 18 sta $1803, y
 D46A: D0 34    bne $d4a0
-D46C: 85 F5    sta $f5
+D46C: 85 F5    sta dummy_write_00f5
 D46E: EA       nop
 D46F: 20 23 D5 jsr $d523
 D472: D0 2C    bne $d4a0
@@ -2755,27 +2857,27 @@ D480: AD 03 40 lda $4003
 D483: 29 40    and #$40
 D485: F0 1D    beq $d4a4
 D487: 68       pla
-D488: A6 1F    ldx $1f
-D48A: 85 F5    sta $f5
+D488: A6 1F    ldx current_player_001f
+D48A: 85 F5    sta dummy_write_00f5
 D48C: EA       nop
 D48D: 18       clc
 D48E: 7D FA D4 adc $d4fa, x
 D491: 99 02 18 sta $1802, y
 D494: 68       pla
 D495: AA       tax
-D496: 85 F5    sta $f5
+D496: 85 F5    sta dummy_write_00f5
 D498: EA       nop
 D499: A9 00    lda #$00
 D49B: 85 67    sta $67
-D49D: 85 F5    sta $f5
+D49D: 85 F5    sta dummy_write_00f5
 D49F: EA       nop
 D4A0: 60       rts
-D4A1: 85 F5    sta $f5
+D4A1: 85 F5    sta dummy_write_00f5
 D4A3: EA       nop
 D4A4: 68       pla
 D4A5: A2 00    ldx #$00
 D4A7: 4C 8D D4 jmp $d48d
-D4AA: 85 F5    sta $f5
+D4AA: 85 F5    sta dummy_write_00f5
 D4AC: EA       nop
 D4AD: A5 04    lda $04
 D4AF: C9 DD    cmp #$dd
@@ -2783,7 +2885,7 @@ D4B1: 90 0A    bcc $d4bd
 D4B3: A9 DD    lda #$dd
 D4B5: 99 03 18 sta $1803, y
 D4B8: D0 36    bne $d4f0
-D4BA: 85 F5    sta $f5
+D4BA: 85 F5    sta dummy_write_00f5
 D4BC: EA       nop
 D4BD: A5 03    lda $03
 D4BF: 20 23 D5 jsr $d523
@@ -2799,29 +2901,29 @@ D4D0: AD 03 40 lda $4003
 D4D3: 29 40    and #$40
 D4D5: F0 1D    beq $d4f4
 D4D7: 68       pla
-D4D8: A6 1F    ldx $1f
-D4DA: 85 F5    sta $f5
+D4D8: A6 1F    ldx current_player_001f
+D4DA: 85 F5    sta dummy_write_00f5
 D4DC: EA       nop
 D4DD: 18       clc
 D4DE: 7D FA D4 adc $d4fa, x
 D4E1: 99 02 18 sta $1802, y
 D4E4: 68       pla
 D4E5: AA       tax
-D4E6: 85 F5    sta $f5
+D4E6: 85 F5    sta dummy_write_00f5
 D4E8: EA       nop
 D4E9: A9 00    lda #$00
 D4EB: 85 67    sta $67
-D4ED: 85 F5    sta $f5
+D4ED: 85 F5    sta dummy_write_00f5
 D4EF: EA       nop
 D4F0: 60       rts
-D4F1: 85 F5    sta $f5
+D4F1: 85 F5    sta dummy_write_00f5
 D4F3: EA       nop
 D4F4: 68       pla
 D4F5: A2 00    ldx #$00
 D4F7: 4C DD D4 jmp $d4dd
 D4FA: FF 01 FE isb $fe01, x
 D4FD: 02       kil
-D4FE: 85 F5    sta $f5
+D4FE: 85 F5    sta dummy_write_00f5
 D500: EA       nop
 D501: A5 04    lda $04
 D503: 29 0F    and #$0f
@@ -2837,7 +2939,7 @@ D515: F0 09    beq $d520
 D517: C9 0B    cmp #$0b
 D519: F0 05    beq $d520
 D51B: C9 0A    cmp #$0a
-D51D: 85 F5    sta $f5
+D51D: 85 F5    sta dummy_write_00f5
 D51F: 6E 60 85 ror $8560
 D522: F5 EA    sbc $ea, x
 D524: A5 03    lda $03
@@ -2845,11 +2947,11 @@ D526: 85 08    sta $08
 D528: AD 03 40 lda $4003
 D52B: 29 40    and #$40
 D52D: F0 0B    beq $d53a
-D52F: A5 1F    lda $1f
+D52F: A5 1F    lda current_player_001f
 D531: F0 07    beq $d53a
 D533: C6 08    dec $08
 D535: E2 08    nop #$08
-D537: C1 F5    cmp ($f5, x)
+D537: C1 F5    cmp (dummy_write_00f5, x)
 D539: EA       nop
 D53A: E6 08    inc $08
 D53C: EA       nop
@@ -2864,7 +2966,7 @@ D548: C9 08    cmp #$08
 D54A: 90 39    bcc $d585
 D54C: C9 0E    cmp #$0e
 D54E: B0 33    bcs $d583
-D550: 85 F5    sta $f5
+D550: 85 F5    sta dummy_write_00f5
 D552: EA       nop
 D553: A5 08    lda $08
 D555: 29 F0    and #$f0
@@ -2879,7 +2981,7 @@ D565: F0 1E    beq $d585
 D567: C9 D0    cmp #$d0
 D569: F0 1A    beq $d585
 D56B: D0 18    bne $d585
-D56D: 85 F5    sta $f5
+D56D: 85 F5    sta dummy_write_00f5
 D56F: 6E A5 08 ror $08a5
 D572: 29 F0    and #$f0
 D574: C9 30    cmp #$30
@@ -2889,7 +2991,7 @@ D57A: F0 09    beq $d585
 D57C: C9 90    cmp #$90
 D57E: F0 05    beq $d585
 D580: C9 C0    cmp #$c0
-D582: 85 F5    sta $f5
+D582: 85 F5    sta dummy_write_00f5
 D584: 6E 60 85 ror $8560
 D587: F5 EA    sbc $ea, x
 D589: A5 03    lda $03
@@ -2911,7 +3013,7 @@ D5A2: 18       clc
 D5A3: 65 12    adc $12
 D5A5: AA       tax
 D5A6: 4C CC D5 jmp $d5cc
-D5A9: 85 F5    sta $f5
+D5A9: 85 F5    sta dummy_write_00f5
 D5AB: EA       nop
 D5AC: A5 03    lda $03
 D5AE: 18       clc
@@ -2931,7 +3033,7 @@ D5C3: 29 F0    and #$f0
 D5C5: 18       clc
 D5C6: 65 12    adc $12
 D5C8: AA       tax
-D5C9: 85 F5    sta $f5
+D5C9: 85 F5    sta dummy_write_00f5
 D5CB: EA       nop
 D5CC: BD 8E D6 lda $d68e, x
 D5CF: AA       tax
@@ -2978,11 +3080,11 @@ D60F: C9 07    cmp #$07
 D611: F0 06    beq $d619
 D613: A9 00    lda #$00
 D615: 60       rts
-D616: 85 F5    sta $f5
+D616: 85 F5    sta dummy_write_00f5
 D618: EA       nop
 D619: A9 FF    lda #$ff
 D61B: 60       rts
-D61C: 85 F5    sta $f5
+D61C: 85 F5    sta dummy_write_00f5
 D61E: EA       nop
 D61F: A5 03    lda $03
 D621: 18       clc
@@ -3004,7 +3106,7 @@ D638: 18       clc
 D639: 65 12    adc $12
 D63B: AA       tax
 D63C: 4C 62 D6 jmp $d662
-D63F: 85 F5    sta $f5
+D63F: 85 F5    sta dummy_write_00f5
 D641: EA       nop
 D642: A5 03    lda $03
 D644: 18       clc
@@ -3025,7 +3127,7 @@ D659: 29 F0    and #$f0
 D65B: 18       clc
 D65C: 65 12    adc $12
 D65E: AA       tax
-D65F: 85 F5    sta $f5
+D65F: 85 F5    sta dummy_write_00f5
 D661: EA       nop
 D662: BD 8E D6 lda $d68e, x
 D665: AA       tax
@@ -3048,7 +3150,7 @@ D681: C9 0B    cmp #$0b
 D683: F0 06    beq $d68b
 D685: A9 00    lda #$00
 D687: 60       rts
-D688: 85 F5    sta $f5
+D688: 85 F5    sta dummy_write_00f5
 D68A: EA       nop
 D68B: A9 FF    lda #$ff
 D68D: 60       rts
@@ -3162,7 +3264,7 @@ D770: 72       kil
 D771: 73 74    rra ($74), y
 D773: 75 76    adc $76, x
 D775: 77 F7    rra $f7, x
-D777: F6 F5    inc $f5, x
+D777: F6 F5    inc dummy_write_00f5, x
 D779: F4 F3    nop $f3, x
 D77B: F2       kil
 D77C: F1 F0    sbc ($f0), y
@@ -3175,7 +3277,7 @@ D78B: FA       nop
 D78C: F9 F8 85 sbc $85f8, y
 D78F: F6 EA    inc $ea, x
 D791: 4C 38 D8 jmp $d838
-D794: 85 F5    sta $f5
+D794: 85 F5    sta dummy_write_00f5
 D796: 6E A5 6E ror $6ea5
 D799: C9 FF    cmp #$ff
 D79B: D0 03    bne $d7a0
@@ -3197,7 +3299,7 @@ D7BB: 60       rts
 D7BC: 85 F6    sta $f6
 D7BE: 6E 4C 57 ror $574c
 D7C1: D8       cld
-D7C2: 85 F5    sta $f5
+D7C2: 85 F5    sta dummy_write_00f5
 D7C4: 6E A5 BA ror $baa5
 D7C7: 4A       lsr a
 D7C8: A8       tay
@@ -3209,12 +3311,12 @@ D7D5: 5D 69 D8 eor $d869, x
 D7D8: 8D 18 18 sta $1818
 D7DB: B9 82 D8 lda $d882, y
 D7DE: 8D 19 18 sta $1819
-D7E1: A6 1F    ldx $1f
-D7E3: B5 2B    lda $2b, x
+D7E1: A6 1F    ldx current_player_001f
+D7E3: B5 2B    lda player_pepper_002b, x
 D7E5: 38       sec
 D7E6: F8       sed
 D7E7: E9 01    sbc #$01
-D7E9: 95 2B    sta $2b, x
+D7E9: 95 2B    sta player_pepper_002b, x
 D7EB: D8       cld
 D7EC: A5 1B    lda $1b
 D7EE: F0 06    beq $d7f6
@@ -3235,7 +3337,7 @@ D80E: EA       nop
 D80F: B9 87 D8 lda $d887, y
 D812: 8D 19 18 sta $1819
 D815: 60       rts
-D816: 85 F5    sta $f5
+D816: 85 F5    sta dummy_write_00f5
 D818: EA       nop
 D819: A5 BA    lda $ba
 D81B: 4A       lsr a
@@ -3250,7 +3352,7 @@ D82D: EA       nop
 D82E: B9 8C D8 lda $d88c, y
 D831: 8D 19 18 sta $1819
 D834: 60       rts
-D835: 85 F5    sta $f5
+D835: 85 F5    sta dummy_write_00f5
 D837: EA       nop
 D838: A5 BA    lda $ba
 D83A: 4A       lsr a
@@ -3265,13 +3367,13 @@ D84C: EA       nop
 D84D: B9 91 D8 lda $d891, y
 D850: 8D 19 18 sta $1819
 D853: 60       rts
-D854: 85 F5    sta $f5
+D854: 85 F5    sta dummy_write_00f5
 D856: EA       nop
 D857: A9 FF    lda #$ff
 D859: 85 6E    sta $6e
 D85B: A9 00    lda #$00
 D85D: 8D 18 18 sta $1818
-D860: 85 F5    sta $f5
+D860: 85 F5    sta dummy_write_00f5
 D862: EA       nop
 D863: 60       rts
 D864: 03 03    slo ($03, x)
@@ -3347,10 +3449,10 @@ D8E4: B1 03    lda ($03), y
 D8E6: 29 1F    and #$1f
 D8E8: C9 04    cmp #$04
 D8EA: 90 06    bcc $d8f2
-D8EC: 85 F5    sta $f5
+D8EC: 85 F5    sta dummy_write_00f5
 D8EE: EA       nop
 D8EF: 4C 55 DA jmp $da55
-D8F2: 85 F5    sta $f5
+D8F2: 85 F5    sta dummy_write_00f5
 D8F4: EA       nop
 D8F5: A9 08    lda #$08
 D8F7: 20 5D EA jsr $ea5d
@@ -3359,7 +3461,7 @@ D8FD: A5 BA    lda $ba
 D8FF: C9 02    cmp #$02
 D901: F0 15    beq $d918
 D903: C8       iny
-D904: 85 F5    sta $f5
+D904: 85 F5    sta dummy_write_00f5
 D906: 6E 20 58 ror $5820
 D909: DA       nop
 D90A: F0 1F    beq $d92b
@@ -3368,7 +3470,7 @@ D90D: C0 08    cpy #$08
 D90F: D0 F6    bne $d907
 D911: A0 04    ldy #$04
 D913: D0 5F    bne $d974
-D915: 85 F5    sta $f5
+D915: 85 F5    sta dummy_write_00f5
 D917: 6E 88 85 ror $8588
 D91A: F5 EA    sbc $ea, x
 D91C: 20 58 DA jsr $da58
@@ -3377,35 +3479,35 @@ D921: 88       dey
 D922: D0 F8    bne $d91c
 D924: A0 01    ldy #$01
 D926: D0 4C    bne $d974
-D928: 85 F5    sta $f5
+D928: 85 F5    sta dummy_write_00f5
 D92A: EA       nop
 D92B: 8A       txa
 D92C: D0 0D    bne $d93b
-D92E: 85 F5    sta $f5
+D92E: 85 F5    sta dummy_write_00f5
 D930: EA       nop
 D931: C8       iny
 D932: B1 05    lda ($05), y
 D934: 29 03    and #$03
 D936: D0 F9    bne $d931
-D938: 85 F5    sta $f5
+D938: 85 F5    sta dummy_write_00f5
 D93A: EA       nop
 D93B: A2 04    ldx #$04
-D93D: 85 F5    sta $f5
+D93D: 85 F5    sta dummy_write_00f5
 D93F: 6E 88 B1 ror $b188
 D942: 03 29    slo ($29, x)
 D944: 1C F0 A8 nop $a8f0, x
 D947: CA       dex
 D948: D0 F6    bne $d940
 D94A: F0 28    beq $d974
-D94C: 85 F5    sta $f5
+D94C: 85 F5    sta dummy_write_00f5
 D94E: 6E 8A D0 ror $d08a
 D951: 0D 85 F5 ora $f585
 D954: 6E 88 B1 ror $b188
-D957: 05 29    ora $29
+D957: 05 29    ora player_lives_0029
 D959: 03 D0    slo ($d0, x)
 D95B: F9 85 F5 sbc $f585, y
 D95E: 6E A2 04 ror $04a2
-D961: 85 F5    sta $f5
+D961: 85 F5    sta dummy_write_00f5
 D963: EA       nop
 D964: C8       iny
 D965: B1 03    lda ($03), y
@@ -3416,7 +3518,7 @@ D96C: D0 F6    bne $d964
 D96E: 88       dey
 D96F: 88       dey
 D970: 88       dey
-D971: 85 F5    sta $f5
+D971: 85 F5    sta dummy_write_00f5
 D973: EA       nop
 D974: A9 09    lda #$09
 D976: 20 5D EA jsr $ea5d
@@ -3439,12 +3541,12 @@ D992: 66 07    ror $07
 D994: A2 08    ldx #$08
 D996: AA       tax
 D997: 07 A5    slo $a5
-D999: 07 29    slo $29
+D999: 07 29    slo player_lives_0029
 D99B: F8       sed
 D99C: 85 07    sta $07
 D99E: 4A       lsr a
 D99F: 00       brk
-D9A0: 85 F5    sta $f5
+D9A0: 85 F5    sta dummy_write_00f5
 D9A2: EA       nop
 D9A3: BD 02 02 lda $0202, x
 D9A6: F0 1E    beq $d9c6
@@ -3457,13 +3559,13 @@ D9B3: BD 04 02 lda $0204, x
 D9B6: 29 F8    and #$f8
 D9B8: C5 07    cmp $07
 D9BA: F0 10    beq $d9cc
-D9BC: 85 F5    sta $f5
+D9BC: 85 F5    sta dummy_write_00f5
 D9BE: 6E E8 E8 ror $e8e8
 D9C1: E8       inx
 D9C2: E8       inx
 D9C3: 4C A3 D9 jmp $d9a3
 D9C6: 4C 31 DA jmp $da31
-D9C9: 85 F5    sta $f5
+D9C9: 85 F5    sta dummy_write_00f5
 D9CB: EA       nop
 D9CC: BD 02 02 lda $0202, x
 D9CF: C9 0F    cmp #$0f
@@ -3479,7 +3581,7 @@ D9E4: 4D 01 9D eor $9d01
 D9E7: 05 02    ora $02
 D9E9: A0 00    ldy #$00
 D9EB: 84 0A    sty $0a
-D9ED: C1 F5    cmp ($f5, x)
+D9ED: C1 F5    cmp (dummy_write_00f5, x)
 D9EF: 6E A4 0A ror $0aa4
 D9F2: B9 68 00 lda $0068, y
 D9F5: 29 A0    and #$a0
@@ -3506,16 +3608,16 @@ DA1A: BD 04 02 lda $0204, x
 DA1D: 29 F8    and #$f8
 DA1F: C5 0B    cmp $0b
 DA21: F0 13    beq $da36
-DA23: 85 F5    sta $f5
+DA23: 85 F5    sta dummy_write_00f5
 DA25: EA       nop
 DA26: E6 0A    inc $0a
 DA28: A4 0A    ldy $0a
 DA2A: C0 06    cpy #$06
 DA2C: D0 C2    bne $d9f0
-DA2E: 85 F5    sta $f5
+DA2E: 85 F5    sta dummy_write_00f5
 DA30: EA       nop
 DA31: F0 22    beq $da55
-DA33: 85 F5    sta $f5
+DA33: 85 F5    sta dummy_write_00f5
 DA35: EA       nop
 DA36: A4 0A    ldy $0a
 DA38: B9 68 00 lda $0068, y
@@ -3528,10 +3630,10 @@ DA47: FE 05 02 inc $0205, x
 DA4A: A9 12    lda #$12
 DA4C: 20 5D EA jsr $ea5d
 DA4F: 4C 26 DA jmp $da26
-DA52: 85 F5    sta $f5
+DA52: 85 F5    sta dummy_write_00f5
 DA54: EA       nop
 DA55: 60       rts
-DA56: 85 F5    sta $f5
+DA56: 85 F5    sta dummy_write_00f5
 DA58: EA       nop
 DA59: A2 FF    ldx #$ff
 DA5B: B1 05    lda ($05), y
@@ -3541,7 +3643,7 @@ DA61: E8       inx
 DA62: B1 03    lda ($03), y
 DA64: 29 1C    and #$1c
 DA66: F0 1E    beq $da86
-DA68: 85 F5    sta $f5
+DA68: 85 F5    sta dummy_write_00f5
 DA6A: EA       nop
 DA6B: 84 12    sty $12
 DA6D: 18       clc
@@ -3557,17 +3659,17 @@ DA7B: 69 04    adc #$04
 DA7D: 91 03    sta ($03), y
 DA7F: A4 12    ldy $12
 DA81: A9 FF    lda #$ff
-DA83: 85 F5    sta $f5
+DA83: 85 F5    sta dummy_write_00f5
 DA85: EA       nop
 DA86: 60       rts
-DA87: 85 F5    sta $f5
+DA87: 85 F5    sta dummy_write_00f5
 DA89: EA       nop
 DA8A: A0 00    ldy #$00
 DA8C: AD 04 40 lda $4004
 DA8F: 29 08    and #$08
 DA91: D0 05    bne $da98
 DA93: A0 06    ldy #$06
-DA95: 85 F5    sta $f5
+DA95: 85 F5    sta dummy_write_00f5
 DA97: EA       nop
 DA98: 18       clc
 DA99: 98       tya
@@ -3586,7 +3688,7 @@ DAB2: 85 BF    sta $bf
 DAB4: 85 C0    sta $c0
 DAB6: 85 C1    sta $c1
 DAB8: 85 90    sta $90
-DABA: A6 1F    ldx $1f
+DABA: A6 1F    ldx current_player_001f
 DABC: B5 61    lda $61, x
 DABE: 4A       lsr a
 DABF: 4A       lsr a
@@ -3597,14 +3699,14 @@ DAC6: A9 07    lda #$07
 DAC8: AA       tax
 DAC9: BD F0 DA lda $daf0, x
 DACC: A0 05    ldy #$05
-DACE: 85 F5    sta $f5
+DACE: 85 F5    sta dummy_write_00f5
 DAD0: EA       nop
 DAD1: 99 91 00 sta $0091, y
 DAD4: 88       dey
 DAD5: 10 FA    bpl $dad1
 DAD7: BD F9 DA lda $daf9, x
 DADA: A0 05    ldy #$05
-DADC: 85 F5    sta $f5
+DADC: 85 F5    sta dummy_write_00f5
 DADE: EA       nop
 DADF: 99 A1 00 sta $00a1, y
 DAE2: 88       dey
@@ -3612,7 +3714,7 @@ DAE3: 10 FA    bpl $dadf
 DAE5: AD F4 DA lda $daf4
 DAE8: 85 98    sta $98
 DAEA: AD FD DA lda $dafd
-DAED: 85 A8    sta $a8
+DAED: 85 A8    sta game_speed_00a8
 DAEF: 60       rts
 DAF0: 0F 03 07 slo $0703
 DAF3: 0F 03 07 slo $0703
@@ -3647,9 +3749,9 @@ DB1E: 04 02    nop $02
 DB20: 01 01    ora ($01, x)
 DB22: 01 00    ora ($00, x)
 DB24: 04 02    nop $02
-DB26: 85 F5    sta $f5
+DB26: 85 F5    sta dummy_write_00f5
 DB28: EA       nop
-DB29: A5 6F    lda $6f
+DB29: A5 6F    lda game_state_006f
 DB2B: 30 6E    bmi $db9b
 DB2D: A5 13    lda timer1_0013
 DB2F: 29 1F    and #$1f
@@ -3664,7 +3766,7 @@ DB3D: 86 C2    stx $c2
 DB3F: D9 BC D5 cmp $d5bc, y
 DB42: BF F0 56 lax $56f0, y
 DB45: A0 00    ldy #$00
-DB47: 85 F5    sta $f5
+DB47: 85 F5    sta dummy_write_00f5
 DB49: EA       nop
 DB4A: B9 68 00 lda $0068, y
 DB4D: C9 FF    cmp #$ff
@@ -3673,7 +3775,7 @@ DB51: C8       iny
 DB52: C0 06    cpy #$06
 DB54: D0 F4    bne $db4a
 DB56: 4C 9B DB jmp $db9b
-DB59: 85 F5    sta $f5
+DB59: 85 F5    sta dummy_write_00f5
 DB5B: EA       nop
 DB5C: F6 BF    inc $bf, x
 DB5E: 6C 8A 09 jmp ($098a)
@@ -3704,7 +3806,7 @@ DB8F: BD A1 DB lda $dba1, x
 DB92: 99 03 18 sta $1803, y
 DB95: 08       php
 DB96: EB DC    sbc #$dc
-DB98: 85 F5    sta $f5
+DB98: 85 F5    sta dummy_write_00f5
 DB9A: EA       nop
 DB9B: 60       rts
 DB9C: 20 40 F0 jsr $f040
@@ -3719,25 +3821,25 @@ DBB2: CD CD 1D cmp $1dcd
 DBB5: 2D 9D 8D and $8d9d
 DBB8: 80 85    nop #$85
 DBBA: F5 EA    sbc $ea, x
-DBBC: A5 6F    lda $6f
+DBBC: A5 6F    lda game_state_006f
 DBBE: 30 1C    bmi $dbdc
 DBC0: A2 00    ldx #$00
-DBC2: 85 F5    sta $f5
+DBC2: 85 F5    sta dummy_write_00f5
 DBC4: 6E B5 68 ror $68b5
 DBC7: 29 D0    and #$d0
 DBC9: D0 09    bne $dbd4
 DBCB: B5 68    lda $68, x
 DBCD: 29 20    and #$20
 DBCF: D0 0F    bne $dbe0
-DBD1: 85 F5    sta $f5
+DBD1: 85 F5    sta dummy_write_00f5
 DBD3: EA       nop
 DBD4: E8       inx
 DBD5: E0 06    cpx #$06
 DBD7: D0 EC    bne $dbc5
-DBD9: 85 F5    sta $f5
+DBD9: 85 F5    sta dummy_write_00f5
 DBDB: EA       nop
 DBDC: 60       rts
-DBDD: 85 F5    sta $f5
+DBDD: 85 F5    sta dummy_write_00f5
 DBDF: 6E 86 70 ror $7086
 DBE2: B5 A9    lda $a9, x
 DBE4: 85 71    sta $71
@@ -3765,7 +3867,7 @@ DC0F: C9 A0    cmp #$a0
 DC11: F0 07    beq $dc1a
 DC13: C9 D0    cmp #$d0
 DC15: D0 2E    bne $dc45
-DC17: 85 F5    sta $f5
+DC17: 85 F5    sta dummy_write_00f5
 DC19: EA       nop
 DC1A: 20 9D E0 jsr $e09d
 DC1D: D0 0D    bne $dc2c
@@ -3773,24 +3875,24 @@ DC1F: 20 7B E0 jsr $e07b
 DC22: F0 13    beq $dc37
 DC24: 20 8C E0 jsr $e08c
 DC27: F0 0E    beq $dc37
-DC29: 85 F5    sta $f5
+DC29: 85 F5    sta dummy_write_00f5
 DC2B: EA       nop
 DC2C: 20 59 E0 jsr $e059
 DC2F: F0 06    beq $dc37
 DC31: 4C 6B DC jmp $dc6b
-DC34: 85 F5    sta $f5
+DC34: 85 F5    sta dummy_write_00f5
 DC36: EA       nop
 DC37: A6 70    ldx $70
 DC39: B5 68    lda $68, x
 DC3B: 29 0F    and #$0f
 DC3D: 95 68    sta $68, x
 DC3F: 4C 6B DC jmp $dc6b
-DC42: 85 F5    sta $f5
+DC42: 85 F5    sta dummy_write_00f5
 DC44: EA       nop
 DC45: A5 03    lda $03
 DC47: C9 80    cmp #$80
 DC49: B0 13    bcs $dc5e
-DC4B: 85 F5    sta $f5
+DC4B: 85 F5    sta dummy_write_00f5
 DC4D: EA       nop
 DC4E: A6 70    ldx $70
 DC50: B5 A9    lda $a9, x
@@ -3798,20 +3900,20 @@ DC52: 29 0F    and #$0f
 DC54: 09 20    ora #$20
 DC56: 95 A9    sta $a9, x
 DC58: 4C 6B DC jmp $dc6b
-DC5B: 85 F5    sta $f5
+DC5B: 85 F5    sta dummy_write_00f5
 DC5D: EA       nop
 DC5E: A6 70    ldx $70
 DC60: B5 A9    lda $a9, x
 DC62: 29 0F    and #$0f
 DC64: 09 40    ora #$40
 DC66: 95 A9    sta $a9, x
-DC68: 85 F5    sta $f5
+DC68: 85 F5    sta dummy_write_00f5
 DC6A: EA       nop
 DC6B: A6 70    ldx $70
 DC6D: 20 69 D2 jsr $d269
 DC70: A6 70    ldx $70
 DC72: 4C D4 DB jmp $dbd4
-DC75: 85 F5    sta $f5
+DC75: 85 F5    sta dummy_write_00f5
 DC77: EA       nop
 DC78: A5 13    lda timer1_0013
 DC7A: 29 3F    and #$3f
@@ -3823,7 +3925,7 @@ DC84: 90 2E    bcc $dcb4
 DC86: A9 00    lda #$00
 DC88: 85 90    sta $90
 DC8A: A2 05    ldx #$05
-DC8C: 85 F5    sta $f5
+DC8C: 85 F5    sta dummy_write_00f5
 DC8E: EA       nop
 DC8F: B5 91    lda $91, x
 DC91: 29 10    and #$10
@@ -3835,27 +3937,27 @@ DC9B: D6 A1    dec $a1, x
 DC9D: A9 03    lda #$03
 DC9F: 95 91    sta $91, x
 DCA1: D0 0B    bne $dcae
-DCA3: 85 F5    sta $f5
+DCA3: 85 F5    sta dummy_write_00f5
 DCA5: EA       nop
 DCA6: 38       sec
 DCA7: B5 91    lda $91, x
 DCA9: 36 91    rol $91, x
-DCAB: 85 F5    sta $f5
+DCAB: 85 F5    sta dummy_write_00f5
 DCAD: EA       nop
 DCAE: CA       dex
 DCAF: 10 DE    bpl $dc8f
-DCB1: 85 F5    sta $f5
+DCB1: 85 F5    sta dummy_write_00f5
 DCB3: EA       nop
 DCB4: A0 05    ldy #$05
 DCB6: A2 14    ldx #$14
-DCB8: 85 F5    sta $f5
+DCB8: 85 F5    sta dummy_write_00f5
 DCBA: EA       nop
 DCBB: B9 68 00 lda $0068, y
 DCBE: 30 09    bmi $dcc9
 DCC0: B5 73    lda $73, x
 DCC2: F0 11    beq $dcd5
 DCC4: D6 73    dec $73, x
-DCC6: 85 F5    sta $f5
+DCC6: 85 F5    sta dummy_write_00f5
 DCC8: EA       nop
 DCC9: 88       dey
 DCCA: CA       dex
@@ -3864,7 +3966,7 @@ DCCC: CA       dex
 DCCD: CA       dex
 DCCE: 10 EB    bpl $dcbb
 DCD0: 30 16    bmi $dce8
-DCD2: 85 F5    sta $f5
+DCD2: 85 F5    sta dummy_write_00f5
 DCD4: EA       nop
 DCD5: 8A       txa
 DCD6: 48       pha
@@ -3877,10 +3979,10 @@ DCDF: A8       tay
 DCE0: 68       pla
 DCE1: AA       tax
 DCE2: 4C C9 DC jmp $dcc9
-DCE5: 85 F5    sta $f5
+DCE5: 85 F5    sta dummy_write_00f5
 DCE7: EA       nop
 DCE8: 60       rts
-DCE9: 85 F5    sta $f5
+DCE9: 85 F5    sta dummy_write_00f5
 DCEB: EA       nop
 DCEC: A4 0A    ldy $0a
 DCEE: B9 68 00 lda $0068, y
@@ -3913,7 +4015,7 @@ DD21: 03 10    slo ($10, x)
 DD23: 07 A9    slo $a9
 DD25: 00       brk
 DD26: 95 75    sta $75, x
-DD28: 85 F5    sta $f5
+DD28: 85 F5    sta dummy_write_00f5
 DD2A: EA       nop
 DD2B: 60       rts
 DD2C: 38       sec
@@ -3942,25 +4044,25 @@ DD5B: 05 04    ora $04
 DD5D: 05 FF    ora $ff
 DD5F: 09 17    ora #$17
 DD61: 09 13    ora #$13
-DD63: 85 F5    sta $f5
+DD63: 85 F5    sta dummy_write_00f5
 DD65: 6E A5 6F ror $6fa5
 DD68: 30 19    bmi $dd83
 DD6A: A2 05    ldx #$05
 DD6C: 86 70    stx $70
-DD6E: C1 F5    cmp ($f5, x)
+DD6E: C1 F5    cmp (dummy_write_00f5, x)
 DD70: EA       nop
 DD71: A6 70    ldx $70
 DD73: B5 68    lda $68, x
 DD75: 29 F0    and #$f0
 DD77: F0 0E    beq $dd87
-DD79: 85 F5    sta $f5
+DD79: 85 F5    sta dummy_write_00f5
 DD7B: EA       nop
 DD7C: C6 70    dec $70
 DD7E: 10 F1    bpl $dd71
-DD80: 85 F5    sta $f5
+DD80: 85 F5    sta dummy_write_00f5
 DD82: EA       nop
 DD83: 60       rts
-DD84: 85 F5    sta $f5
+DD84: 85 F5    sta dummy_write_00f5
 DD86: 6E 8A 0A ror $0a8a
 DD89: 0A       asl a
 DD8A: A8       tay
@@ -3971,7 +4073,7 @@ DD93: 85 04    sta $04
 DD95: D9 8A F0 cmp $f08a, y
 DD98: 0B D6    anc #$d6
 DD9A: 8A       txa
-DD9B: 85 F5    sta $f5
+DD9B: 85 F5    sta dummy_write_00f5
 DD9D: 6E 4C BB ror $bb4c
 DDA0: DE 85 F5 dec $f585, x
 DDA3: EA       nop
@@ -3998,10 +4100,10 @@ DDC8: F0 1A    beq $dde4
 DDCA: 88       dey
 DDCB: F0 20    beq $dded
 DDCD: D0 44    bne $de13
-DDCF: 85 F5    sta $f5
+DDCF: 85 F5    sta dummy_write_00f5
 DDD1: EA       nop
 DDD2: 4C ED DD jmp $dded
-DDD5: 85 F5    sta $f5
+DDD5: 85 F5    sta dummy_write_00f5
 DDD7: 6E 4C 13 ror $134c
 DDDA: DE 85 F5 dec $f585, x
 DDDD: 6E 4C ED ror $ed4c
@@ -4010,33 +4112,33 @@ DDE3: EA       nop
 DDE4: A5 17    lda $17
 DDE6: 69 08    adc #$08
 DDE8: 85 17    sta $17
-DDEA: 85 F5    sta $f5
+DDEA: 85 F5    sta dummy_write_00f5
 DDEC: 6E A6 70 ror $70a6
 DDEF: B5 A9    lda $a9, x
 DDF1: 85 71    sta $71
 DDF3: 29 F0    and #$f0
 DDF5: C9 20    cmp #$20
-DDF7: 85 F5    sta $f5
+DDF7: 85 F5    sta dummy_write_00f5
 DDF9: EA       nop
 DDFA: F0 23    beq $de1f
 DDFC: C9 40    cmp #$40
-DDFE: 85 F5    sta $f5
+DDFE: 85 F5    sta dummy_write_00f5
 DE00: EA       nop
 DE01: F0 31    beq $de34
 DE03: C9 60    cmp #$60
-DE05: 85 F5    sta $f5
+DE05: 85 F5    sta dummy_write_00f5
 DE07: EA       nop
 DE08: F0 3F    beq $de49
-DE0A: 85 F5    sta $f5
+DE0A: 85 F5    sta dummy_write_00f5
 DE0C: EA       nop
 DE0D: 4C 5E DE jmp $de5e
-DE10: 85 F5    sta $f5
+DE10: 85 F5    sta dummy_write_00f5
 DE12: EA       nop
 DE13: A5 18    lda $18
 DE15: 69 08    adc #$08
 DE17: 85 18    sta $18
 DE19: 4C ED DD jmp $dded
-DE1C: 85 F5    sta $f5
+DE1C: 85 F5    sta dummy_write_00f5
 DE1E: EA       nop
 DE1F: A5 18    lda $18
 DE21: 29 F8    and #$f8
@@ -4047,7 +4149,7 @@ DE29: C5 05    cmp $05
 DE2B: B0 46    bcs $de73
 DE2D: F0 4A    beq $de79
 DE2F: 90 4E    bcc $de7f
-DE31: 85 F5    sta $f5
+DE31: 85 F5    sta dummy_write_00f5
 DE33: EA       nop
 DE34: A5 18    lda $18
 DE36: 29 F8    and #$f8
@@ -4058,7 +4160,7 @@ DE3E: C5 05    cmp $05
 DE40: B0 43    bcs $de85
 DE42: F0 47    beq $de8b
 DE44: 90 4B    bcc $de91
-DE46: 85 F5    sta $f5
+DE46: 85 F5    sta dummy_write_00f5
 DE48: EA       nop
 DE49: A5 17    lda $17
 DE4B: 29 F8    and #$f8
@@ -4069,7 +4171,7 @@ DE53: C5 05    cmp $05
 DE55: 90 4C    bcc $dea3
 DE57: F0 44    beq $de9d
 DE59: B0 3C    bcs $de97
-DE5B: 85 F5    sta $f5
+DE5B: 85 F5    sta dummy_write_00f5
 DE5D: EA       nop
 DE5E: A5 17    lda $17
 DE60: 29 F8    and #$f8
@@ -4080,43 +4182,43 @@ DE68: C5 05    cmp $05
 DE6A: 90 49    bcc $deb5
 DE6C: F0 41    beq $deaf
 DE6E: B0 39    bcs $dea9
-DE70: 85 F5    sta $f5
+DE70: 85 F5    sta dummy_write_00f5
 DE72: EA       nop
 DE73: 4C E7 DE jmp $dee7
-DE76: 85 F5    sta $f5
+DE76: 85 F5    sta dummy_write_00f5
 DE78: EA       nop
 DE79: 4C 01 DF jmp $df01
-DE7C: 85 F5    sta $f5
+DE7C: 85 F5    sta dummy_write_00f5
 DE7E: EA       nop
 DE7F: 4C 1B DF jmp $df1b
-DE82: 85 F5    sta $f5
+DE82: 85 F5    sta dummy_write_00f5
 DE84: EA       nop
 DE85: 4C 35 DF jmp $df35
-DE88: 85 F5    sta $f5
+DE88: 85 F5    sta dummy_write_00f5
 DE8A: EA       nop
 DE8B: 4C 55 DF jmp $df55
-DE8E: 85 F5    sta $f5
+DE8E: 85 F5    sta dummy_write_00f5
 DE90: EA       nop
 DE91: 4C 6F DF jmp $df6f
-DE94: 85 F5    sta $f5
+DE94: 85 F5    sta dummy_write_00f5
 DE96: EA       nop
 DE97: 4C 89 DF jmp $df89
-DE9A: 85 F5    sta $f5
+DE9A: 85 F5    sta dummy_write_00f5
 DE9C: EA       nop
 DE9D: 4C A3 DF jmp $dfa3
-DEA0: 85 F5    sta $f5
+DEA0: 85 F5    sta dummy_write_00f5
 DEA2: EA       nop
 DEA3: 4C BD DF jmp $dfbd
-DEA6: 85 F5    sta $f5
+DEA6: 85 F5    sta dummy_write_00f5
 DEA8: EA       nop
 DEA9: 4C D7 DF jmp $dfd7
-DEAC: 85 F5    sta $f5
+DEAC: 85 F5    sta dummy_write_00f5
 DEAE: EA       nop
 DEAF: 4C F1 DF jmp $dff1
-DEB2: 85 F5    sta $f5
+DEB2: 85 F5    sta dummy_write_00f5
 DEB4: EA       nop
 DEB5: 4C 0B E0 jmp $e00b
-DEB8: 85 F5    sta $f5
+DEB8: 85 F5    sta dummy_write_00f5
 DEBA: EA       nop
 DEBB: A6 70    ldx $70
 DEBD: 20 C3 D3 jsr $d3c3
@@ -4124,7 +4226,7 @@ DEC0: D0 0B    bne $decd
 DEC2: A6 70    ldx $70
 DEC4: 20 69 D2 jsr $d269
 DEC7: 4C 7C DD jmp $dd7c
-DECA: 85 F5    sta $f5
+DECA: 85 F5    sta dummy_write_00f5
 DECC: EA       nop
 DECD: A6 70    ldx $70
 DECF: B5 A9    lda $a9, x
@@ -4137,7 +4239,7 @@ DEDB: F0 AE    beq $de8b
 DEDD: C9 60    cmp #$60
 DEDF: F0 BC    beq $de9d
 DEE1: 4C F1 DF jmp $dff1
-DEE4: 85 F5    sta $f5
+DEE4: 85 F5    sta dummy_write_00f5
 DEE6: EA       nop
 DEE7: 20 59 E0 jsr $e059
 DEEA: F0 63    beq $df4f
@@ -4148,7 +4250,7 @@ DEF4: F0 59    beq $df4f
 DEF6: 20 6A E0 jsr $e06a
 DEF9: F0 54    beq $df4f
 DEFB: 4C 3D E0 jmp $e03d
-DEFE: 85 F5    sta $f5
+DEFE: 85 F5    sta dummy_write_00f5
 DF00: EA       nop
 DF01: 20 7B E0 jsr $e07b
 DF04: F0 49    beq $df4f
@@ -4159,7 +4261,7 @@ DF0E: F0 3F    beq $df4f
 DF10: 20 8C E0 jsr $e08c
 DF13: F0 3A    beq $df4f
 DF15: 4C 3D E0 jmp $e03d
-DF18: 85 F5    sta $f5
+DF18: 85 F5    sta dummy_write_00f5
 DF1A: EA       nop
 DF1B: 20 6A E0 jsr $e06a
 DF1E: F0 2F    beq $df4f
@@ -4170,7 +4272,7 @@ DF28: F0 25    beq $df4f
 DF2A: 20 59 E0 jsr $e059
 DF2D: F0 20    beq $df4f
 DF2F: 4C 3D E0 jmp $e03d
-DF32: 85 F5    sta $f5
+DF32: 85 F5    sta dummy_write_00f5
 DF34: 6E 20 59 ror $5920
 DF37: E0 F0    cpx #$f0
 DF39: 15 20    ora $20, x
@@ -4184,7 +4286,7 @@ DF48: 06 4C    asl $4c
 DF4A: 3D E0 85 and $85e0, x
 DF4D: F5 6E    sbc $6e, x
 DF4F: 4C 25 E0 jmp $e025
-DF52: 85 F5    sta $f5
+DF52: 85 F5    sta dummy_write_00f5
 DF54: 6E 20 8C ror $8c20
 DF57: E0 F0    cpx #$f0
 DF59: F5 20    sbc $20, x
@@ -4206,7 +4308,7 @@ DF7C: F0 D1    beq $df4f
 DF7E: 20 7B E0 jsr $e07b
 DF81: F0 CC    beq $df4f
 DF83: 4C 3D E0 jmp $e03d
-DF86: 85 F5    sta $f5
+DF86: 85 F5    sta dummy_write_00f5
 DF88: EA       nop
 DF89: 20 7B E0 jsr $e07b
 DF8C: F0 C1    beq $df4f
@@ -4217,7 +4319,7 @@ DF96: F0 B7    beq $df4f
 DF98: 20 6A E0 jsr $e06a
 DF9B: F0 B2    beq $df4f
 DF9D: 4C 3D E0 jmp $e03d
-DFA0: 85 F5    sta $f5
+DFA0: 85 F5    sta dummy_write_00f5
 DFA2: EA       nop
 DFA3: 20 59 E0 jsr $e059
 DFA6: F0 7D    beq $e025
@@ -4228,7 +4330,7 @@ DFB0: F0 73    beq $e025
 DFB2: 20 6A E0 jsr $e06a
 DFB5: F0 6E    beq $e025
 DFB7: 4C 3D E0 jmp $e03d
-DFBA: 85 F5    sta $f5
+DFBA: 85 F5    sta dummy_write_00f5
 DFBC: 6E 20 8C ror $8c20
 DFBF: E0 F0    cpx #$f0
 DFC1: 63 20    rra ($20, x)
@@ -4249,7 +4351,7 @@ DFE4: F0 3F    beq $e025
 DFE6: 20 59 E0 jsr $e059
 DFE9: F0 3A    beq $e025
 DFEB: 4C 3D E0 jmp $e03d
-DFEE: 85 F5    sta $f5
+DFEE: 85 F5    sta dummy_write_00f5
 DFF0: EA       nop
 DFF1: 20 6A E0 jsr $e06a
 DFF4: F0 2F    beq $e025
@@ -4260,7 +4362,7 @@ DFFE: F0 25    beq $e025
 E000: 20 59 E0 jsr $e059
 E003: F0 20    beq $e025
 E005: 4C 3D E0 jmp $e03d
-E008: 85 F5    sta $f5
+E008: 85 F5    sta dummy_write_00f5
 E00A: EA       nop
 E00B: 20 8C E0 jsr $e08c
 E00E: F0 15    beq $e025
@@ -4271,19 +4373,19 @@ E018: F0 0B    beq $e025
 E01A: 20 59 E0 jsr $e059
 E01D: F0 06    beq $e025
 E01F: 4C 3D E0 jmp $e03d
-E022: 85 F5    sta $f5
+E022: 85 F5    sta dummy_write_00f5
 E024: EA       nop
 E025: A6 70    ldx $70
 E027: A9 00    lda #$00
 E029: 95 74    sta $74, x
 E02B: A9 10    lda #$10
 E02D: 95 8A    sta $8a, x
-E02F: 85 F5    sta $f5
+E02F: 85 F5    sta dummy_write_00f5
 E031: EA       nop
 E032: A6 70    ldx $70
 E034: 20 69 D2 jsr $d269
 E037: 4C 7B DD jmp $dd7b
-E03A: 85 F5    sta $f5
+E03A: 85 F5    sta dummy_write_00f5
 E03C: EA       nop
 E03D: A6 70    ldx $70
 E03F: B5 68    lda $68, x
@@ -4299,7 +4401,7 @@ E04D: 99 00 18 sta $1800, y
 E050: A9 FF    lda #$ff
 E052: 95 68    sta $68, x
 E054: 4C 7C DD jmp $dd7c
-E057: 85 F5    sta $f5
+E057: 85 F5    sta dummy_write_00f5
 E059: EA       nop
 E05A: A6 70    ldx $70
 E05C: A5 71    lda $71
@@ -4308,7 +4410,7 @@ E060: 09 60    ora #$60
 E062: 95 A9    sta $a9, x
 E064: 20 C3 D3 jsr $d3c3
 E067: 60       rts
-E068: 85 F5    sta $f5
+E068: 85 F5    sta dummy_write_00f5
 E06A: EA       nop
 E06B: A6 70    ldx $70
 E06D: A5 71    lda $71
@@ -4317,7 +4419,7 @@ E071: 09 80    ora #$80
 E073: 95 A9    sta $a9, x
 E075: 20 C3 D3 jsr $d3c3
 E078: 60       rts
-E079: 85 F5    sta $f5
+E079: 85 F5    sta dummy_write_00f5
 E07B: EA       nop
 E07C: A6 70    ldx $70
 E07E: A5 71    lda $71
@@ -4326,7 +4428,7 @@ E082: 09 20    ora #$20
 E084: 95 A9    sta $a9, x
 E086: 20 C3 D3 jsr $d3c3
 E089: 60       rts
-E08A: 85 F5    sta $f5
+E08A: 85 F5    sta dummy_write_00f5
 E08C: EA       nop
 E08D: A6 70    ldx $70
 E08F: A5 71    lda $71
@@ -4335,7 +4437,7 @@ E093: 09 40    ora #$40
 E095: 95 A9    sta $a9, x
 E097: 20 C3 D3 jsr $d3c3
 E09A: 60       rts
-E09B: 85 F5    sta $f5
+E09B: 85 F5    sta dummy_write_00f5
 E09D: EA       nop
 E09E: A5 04    lda $04
 E0A0: 29 0F    and #$0f
@@ -4346,10 +4448,10 @@ E0A8: F0 09    beq $e0b3
 E0AA: C9 0D    cmp #$0d
 E0AC: F0 05    beq $e0b3
 E0AE: C9 0C    cmp #$0c
-E0B0: 85 F5    sta $f5
+E0B0: 85 F5    sta dummy_write_00f5
 E0B2: EA       nop
 E0B3: 60       rts
-E0B4: 85 F5    sta $f5
+E0B4: 85 F5    sta dummy_write_00f5
 E0B6: EA       nop
 E0B7: A5 03    lda $03
 E0B9: 85 08    sta $08
@@ -4372,7 +4474,7 @@ E0D9: C9 A0    cmp #$a0
 E0DB: F0 1B    beq $e0f8
 E0DD: C9 D0    cmp #$d0
 E0DF: 60       rts
-E0E0: 85 F5    sta $f5
+E0E0: 85 F5    sta dummy_write_00f5
 E0E2: EA       nop
 E0E3: A5 08    lda $08
 E0E5: 29 F0    and #$f0
@@ -4383,10 +4485,10 @@ E0ED: F0 09    beq $e0f8
 E0EF: C9 90    cmp #$90
 E0F1: F0 05    beq $e0f8
 E0F3: C9 C0    cmp #$c0
-E0F5: 85 F5    sta $f5
+E0F5: 85 F5    sta dummy_write_00f5
 E0F7: EA       nop
 E0F8: 60       rts
-E0F9: 85 F5    sta $f5
+E0F9: 85 F5    sta dummy_write_00f5
 E0FB: EA       nop
 E0FC: 86 11    stx $11
 E0FE: 84 12    sty $12
@@ -4421,7 +4523,7 @@ E132: A4 12    ldy $12
 E134: A6 11    ldx $11
 E136: A9 0B    lda #$0b
 E138: 20 5D EA jsr $ea5d
-E13B: 85 F5    sta $f5
+E13B: 85 F5    sta dummy_write_00f5
 E13D: 6E 60 85 ror $8560
 E140: F5 EA    sbc $ea, x
 E142: A5 C4    lda $c4
@@ -4448,7 +4550,7 @@ E16A: 20 91 03 jsr $0391
 E16D: 64 91    nop $91
 E16F: 03 85    slo ($85, x)
 E171: 60       rts
-E172: 85 F5    sta $f5
+E172: 85 F5    sta dummy_write_00f5
 E174: 6E 60 4F ror $4f60
 E177: 11 CF    ora ($cf), y
 E179: 11 CF    ora ($cf), y
@@ -4461,17 +4563,17 @@ E185: BC C0 B8 ldy $b8c0, x
 E188: 07 06    slo $06
 E18A: 05 05    ora $05
 E18C: 05 05    ora $05
-E18E: 85 F5    sta $f5
+E18E: 85 F5    sta dummy_write_00f5
 E190: EA       nop
 E191: A9 00    lda #$00
 E193: 8D 00 02 sta $0200
-E196: C1 F5    cmp ($f5, x)
+E196: C1 F5    cmp (dummy_write_00f5, x)
 E198: EA       nop
 E199: AC 00 02 ldy $0200
 E19C: B9 02 02 lda $0202, y
 E19F: D0 04    bne $e1a5
 E1A1: 60       rts
-E1A2: 85 F5    sta $f5
+E1A2: 85 F5    sta dummy_write_00f5
 E1A4: 6E 29 0F ror $0f29
 E1A7: 85 03    sta $03
 E1A9: B9 03 02 lda $0203, y
@@ -4507,7 +4609,7 @@ E1E4: E3 57    isb ($57, x)
 E1E6: E4 03    cpx $03
 E1E8: E2 85    nop #$85
 E1EA: F5 EA    sbc $ea, x
-E1EC: 85 F5    sta $f5
+E1EC: 85 F5    sta dummy_write_00f5
 E1EE: 6E 85 F5 ror $f585
 E1F1: EA       nop
 E1F2: 00       brk
@@ -4515,7 +4617,7 @@ E1F3: B9 02 02 lda $0202, y
 E1F6: 29 0F    and #$0f
 E1F8: 09 10    ora #$10
 E1FA: 99 02 02 sta $0202, y
-E1FD: C1 F5    cmp ($f5, x)
+E1FD: C1 F5    cmp (dummy_write_00f5, x)
 E1FF: 6E 85 F5 ror $f585
 E202: EA       nop
 E203: 20 BE E5 jsr $e5be
@@ -4524,7 +4626,7 @@ E209: EE 00 02 inc $0200
 E20C: EE 00 02 inc $0200
 E20F: EE 00 02 inc $0200
 E212: 4C 99 E1 jmp $e199
-E215: 85 F5    sta $f5
+E215: 85 F5    sta dummy_write_00f5
 E217: EA       nop
 E218: 20 16 E5 jsr $e516
 E21B: D0 13    bne $e230
@@ -4535,10 +4637,10 @@ E225: 98       tya
 E226: AA       tax
 E227: FE 04 02 inc $0204, x
 E22A: 20 6B EB jsr $eb6b
-E22D: 85 F5    sta $f5
+E22D: 85 F5    sta dummy_write_00f5
 E22F: EA       nop
 E230: 4C 03 E2 jmp $e203
-E233: 85 F5    sta $f5
+E233: 85 F5    sta dummy_write_00f5
 E235: EA       nop
 E236: B9 05 02 lda $0205, y
 E239: 29 10    and #$10
@@ -4552,10 +4654,10 @@ E247: 20 A9 E4 jsr $e4a9
 E24A: B9 05 02 lda $0205, y
 E24D: 09 10    ora #$10
 E24F: 99 05 02 sta $0205, y
-E252: 85 F5    sta $f5
+E252: 85 F5    sta dummy_write_00f5
 E254: EA       nop
 E255: 4C 03 E2 jmp $e203
-E258: 85 F5    sta $f5
+E258: 85 F5    sta dummy_write_00f5
 E25A: EA       nop
 E25B: A5 13    lda timer1_0013
 E25D: 29 03    and #$03
@@ -4568,7 +4670,7 @@ E26C: 29 0F    and #$0f
 E26E: 09 30    ora #$30
 E270: 99 02 02 sta $0202, y
 E273: D0 E0    bne $e255
-E275: 85 F5    sta $f5
+E275: 85 F5    sta dummy_write_00f5
 E277: EA       nop
 E278: B9 05 02 lda $0205, y
 E27B: 29 10    and #$10
@@ -4577,10 +4679,10 @@ E27F: 20 B2 E4 jsr $e4b2
 E282: B9 05 02 lda $0205, y
 E285: 09 10    ora #$10
 E287: 99 05 02 sta $0205, y
-E28A: 85 F5    sta $f5
+E28A: 85 F5    sta dummy_write_00f5
 E28C: EA       nop
 E28D: 4C 03 E2 jmp $e203
-E290: 85 F5    sta $f5
+E290: 85 F5    sta dummy_write_00f5
 E292: EA       nop
 E293: A5 13    lda timer1_0013
 E295: 29 03    and #$03
@@ -4593,7 +4695,7 @@ E2A4: 29 0F    and #$0f
 E2A6: 09 40    ora #$40
 E2A8: 99 02 02 sta $0202, y
 E2AB: D0 E0    bne $e28d
-E2AD: 85 F5    sta $f5
+E2AD: 85 F5    sta dummy_write_00f5
 E2AF: EA       nop
 E2B0: B9 05 02 lda $0205, y
 E2B3: 29 10    and #$10
@@ -4602,10 +4704,10 @@ E2B7: 20 BB E4 jsr $e4bb
 E2BA: B9 05 02 lda $0205, y
 E2BD: 09 10    ora #$10
 E2BF: 99 05 02 sta $0205, y
-E2C2: 85 F5    sta $f5
+E2C2: 85 F5    sta dummy_write_00f5
 E2C4: EA       nop
 E2C5: 4C 03 E2 jmp $e203
-E2C8: 85 F5    sta $f5
+E2C8: 85 F5    sta dummy_write_00f5
 E2CA: EA       nop
 E2CB: A5 13    lda timer1_0013
 E2CD: 29 03    and #$03
@@ -4618,7 +4720,7 @@ E2DC: 09 50    ora #$50
 E2DE: 29 5F    and #$5f
 E2E0: 99 02 02 sta $0202, y
 E2E3: D0 E0    bne $e2c5
-E2E5: 85 F5    sta $f5
+E2E5: 85 F5    sta dummy_write_00f5
 E2E7: EA       nop
 E2E8: B9 05 02 lda $0205, y
 E2EB: 29 10    and #$10
@@ -4627,10 +4729,10 @@ E2EF: 20 C4 E4 jsr $e4c4
 E2F2: B9 05 02 lda $0205, y
 E2F5: 09 10    ora #$10
 E2F7: 99 05 02 sta $0205, y
-E2FA: 85 F5    sta $f5
+E2FA: 85 F5    sta dummy_write_00f5
 E2FC: EA       nop
 E2FD: 4C 03 E2 jmp $e203
-E300: 85 F5    sta $f5
+E300: 85 F5    sta dummy_write_00f5
 E302: EA       nop
 E303: A5 13    lda timer1_0013
 E305: 29 03    and #$03
@@ -4643,7 +4745,7 @@ E314: 09 60    ora #$60
 E316: 29 6F    and #$6f
 E318: 99 02 02 sta $0202, y
 E31B: D0 E0    bne $e2fd
-E31D: 85 F5    sta $f5
+E31D: 85 F5    sta dummy_write_00f5
 E31F: 6E B9 05 ror $05b9
 E322: 02       kil
 E323: 29 10    and #$10
@@ -4652,7 +4754,7 @@ E327: 20 A9 E4 jsr $e4a9
 E32A: B9 05 02 lda $0205, y
 E32D: 09 10    ora #$10
 E32F: 99 05 02 sta $0205, y
-E332: 85 F5    sta $f5
+E332: 85 F5    sta dummy_write_00f5
 E334: 6E 4C 03 ror $034c
 E337: E2 85    nop #$85
 E339: F5 EA    sbc $ea, x
@@ -4667,7 +4769,7 @@ E34C: 29 0F    and #$0f
 E34E: 09 B0    ora #$b0
 E350: 99 02 02 sta $0202, y
 E353: D0 E0    bne $e335
-E355: 85 F5    sta $f5
+E355: 85 F5    sta dummy_write_00f5
 E357: 6E B9 05 ror $05b9
 E35A: 02       kil
 E35B: 29 10    and #$10
@@ -4676,7 +4778,7 @@ E35F: 20 B2 E4 jsr $e4b2
 E362: B9 05 02 lda $0205, y
 E365: 09 10    ora #$10
 E367: 99 05 02 sta $0205, y
-E36A: 85 F5    sta $f5
+E36A: 85 F5    sta dummy_write_00f5
 E36C: 6E 4C 03 ror $034c
 E36F: E2 85    nop #$85
 E371: F5 EA    sbc $ea, x
@@ -4691,7 +4793,7 @@ E384: 09 C0    ora #$c0
 E386: 29 CF    and #$cf
 E388: 99 02 02 sta $0202, y
 E38B: D0 E0    bne $e36d
-E38D: 85 F5    sta $f5
+E38D: 85 F5    sta dummy_write_00f5
 E38F: 6E B9 05 ror $05b9
 E392: 02       kil
 E393: 29 10    and #$10
@@ -4700,7 +4802,7 @@ E397: 20 BB E4 jsr $e4bb
 E39A: B9 05 02 lda $0205, y
 E39D: 09 10    ora #$10
 E39F: 99 05 02 sta $0205, y
-E3A2: 85 F5    sta $f5
+E3A2: 85 F5    sta dummy_write_00f5
 E3A4: 6E 4C 03 ror $034c
 E3A7: E2 85    nop #$85
 E3A9: F5 EA    sbc $ea, x
@@ -4715,7 +4817,7 @@ E3BC: 09 D0    ora #$d0
 E3BE: 29 DF    and #$df
 E3C0: 99 02 02 sta $0202, y
 E3C3: D0 E0    bne $e3a5
-E3C5: 85 F5    sta $f5
+E3C5: 85 F5    sta dummy_write_00f5
 E3C7: 6E B9 05 ror $05b9
 E3CA: 02       kil
 E3CB: 29 10    and #$10
@@ -4724,7 +4826,7 @@ E3CF: 20 C4 E4 jsr $e4c4
 E3D2: B9 05 02 lda $0205, y
 E3D5: 09 10    ora #$10
 E3D7: 99 05 02 sta $0205, y
-E3DA: 85 F5    sta $f5
+E3DA: 85 F5    sta dummy_write_00f5
 E3DC: 6E 4C 03 ror $034c
 E3DF: E2 85    nop #$85
 E3E1: F5 EA    sbc $ea, x
@@ -4739,7 +4841,7 @@ E3F4: 09 E0    ora #$e0
 E3F6: 29 EF    and #$ef
 E3F8: 99 02 02 sta $0202, y
 E3FB: D0 E0    bne $e3dd
-E3FD: 85 F5    sta $f5
+E3FD: 85 F5    sta dummy_write_00f5
 E3FF: 6E 20 A2 ror $a220
 E402: CC 98 AA cpy $aa98
 E405: FE 04 02 inc $0204, x
@@ -4761,7 +4863,7 @@ E42A: B9 06 02 lda $0206, y
 E42D: 29 F0    and #$f0
 E42F: C9 F0    cmp #$f0
 E431: D0 1E    bne $e451
-E433: 85 F5    sta $f5
+E433: 85 F5    sta dummy_write_00f5
 E435: EA       nop
 E436: A9 00    lda #$00
 E438: 99 05 02 sta $0205, y
@@ -4772,10 +4874,10 @@ E443: A9 00    lda #$00
 E445: 20 8C E9 jsr $e98c
 E448: 20 FA E5 jsr $e5fa
 E44B: 20 C8 E7 jsr $e7c8
-E44E: 85 F5    sta $f5
+E44E: 85 F5    sta dummy_write_00f5
 E450: EA       nop
 E451: 4C 03 E2 jmp $e203
-E454: 85 F5    sta $f5
+E454: 85 F5    sta dummy_write_00f5
 E456: EA       nop
 E457: 20 A2 CC jsr $cca2
 E45A: 98       tya
@@ -4786,7 +4888,7 @@ E461: 9D 05 02 sta $0205, x
 E464: F0 08    beq $e46e
 E466: DE 05 02 dec $0205, x
 E469: D0 19    bne $e484
-E46B: 85 F5    sta $f5
+E46B: 85 F5    sta dummy_write_00f5
 E46D: EA       nop
 E46E: B9 02 02 lda $0202, y
 E471: 29 0F    and #$0f
@@ -4795,7 +4897,7 @@ E476: A9 00    lda #$00
 E478: 20 8C E9 jsr $e98c
 E47B: 20 FA E5 jsr $e5fa
 E47E: 4C 03 E2 jmp $e203
-E481: 85 F5    sta $f5
+E481: 85 F5    sta dummy_write_00f5
 E483: EA       nop
 E484: B9 02 02 lda $0202, y
 E487: 29 0F    and #$0f
@@ -4813,26 +4915,26 @@ E4A0: 00       brk
 E4A1: 01 01    ora ($01, x)
 E4A3: 05 02    ora $02
 E4A5: 04 03    nop $03
-E4A7: 85 F5    sta $f5
+E4A7: 85 F5    sta dummy_write_00f5
 E4A9: EA       nop
 E4AA: A9 00    lda #$00
 E4AC: 85 11    sta $11
 E4AE: F0 1C    beq $e4cc
-E4B0: 85 F5    sta $f5
+E4B0: 85 F5    sta dummy_write_00f5
 E4B2: EA       nop
 E4B3: A9 01    lda #$01
 E4B5: 85 11    sta $11
 E4B7: F0 13    beq $e4cc
-E4B9: 85 F5    sta $f5
+E4B9: 85 F5    sta dummy_write_00f5
 E4BB: EA       nop
 E4BC: A9 02    lda #$02
 E4BE: 85 11    sta $11
 E4C0: F0 0A    beq $e4cc
-E4C2: 85 F5    sta $f5
+E4C2: 85 F5    sta dummy_write_00f5
 E4C4: EA       nop
 E4C5: A9 03    lda #$03
 E4C7: 85 11    sta $11
-E4C9: 85 F5    sta $f5
+E4C9: 85 F5    sta dummy_write_00f5
 E4CB: EA       nop
 E4CC: 98       tya
 E4CD: 48       pha
@@ -4873,7 +4975,7 @@ E50C: 04 03    nop $03
 E50E: 02       kil
 E50F: 01 04    ora ($04, x)
 E511: FC 04 FC nop $fc04, x
-E514: 85 F5    sta $f5
+E514: 85 F5    sta dummy_write_00f5
 E516: 6E A5 05 ror $05a5
 E519: 29 07    and #$07
 E51B: D0 4C    bne $e569
@@ -4904,16 +5006,16 @@ E552: B9 08 02 lda $0208, y
 E555: 18       clc
 E556: 69 04    adc #$04
 E558: 99 08 02 sta $0208, y
-E55B: 85 F5    sta $f5
+E55B: 85 F5    sta dummy_write_00f5
 E55D: 6E A9 0A ror $0aa9
 E560: 20 5D EA jsr $ea5d
 E563: A9 FF    lda #$ff
 E565: 60       rts
-E566: 85 F5    sta $f5
+E566: 85 F5    sta dummy_write_00f5
 E568: EA       nop
 E569: A9 00    lda #$00
 E56B: 60       rts
-E56C: 85 F5    sta $f5
+E56C: 85 F5    sta dummy_write_00f5
 E56E: 6E A5 05 ror $05a5
 E571: 29 0F    and #$0f
 E573: C9 08    cmp #$08
@@ -4943,11 +5045,11 @@ E599: C9 09    cmp #$09
 E59B: F0 0D    beq $e5aa
 E59D: C9 08    cmp #$08
 E59F: F0 09    beq $e5aa
-E5A1: 85 F5    sta $f5
+E5A1: 85 F5    sta dummy_write_00f5
 E5A3: EA       nop
 E5A4: A9 00    lda #$00
 E5A6: 60       rts
-E5A7: 85 F5    sta $f5
+E5A7: 85 F5    sta dummy_write_00f5
 E5A9: EA       nop
 E5AA: B9 02 02 lda $0202, y
 E5AD: 29 0F    and #$0f
@@ -4958,17 +5060,17 @@ E5B7: 5D EA A9 eor $a9ea, x
 E5BA: FF 60 85 isb $8560, x
 E5BD: F5 6E    sbc $6e, x
 E5BF: A2 00    ldx #$00
-E5C1: 85 F5    sta $f5
+E5C1: 85 F5    sta dummy_write_00f5
 E5C3: EA       nop
 E5C4: B5 68    lda $68, x
 E5C6: 29 E0    and #$e0
 E5C8: C9 40    cmp #$40
 E5CA: F0 0C    beq $e5d8
-E5CC: 85 F5    sta $f5
+E5CC: 85 F5    sta dummy_write_00f5
 E5CE: 6E E8 E0 ror $e0e8
 E5D1: 06 D0    asl $d0
 E5D3: F0 60    beq $e635
-E5D5: 85 F5    sta $f5
+E5D5: 85 F5    sta dummy_write_00f5
 E5D7: 6E B5 B1 ror $b1b5
 E5DA: 85 0D    sta $0d
 E5DC: E0 0D    cpx #$0d
@@ -4986,17 +5088,17 @@ E5EE: A5 0F    lda $0f
 E5F0: 99 03 18 sta $1803, y
 E5F3: A4 0E    ldy $0e
 E5F5: 4C CF E5 jmp $e5cf
-E5F8: 85 F5    sta $f5
+E5F8: 85 F5    sta dummy_write_00f5
 E5FA: EA       nop
 E5FB: A2 00    ldx #$00
 E5FD: 86 C9    stx $c9
-E5FF: C1 F5    cmp ($f5, x)
+E5FF: C1 F5    cmp (dummy_write_00f5, x)
 E601: EA       nop
 E602: B5 68    lda $68, x
 E604: 30 07    bmi $e60d
 E606: 29 40    and #$40
 E608: D0 2F    bne $e639
-E60A: 85 F5    sta $f5
+E60A: 85 F5    sta dummy_write_00f5
 E60C: EA       nop
 E60D: E8       inx
 E60E: E0 06    cpx #$06
@@ -5016,10 +5118,10 @@ E62B: A9 01    lda #$01
 E62D: 99 00 18 sta $1800, y
 E630: 68       pla
 E631: A8       tay
-E632: 85 F5    sta $f5
+E632: 85 F5    sta dummy_write_00f5
 E634: EA       nop
 E635: 60       rts
-E636: 85 F5    sta $f5
+E636: 85 F5    sta dummy_write_00f5
 E638: EA       nop
 E639: B5 B1    lda $b1, x
 E63B: 85 0D    sta $0d
@@ -5053,17 +5155,17 @@ E676: 85 03    sta $03
 E678: AD 1B 18 lda $181b
 E67B: 85 04    sta $04
 E67D: A2 00    ldx #$00
-E67F: 85 F5    sta $f5
+E67F: 85 F5    sta dummy_write_00f5
 E681: EA       nop
 E682: B5 68    lda $68, x
 E684: 10 0C    bpl $e692
-E686: 85 F5    sta $f5
+E686: 85 F5    sta dummy_write_00f5
 E688: EA       nop
 E689: E8       inx
 E68A: E0 06    cpx #$06
 E68C: D0 F4    bne $e682
 E68E: 60       rts
-E68F: 85 F5    sta $f5
+E68F: 85 F5    sta dummy_write_00f5
 E691: EA       nop
 E692: 8A       txa
 E693: 0A       asl a
@@ -5088,7 +5190,7 @@ E6B4: B0 D3    bcs $e689
 E6B6: B5 68    lda $68, x
 E6B8: 09 10    ora #$10
 E6BA: 95 68    sta $68, x
-E6BC: A4 1F    ldy $1f
+E6BC: A4 1F    ldy current_player_001f
 E6BE: B9 61 00 lda $0061, y
 E6C1: C9 08    cmp #$08
 E6C3: 90 02    bcc $e6c7
@@ -5103,22 +5205,22 @@ E6D5: D1 C1    cmp ($c1), y
 E6D7: B1 A1    lda ($a1), y
 E6D9: 91 81    sta ($81), y
 E6DB: 71 61    adc ($61), y
-E6DD: 85 F5    sta $f5
+E6DD: 85 F5    sta dummy_write_00f5
 E6DF: EA       nop
 E6E0: A2 00    ldx #$00
-E6E2: 85 F5    sta $f5
+E6E2: 85 F5    sta dummy_write_00f5
 E6E4: EA       nop
 E6E5: B5 68    lda $68, x
 E6E7: 30 07    bmi $e6f0
 E6E9: 29 10    and #$10
 E6EB: D0 0C    bne $e6f9
-E6ED: 85 F5    sta $f5
+E6ED: 85 F5    sta dummy_write_00f5
 E6EF: EA       nop
 E6F0: E8       inx
 E6F1: E0 06    cpx #$06
 E6F3: D0 F0    bne $e6e5
 E6F5: 60       rts
-E6F6: 85 F5    sta $f5
+E6F6: 85 F5    sta dummy_write_00f5
 E6F8: EA       nop
 E6F9: B5 99    lda $99, x
 E6FB: C9 01    cmp #$01
@@ -5136,14 +5238,14 @@ E711: A8       tay
 E712: B9 4C E7 lda $e74c, y
 E715: 85 03    sta $03
 E717: 70 10    bvs $e729
-E719: 85 F5    sta $f5
+E719: 85 F5    sta dummy_write_00f5
 E71B: EA       nop
 E71C: B5 68    lda $68, x
 E71E: 29 03    and #$03
 E720: A8       tay
 E721: B9 53 E7 lda $e753, y
 E724: 85 03    sta $03
-E726: C1 F5    cmp ($f5, x)
+E726: C1 F5    cmp (dummy_write_00f5, x)
 E728: EA       nop
 E729: 8A       txa
 E72A: 0A       asl a
@@ -5152,14 +5254,14 @@ E72C: A8       tay
 E72D: A5 03    lda $03
 E72F: 99 01 18 sta $1801, y
 E732: 4C F0 E6 jmp $e6f0
-E735: 85 F5    sta $f5
+E735: 85 F5    sta dummy_write_00f5
 E737: 6E B5 68 ror $68b5
 E73A: 29 EF    and #$ef
 E73C: 95 68    sta $68, x
 E73E: 0D 03 A8 ora $a803
 E741: B9 5A E7 lda $e75a, y
 E744: 85 03    sta $03
-E746: A4 29    ldy $29
+E746: A4 29    ldy player_lives_0029
 E748: E7 85    isb $85
 E74A: F5 EA    sbc $ea, x
 E74C: 00       brk
@@ -5173,9 +5275,9 @@ E759: EA       nop
 E75A: 00       brk
 E75B: 5A       nop
 E75C: 66 72    ror $72
-E75E: 85 F5    sta $f5
+E75E: 85 F5    sta dummy_write_00f5
 E760: EA       nop
-E761: A5 6F    lda $6f
+E761: A5 6F    lda game_state_006f
 E763: 30 1E    bmi $e783
 E765: AD 1E 18 lda $181e
 E768: 85 03    sta $03
@@ -5183,19 +5285,19 @@ E76A: AD 1F 18 lda $181f
 E76D: 85 04    sta $04
 E76F: 4A       lsr a
 E770: 00       brk
-E771: 85 F5    sta $f5
+E771: 85 F5    sta dummy_write_00f5
 E773: EA       nop
 E774: B5 68    lda $68, x
 E776: 10 0F    bpl $e787
-E778: 85 F5    sta $f5
+E778: 85 F5    sta dummy_write_00f5
 E77A: EA       nop
 E77B: E8       inx
 E77C: E0 06    cpx #$06
 E77E: D0 F4    bne $e774
-E780: 85 F5    sta $f5
+E780: 85 F5    sta dummy_write_00f5
 E782: EA       nop
 E783: 60       rts
-E784: 85 F5    sta $f5
+E784: 85 F5    sta dummy_write_00f5
 E786: 6E 29 70 ror $7029
 E789: D0 F0    bne $e77b
 E78B: 8A       txa
@@ -5220,16 +5322,16 @@ E7AB: C5 04    cmp $04
 E7AD: B0 CC    bcs $e77b
 E7AF: A9 10    lda #$10
 E7B1: 20 5D EA jsr $ea5d
-E7B4: A5 6F    lda $6f
+E7B4: A5 6F    lda game_state_006f
 E7B6: 09 F0    ora #$f0
-E7B8: 85 6F    sta $6f
+E7B8: 85 6F    sta game_state_006f
 E7BA: A9 FF    lda #$ff
 E7BC: 85 A0    sta $a0
 E7BE: 4D 00 20 eor $2000
 E7C1: 5D EA 4C eor $4cea, x
 E7C4: 7B E7 85 rra $85e7, y
 E7C7: F5 EA    sbc $ea, x
-E7C9: A6 1F    ldx $1f
+E7C9: A6 1F    ldx current_player_001f
 E7CB: F6 65    inc $65, x
 E7CD: C8       iny
 E7CE: 63 B5    rra ($b5, x)
@@ -5253,15 +5355,15 @@ E7F6: 20 FB E0 jsr $e0fb
 E7F9: A5 05    lda $05
 E7FB: D9 2D E8 cmp $e82d, y
 E7FE: 90 14    bcc $e814
-E800: A5 6F    lda $6f
+E800: A5 6F    lda game_state_006f
 E802: 29 0F    and #$0f
 E804: 09 80    ora #$80
-E806: 85 6F    sta $6f
+E806: 85 6F    sta game_state_006f
 E808: A9 FF    lda #$ff
 E80A: 85 A0    sta $a0
 E80C: A9 05    lda #$05
 E80E: 20 5D EA jsr $ea5d
-E811: 85 F5    sta $f5
+E811: 85 F5    sta dummy_write_00f5
 E813: EA       nop
 E814: 60       rts
 E815: 04 05    nop $05
@@ -5278,9 +5380,9 @@ E82A: 1C FF 0E nop $0eff, x
 E82D: 10 10    bpl $e83f
 E82F: 12       kil
 E830: 20 10 12 jsr $1210
-E833: 85 F5    sta $f5
+E833: 85 F5    sta dummy_write_00f5
 E835: EA       nop
-E836: A5 6F    lda $6f
+E836: A5 6F    lda game_state_006f
 E838: 29 F0    and #$f0
 E83A: C9 80    cmp #$80
 E83C: D0 2B    bne $e869
@@ -5295,33 +5397,33 @@ E84C: 29 10    and #$10
 E84E: F0 07    beq $e857
 E850: A9 47    lda #$47
 E852: D0 08    bne $e85c
-E854: 85 F5    sta $f5
+E854: 85 F5    sta dummy_write_00f5
 E856: EA       nop
 E857: A9 4C    lda #$4c
-E859: 85 F5    sta $f5
+E859: 85 F5    sta dummy_write_00f5
 E85B: EA       nop
 E85C: 8D 1D 18 sta $181d
 E85F: D0 08    bne $e869
-E861: 85 F5    sta $f5
+E861: 85 F5    sta dummy_write_00f5
 E863: EA       nop
 E864: E6 C5    inc $c5
-E866: 85 F5    sta $f5
+E866: 85 F5    sta dummy_write_00f5
 E868: EA       nop
 E869: 60       rts
-E86A: 85 F5    sta $f5
+E86A: 85 F5    sta dummy_write_00f5
 E86C: EA       nop
 E86D: A5 C6    lda $c6
 E86F: 30 46    bmi $e8b7
-E871: A5 6F    lda $6f
+E871: A5 6F    lda game_state_006f
 E873: 29 F0    and #$f0
 E875: C9 F0    cmp #$f0
 E877: F0 04    beq $e87d
 E879: 60       rts
-E87A: 85 F5    sta $f5
+E87A: 85 F5    sta dummy_write_00f5
 E87C: EA       nop
 E87D: A2 1B    ldx #$1b
 E87F: A5 A0    lda $a0
-E881: 85 F5    sta $f5
+E881: 85 F5    sta dummy_write_00f5
 E883: EA       nop
 E884: DD B8 E8 cmp $e8b8, x
 E887: F0 09    beq $e892
@@ -5329,25 +5431,25 @@ E889: CA       dex
 E88A: 10 F8    bpl $e884
 E88C: C6 A0    dec $a0
 E88E: 60       rts
-E88F: 85 F5    sta $f5
+E88F: 85 F5    sta dummy_write_00f5
 E891: EA       nop
 E892: BD D4 E8 lda $e8d4, x
 E895: 8D 1D 18 sta $181d
 E898: C6 A0    dec $a0
 E89A: 8A       txa
 E89B: D0 0E    bne $e8ab
-E89D: A6 1F    ldx $1f
-E89F: D6 29    dec $29, x
+E89D: A6 1F    ldx current_player_001f
+E89F: D6 29    dec player_lives_0029, x
 E8A1: A9 FF    lda #$ff
 E8A3: 85 C6    sta $c6
 E8A5: 4C B7 E8 jmp $e8b7
-E8A8: 85 F5    sta $f5
+E8A8: 85 F5    sta dummy_write_00f5
 E8AA: EA       nop
 E8AB: E0 18    cpx #$18
 E8AD: D0 08    bne $e8b7
 E8AF: A9 10    lda #$10
 E8B1: 20 5D EA jsr $ea5d
-E8B4: 85 F5    sta $f5
+E8B4: 85 F5    sta dummy_write_00f5
 E8B6: EA       nop
 E8B7: 60       rts
 E8B8: 01 08    ora ($08, x)
@@ -5380,7 +5482,7 @@ E8E7: 51 52    eor ($52), y
 E8E9: 51 52    eor ($52), y
 E8EB: 51 50    eor ($50), y
 E8ED: 4F 4E 4D sre $4d4e
-E8F0: 85 F5    sta $f5
+E8F0: 85 F5    sta dummy_write_00f5
 E8F2: EA       nop
 E8F3: A5 60    lda $60
 E8F5: D0 7A    bne $e971
@@ -5432,17 +5534,17 @@ E951: 60       rts
 E952: BC 81 E9 ldy $e981, x
 E955: B9 87 E9 lda $e987, y
 E958: 20 8C E9 jsr $e98c
-E95B: A6 1F    ldx $1f
-E95D: B5 2B    lda $2b, x
+E95B: A6 1F    ldx current_player_001f
+E95D: B5 2B    lda player_pepper_002b, x
 E95F: 18       clc
 E960: F8       sed
 E961: 69 01    adc #$01
-E963: 95 2B    sta $2b, x
+E963: 95 2B    sta player_pepper_002b, x
 E965: 74 20    nop $20, x
 E967: 94 CA    sty $ca, x
 E969: A9 11    lda #$11
 E96B: 20 5D EA jsr $ea5d
-E96E: 85 F5    sta $f5
+E96E: 85 F5    sta dummy_write_00f5
 E970: EA       nop
 E971: 60       rts
 E972: 78       sei
@@ -5470,7 +5572,7 @@ E992: 48       pha
 E993: A5 1B    lda $1b
 E995: D0 06    bne $e99d
 E997: 4C 33 EA jmp $ea33
-E99A: 85 F5    sta $f5
+E99A: 85 F5    sta dummy_write_00f5
 E99C: 6E A6 1F ror $1fa6
 E99F: BC 59 EA ldy $ea59, x
 E9A2: A6 04    ldx $04
@@ -5486,9 +5588,9 @@ E9B8: B9 2F 00 lda $002f, y
 E9BB: 7D 4E EA adc $ea4e, x
 E9BE: 99 2F 00 sta $002f, y
 E9C1: D8       cld
-E9C2: A6 1F    ldx $1f
+E9C2: A6 1F    ldx current_player_001f
 E9C4: 20 4E C9 jsr $c94e
-E9C7: A6 1F    ldx $1f
+E9C7: A6 1F    ldx current_player_001f
 E9C9: BC 59 EA ldy $ea59, x
 E9CC: A5 35    lda $35
 E9CE: D9 2F 00 cmp $002f, y
@@ -5501,7 +5603,7 @@ E9DC: D0 21    bne $e9ff
 E9DE: A5 33    lda $33
 E9E0: D9 2D 00 cmp $002d, y
 E9E3: B0 1A    bcs $e9ff
-E9E5: 85 F5    sta $f5
+E9E5: 85 F5    sta dummy_write_00f5
 E9E7: 6E B9 2D ror $2db9
 E9EA: 00       brk
 E9EB: 85 33    sta $33
@@ -5512,7 +5614,7 @@ E9F5: 85 35    sta $35
 E9F7: 4A       lsr a
 E9F8: 02       kil
 E9F9: 20 4E C9 jsr $c94e
-E9FC: 85 F5    sta $f5
+E9FC: 85 F5    sta dummy_write_00f5
 E9FE: 6E A6 1F ror $1fa6
 EA01: BC 59 EA ldy $ea59, x
 EA04: 8A       txa
@@ -5533,12 +5635,12 @@ EA1D: B5 5D    lda $5d, x
 EA1F: 65 5B    adc $5b
 EA21: 95 5D    sta $5d, x
 EA23: D8       cld
-EA24: A6 1F    ldx $1f
-EA26: F6 29    inc $29, x
+EA24: A6 1F    ldx current_player_001f
+EA26: F6 29    inc player_lives_0029, x
 EA28: 20 54 CA jsr $ca54
 EA2B: A9 02    lda #$02
 EA2D: 20 5D EA jsr $ea5d
-EA30: 85 F5    sta $f5
+EA30: 85 F5    sta dummy_write_00f5
 EA32: EA       nop
 EA33: 68       pla
 EA34: A8       tay
@@ -5580,7 +5682,7 @@ EA62: F0 0A    beq $ea6e
 EA64: AA       tax
 EA65: BD 71 EA lda $ea71, x
 EA68: 8D 03 40 sta $4003
-EA6B: 85 F5    sta $f5
+EA6B: 85 F5    sta dummy_write_00f5
 EA6D: EA       nop
 EA6E: A6 C7    ldx $c7
 EA70: 60       rts
@@ -5599,20 +5701,20 @@ EA88: 17 05    slo $05, x
 EA8A: 03 85    slo ($85, x)
 EA8C: F5 EA    sbc $ea, x
 EA8E: A2 05    ldx #$05
-EA90: 85 F5    sta $f5
+EA90: 85 F5    sta dummy_write_00f5
 EA92: EA       nop
 EA93: B5 68    lda $68, x
 EA95: 29 F0    and #$f0
 EA97: C9 80    cmp #$80
 EA99: F0 0D    beq $eaa8
-EA9B: 85 F5    sta $f5
+EA9B: 85 F5    sta dummy_write_00f5
 EA9D: EA       nop
 EA9E: CA       dex
 EA9F: 10 F2    bpl $ea93
-EAA1: 85 F5    sta $f5
+EAA1: 85 F5    sta dummy_write_00f5
 EAA3: EA       nop
 EAA4: 60       rts
-EAA5: 85 F5    sta $f5
+EAA5: 85 F5    sta dummy_write_00f5
 EAA7: EA       nop
 EAA8: B5 99    lda $99, x
 EAAA: C9 01    cmp #$01
@@ -5640,7 +5742,7 @@ EAD7: 99 01 18 sta $1801, y
 EADA: A9 01    lda #$01
 EADC: 99 00 18 sta $1800, y
 EADF: 4C 9E EA jmp $ea9e
-EAE2: 85 F5    sta $f5
+EAE2: 85 F5    sta dummy_write_00f5
 EAE4: EA       nop
 EAE5: B5 68    lda $68, x
 EAE7: 29 03    and #$03
@@ -5658,7 +5760,7 @@ EB01: BC 4F EB ldy $eb4f, x
 EB04: 99 01 18 sta $1801, y
 EB07: A4 9E    ldy $9e
 EB09: EA       nop
-EB0A: 85 F5    sta $f5
+EB0A: 85 F5    sta dummy_write_00f5
 EB0C: 6E B5 68 ror $68b5
 EB0F: 29 03    and #$03
 EB11: A8       tay
@@ -5666,7 +5768,7 @@ EB12: B9 59 EB lda $eb59, y
 EB15: BC 4F EB ldy $eb4f, x
 EB18: 99 01 18 sta $1801, y
 EB1B: 4C 9E EA jmp $ea9e
-EB1E: 85 F5    sta $f5
+EB1E: 85 F5    sta dummy_write_00f5
 EB20: EA       nop
 EB21: B5 68    lda $68, x
 EB23: 29 03    and #$03
@@ -5676,7 +5778,7 @@ EB29: BC 4F EB ldy $eb4f, x
 EB2C: 99 01 18 sta $1801, y
 EB2F: A4 9E    ldy $9e
 EB31: EA       nop
-EB32: 85 F5    sta $f5
+EB32: 85 F5    sta dummy_write_00f5
 EB34: 6E 86 03 ror $0386
 EB37: D9 68 29 cmp $2968, y
 EB3A: 03 AA    slo ($aa, x)
@@ -5704,14 +5806,14 @@ EB66: 01 02    ora ($02, x)
 EB68: 03 85    slo ($85, x)
 EB6A: F5 EA    sbc $ea, x
 EB6C: A2 05    ldx #$05
-EB6E: 85 F5    sta $f5
+EB6E: 85 F5    sta dummy_write_00f5
 EB70: EA       nop
 EB71: B5 68    lda $68, x
 EB73: 10 0A    bpl $eb7f
-EB75: 85 F5    sta $f5
+EB75: 85 F5    sta dummy_write_00f5
 EB77: 6E CA 10 ror $10ca
 EB7A: F6 60    inc $60, x
-EB7C: 85 F5    sta $f5
+EB7C: 85 F5    sta dummy_write_00f5
 EB7E: 6E BC 4F ror $4fbc
 EB81: EB B9    sbc #$b9
 EB83: 02       kil
@@ -5745,12 +5847,12 @@ EBBE: 4C 78 EB jmp $eb78
 EBC1: 85 F6    sta $f6
 EBC3: EA       nop
 EBC4: A9 05    lda #$05
-EBC6: 85 2B    sta $2b
+EBC6: 85 2B    sta player_pepper_002b
 EBC8: 85 2C    sta $2c
 EBCA: AD 04 40 lda $4004
 EBCD: 29 10    and #$10
 EBCF: D0 05    bne $ebd6
-EBD1: C6 2B    dec $2b
+EBD1: C6 2B    dec player_pepper_002b
 EBD3: 85 F6    sta $f6
 EBD5: 6E 60 01 ror $0160
 EBD8: D7 48    dcp $48, x
@@ -5838,7 +5940,7 @@ EC5F: 38       sec
 EC60: 06 A7    asl $a7
 EC62: 58       cli
 EC63: 02       kil
-EC64: A7 A8    lax $a8
+EC64: A7 A8    lax game_speed_00a8
 EC66: 0F A7 E8 slo $e8a7
 EC69: 01 77    ora ($77, x)
 EC6B: 28       plp
@@ -5847,7 +5949,7 @@ EC6E: 78       sei
 EC6F: 06 77    asl $77
 EC71: 98       tya
 EC72: 02       kil
-EC73: 77 A8    rra $a8, x
+EC73: 77 A8    rra game_speed_00a8, x
 EC75: 0F 77 E8 slo $e877
 EC78: 01 47    ora ($47, x)
 EC7A: 28       plp
@@ -5986,7 +6088,7 @@ ED55: 68       pla
 ED56: 03 A7    slo ($a7, x)
 ED58: 88       dey
 ED59: 02       kil
-ED5A: A7 A8    lax $a8
+ED5A: A7 A8    lax game_speed_00a8
 ED5C: 0F A7 E8 slo $e8a7
 ED5F: 01 77    ora ($77, x)
 ED61: 38       sec
@@ -6399,11 +6501,11 @@ EFED: 00       brk
 EFEE: 00       brk
 EFEF: 00       brk
 EFF0: 00       brk
-EFF1: 85 F5    sta $f5
+EFF1: 85 F5    sta dummy_write_00f5
 EFF3: EA       nop
 EFF4: A9 00    lda #$00
 EFF6: 85 F3    sta $f3
-EFF8: 85 F5    sta $f5
+EFF8: 85 F5    sta dummy_write_00f5
 EFFA: EA       nop
 EFFB: A9 00    lda #$00
 EFFD: 85 ED    sta $ed
@@ -6411,10 +6513,10 @@ EFFF: 4D 36 85 eor $8536
 F002: E4 A9    cpx $a9
 F004: 00       brk
 F005: 85 E5    sta $e5
-F007: 85 F5    sta $f5
+F007: 85 F5    sta dummy_write_00f5
 F009: EA       nop
 F00A: A0 02    ldy #$02
-F00C: 85 F5    sta $f5
+F00C: 85 F5    sta dummy_write_00f5
 F00E: EA       nop
 F00F: B1 E4    lda ($e4), y
 F011: 99 E7 00 sta $00e7, y
@@ -6424,7 +6526,7 @@ F017: A5 E7    lda $e7
 F019: C9 FF    cmp #$ff
 F01B: D0 04    bne $f021
 F01D: 60       rts
-F01E: 85 F5    sta $f5
+F01E: 85 F5    sta dummy_write_00f5
 F020: EA       nop
 F021: A5 E4    lda $e4
 F023: 18       clc
@@ -6455,7 +6557,7 @@ F04F: A9 02    lda #$02
 F051: 85 DA    sta $da
 F053: 20 8C F0 jsr $f08c
 F056: A2 02    ldx #$02
-F058: 85 F5    sta $f5
+F058: 85 F5    sta dummy_write_00f5
 F05A: EA       nop
 F05B: A9 00    lda #$00
 F05D: 95 CC    sta $cc, x
@@ -6484,7 +6586,7 @@ F086: 15 18    ora $18, x
 F088: 1B 1E 85 slo $851e, y
 F08B: F5 EA    sbc $ea, x
 F08D: A4 DA    ldy $da
-F08F: 85 F5    sta $f5
+F08F: 85 F5    sta dummy_write_00f5
 F091: EA       nop
 F092: B1 D8    lda ($d8), y
 F094: 99 EA 00 sta $00ea, y
@@ -6494,17 +6596,17 @@ F09A: A5 EA    lda $ea
 F09C: C9 FF    cmp #$ff
 F09E: D0 04    bne $f0a4
 F0A0: 60       rts
-F0A1: 85 F5    sta $f5
+F0A1: 85 F5    sta dummy_write_00f5
 F0A3: EA       nop
 F0A4: A4 DA    ldy $da
-F0A6: 85 F5    sta $f5
+F0A6: 85 F5    sta dummy_write_00f5
 F0A8: EA       nop
 F0A9: B9 CC 00 lda $00cc, y
 F0AC: 91 D8    sta ($d8), y
 F0AE: 88       dey
 F0AF: 10 F8    bpl $f0a9
 F0B1: A6 DA    ldx $da
-F0B3: 85 F5    sta $f5
+F0B3: 85 F5    sta dummy_write_00f5
 F0B5: EA       nop
 F0B6: B5 EA    lda $ea, x
 F0B8: 95 CC    sta $cc, x
@@ -6520,14 +6622,14 @@ F0C6: A5 D9    lda $d9
 F0C8: 69 00    adc #$00
 F0CA: 85 D9    sta $d9
 F0CC: 4C 8D F0 jmp $f08d
-F0CF: 85 F5    sta $f5
+F0CF: 85 F5    sta dummy_write_00f5
 F0D1: EA       nop
 F0D2: 20 A3 C8 jsr $c8a3
 F0D5: 20 DC F1 jsr $f1dc
 F0D8: 20 F8 F2 jsr $f2f8
 F0DB: A9 05    lda #$05
 F0DD: 85 DC    sta $dc
-F0DF: 85 F5    sta $f5
+F0DF: 85 F5    sta dummy_write_00f5
 F0E1: EA       nop
 F0E2: A5 DC    lda $dc
 F0E4: 18       clc
@@ -6568,7 +6670,7 @@ F128: 20 B8 F2 jsr $f2b8
 F12B: A9 00    lda #$00
 F12D: 8D 03 40 sta $4003
 F130: 60       rts
-F131: 85 F5    sta $f5
+F131: 85 F5    sta dummy_write_00f5
 F133: EA       nop
 F134: A5 E2    lda $e2
 F136: 10 15    bpl $f14d
@@ -6588,10 +6690,10 @@ F153: A5 E2    lda $e2
 F155: 10 07    bpl $f15e
 F157: 09 0F    ora #$0f
 F159: 85 E2    sta $e2
-F15B: 85 F5    sta $f5
+F15B: 85 F5    sta dummy_write_00f5
 F15D: 6E 09 80 ror $8009
 F160: 85 E2    sta $e2
-F162: 85 F5    sta $f5
+F162: 85 F5    sta dummy_write_00f5
 F164: 6E 20 2F ror $2f20
 F167: F3 20    isb ($20), y
 F169: 7C F3 20 nop $20f3, x
@@ -6611,10 +6713,10 @@ F188: A5 E3    lda $e3
 F18A: 29 40    and #$40
 F18C: D0 04    bne $f192
 F18E: E8       inx
-F18F: 85 F5    sta $f5
+F18F: 85 F5    sta dummy_write_00f5
 F191: EA       nop
 F192: 86 E2    stx $e2
-F194: C1 F5    cmp ($f5, x)
+F194: C1 F5    cmp (dummy_write_00f5, x)
 F196: 6E 20 3E ror $3e20
 F199: F6 A5    inc $a5, x
 F19B: E3 29    isb ($29, x)
@@ -6626,10 +6728,10 @@ F1A6: 90 09    bcc $f1b1
 F1A8: A5 E3    lda $e3
 F1AA: 09 20    ora #$20
 F1AC: 85 E3    sta $e3
-F1AE: C1 F5    cmp ($f5, x)
+F1AE: C1 F5    cmp (dummy_write_00f5, x)
 F1B0: EA       nop
 F1B1: 4C 1A F1 jmp $f11a
-F1B4: 85 F5    sta $f5
+F1B4: 85 F5    sta dummy_write_00f5
 F1B6: 6E A9 B4 ror $b4a9
 F1B9: 8D 02 18 sta $1802
 F1BC: 4D 40 8D eor $8d40
@@ -6646,10 +6748,10 @@ F1D2: 85 EF    sta $ef
 F1D4: 4D 17 8D eor $8d17
 F1D7: 05 18    ora $18
 F1D9: 60       rts
-F1DA: 85 F5    sta $f5
+F1DA: 85 F5    sta dummy_write_00f5
 F1DC: 6E A9 08 ror $08a9
 F1DF: 85 DD    sta $dd
-F1E1: 85 F5    sta $f5
+F1E1: 85 F5    sta dummy_write_00f5
 F1E3: EA       nop
 F1E4: A5 DD    lda $dd
 F1E6: 0A       asl a
@@ -6667,7 +6769,7 @@ F1FD: CA       dex
 F1FE: DD BD 36 cmp $36bd, x
 F201: F2       kil
 F202: A8       tay
-F203: 85 F5    sta $f5
+F203: 85 F5    sta dummy_write_00f5
 F205: EA       nop
 F206: B1 D8    lda ($d8), y
 F208: 91 DA    sta ($da), y
@@ -6676,22 +6778,22 @@ F20B: 10 F9    bpl $f206
 F20D: C6 DD    dec $dd
 F20F: 10 D3    bpl $f1e4
 F211: 60       rts
-F212: 3F F2 52 rla $52f2, x
-F215: F2       kil
-F216: 65 F2    adc $f2
-F218: 78       sei
-F219: F2       kil
-F21A: 83 F2    sax ($f2, x)
-F21C: 92       kil
-F21D: F2       kil
-F21E: 9B F2 A4 shs $a4f2, y
-F221: F2       kil
-F222: AD F2 A8 lda $a8f2
-F225: 10 08    bpl $f22f
-F227: 11 68    ora ($68), y
-F229: 11 C8    ora ($c8), y
-F22B: 11 4B    ora ($4b), y
-F22D: 12       kil
+F212: 3F F2 52
+F215: F2      
+F216: 65 F2   
+F218: 78      
+F219: F2      
+F21A: 83 F2   
+F21C: 92      
+F21D: F2      
+F21E: 9B F2 A4
+F221: F2      
+F222: AD F2 A8
+F225: 10 08   
+F227: 11 68   
+F229: 11 C8   
+F22B: 11 4B   
+F22D: 12      
 F22E: D4 18    nop $18, x
 F230: 14 1B    nop $1b, x
 F232: 34 1B    nop $1b, x
@@ -6774,7 +6876,7 @@ F2B5: 41 85    eor ($85, x)
 F2B7: F5 EA    sbc $ea, x
 F2B9: AD 03 40 lda $4003
 F2BC: 10 FB    bpl $f2b9
-F2BE: 85 F5    sta $f5
+F2BE: 85 F5    sta dummy_write_00f5
 F2C0: EA       nop
 F2C1: AD 03 40 lda $4003
 F2C4: 30 FB    bmi $f2c1
@@ -6785,7 +6887,7 @@ F2C9: EA       nop
 F2CA: 78       sei
 F2CB: 20 45 D0 jsr $d045
 F2CE: 60       rts
-F2CF: 85 F5    sta $f5
+F2CF: 85 F5    sta dummy_write_00f5
 F2D1: EA       nop
 F2D2: A5 DE    lda $de
 F2D4: 38       sec
@@ -6798,32 +6900,32 @@ F2DF: C6 E0    dec $e0
 F2E1: 10 07    bpl $f2ea
 F2E3: A9 04    lda #$04
 F2E5: 85 E0    sta $e0
-F2E7: 85 F5    sta $f5
+F2E7: 85 F5    sta dummy_write_00f5
 F2E9: EA       nop
 F2EA: C6 E1    dec $e1
 F2EC: 10 07    bpl $f2f5
 F2EE: A9 00    lda #$00
 F2F0: 85 E1    sta $e1
-F2F2: 85 F5    sta $f5
+F2F2: 85 F5    sta dummy_write_00f5
 F2F4: EA       nop
 F2F5: 60       rts
-F2F6: 85 F5    sta $f5
+F2F6: 85 F5    sta dummy_write_00f5
 F2F8: EA       nop
 F2F9: A9 8B    lda #$8b
 F2FB: 85 D8    sta $d8
 F2FD: A9 12    lda #$12
 F2FF: 85 D9    sta $d9
 F301: A2 00    ldx #$00
-F303: 85 F5    sta $f5
+F303: 85 F5    sta dummy_write_00f5
 F305: 6E A0 00 ror $00a0
-F308: 85 F5    sta $f5
+F308: 85 F5    sta dummy_write_00f5
 F30A: EA       nop
 F30B: B5 48    lda $48, x
 F30D: 91 D8    sta ($d8), y
 F30F: 6C E0 0F jmp ($0fe0)
 F312: D0 04    bne $f318
 F314: 60       rts
-F315: 85 F5    sta $f5
+F315: 85 F5    sta dummy_write_00f5
 F317: 6E C8 C0 ror $c0c8
 F31A: 03 D0    slo ($d0, x)
 F31C: EE A5 D8 inc $d8a5
@@ -6834,7 +6936,7 @@ F324: C9 D9    cmp #$d9
 F326: 69 00    adc #$00
 F328: 85 D9    sta $d9
 F32A: 4C 06 F3 jmp $f306
-F32D: 85 F5    sta $f5
+F32D: 85 F5    sta dummy_write_00f5
 F32F: 6E A5 E0 ror $e0a5
 F332: D0 45    bne $f379
 F334: A5 E2    lda $e2
@@ -6852,7 +6954,7 @@ F346: C6 DC    dec $dc
 F348: F0 07    beq $f351
 F34A: A9 47    lda #$47
 F34C: D0 1C    bne $f36a
-F34E: 85 F5    sta $f5
+F34E: 85 F5    sta dummy_write_00f5
 F350: EA       nop
 F351: E6 F3    inc $f3
 F353: A5 F3    lda $f3
@@ -6860,21 +6962,21 @@ F355: C9 01    cmp #$01
 F357: D0 08    bne $f361
 F359: A9 1E    lda #$1e
 F35B: 8D 03 40 sta $4003
-F35E: C1 F5    cmp ($f5, x)
+F35E: C1 F5    cmp (dummy_write_00f5, x)
 F360: EA       nop
 F361: A9 03    lda #$03
 F363: 85 DC    sta $dc
 F365: 4D 4C 85 eor $854c
 F368: F5 EA    sbc $ea, x
 F36A: 8D 01 18 sta $1801
-F36D: C1 F5    cmp ($f5, x)
+F36D: C1 F5    cmp (dummy_write_00f5, x)
 F36F: 6E A5 E2 ror $e2a5
 F372: 49 10    eor #$10
 F374: 85 E2    sta $e2
-F376: C1 F5    cmp ($f5, x)
+F376: C1 F5    cmp (dummy_write_00f5, x)
 F378: EA       nop
 F379: 60       rts
-F37A: 85 F5    sta $f5
+F37A: 85 F5    sta dummy_write_00f5
 F37C: 6E AD 02 ror $02ad
 F37F: 40       rti
 F380: 49 FF    eor #$ff
@@ -6885,7 +6987,7 @@ F387: E8       inx
 F388: E8       inx
 F389: 9A       txs
 F38A: 60       rts
-F38B: 85 F5    sta $f5
+F38B: 85 F5    sta dummy_write_00f5
 F38D: 6E A5 E0 ror $e0a5
 F390: D0 42    bne $f3d4
 F392: A5 E2    lda $e2
@@ -6896,7 +6998,7 @@ F39A: AD 03 40 lda $4003
 F39D: 29 40    and #$40
 F39F: D0 05    bne $f3a6
 F3A1: A2 00    ldx #$00
-F3A3: 85 F5    sta $f5
+F3A3: 85 F5    sta dummy_write_00f5
 F3A5: 6E BD 00 ror $00bd
 F3A8: 40       rti
 F3A9: 49 FF    eor #$ff
@@ -6909,17 +7011,17 @@ F3B5: 85 EF    sta $ef
 F3B7: 14 65    nop $65, x
 F3B9: EE 10 05 inc $0510
 F3BC: A9 00    lda #$00
-F3BE: 85 F5    sta $f5
+F3BE: 85 F5    sta dummy_write_00f5
 F3C0: EA       nop
 F3C1: C9 24    cmp #$24
 F3C3: 90 05    bcc $f3ca
 F3C5: A9 23    lda #$23
-F3C7: 85 F5    sta $f5
+F3C7: 85 F5    sta dummy_write_00f5
 F3C9: EA       nop
 F3CA: 85 EE    sta $ee
 F3CC: 4D 15 8D eor $8d15
 F3CF: 03 40    slo ($40, x)
-F3D1: 85 F5    sta $f5
+F3D1: 85 F5    sta dummy_write_00f5
 F3D3: EA       nop
 F3D4: 60       rts
 F3D5: 00       brk
@@ -6938,7 +7040,7 @@ F3E3: 00       brk
 F3E4: 00       brk
 F3E5: 00       brk
 F3E6: 00       brk
-F3E7: 85 F5    sta $f5
+F3E7: 85 F5    sta dummy_write_00f5
 F3E9: EA       nop
 F3EA: A5 E2    lda $e2
 F3EC: 29 E0    and #$e0
@@ -6954,12 +7056,12 @@ F3FE: A2 48    ldx #$48
 F400: C9 0A    cmp #$0a
 F402: B0 05    bcs $f409
 F404: A2 30    ldx #$30
-F406: 85 F5    sta $f5
+F406: 85 F5    sta dummy_write_00f5
 F408: EA       nop
 F409: 8E 03 18 stx $1803
 F40C: A5 EE    lda $ee
 F40E: 38       sec
-F40F: 85 F5    sta $f5
+F40F: 85 F5    sta dummy_write_00f5
 F411: EA       nop
 F412: E9 0A    sbc #$0a
 F414: B0 FC    bcs $f412
@@ -6967,7 +7069,7 @@ F416: 69 0A    adc #$0a
 F418: AA       tax
 F419: BD 23 F4 lda $f423, x
 F41C: 8D 02 18 sta $1802
-F41F: 85 F5    sta $f5
+F41F: 85 F5    sta dummy_write_00f5
 F421: EA       nop
 F422: 60       rts
 F423: B4 A4    ldy $a4, x
@@ -6975,7 +7077,7 @@ F425: 94 84    sty $84, x
 F427: 74 64    nop $64, x
 F429: 54 44    nop $44, x
 F42B: 34 24    nop $24, x
-F42D: 85 F5    sta $f5
+F42D: 85 F5    sta dummy_write_00f5
 F42F: EA       nop
 F430: A5 E1    lda $e1
 F432: D0 4F    bne $f483
@@ -6987,7 +7089,7 @@ F43C: AD 03 40 lda $4003
 F43F: 29 40    and #$40
 F441: D0 05    bne $f448
 F443: A2 00    ldx #$00
-F445: 85 F5    sta $f5
+F445: 85 F5    sta dummy_write_00f5
 F447: EA       nop
 F448: BD 00 40 lda $4000, x
 F44B: 49 FF    eor #$ff
@@ -7016,10 +7118,10 @@ F476: 85 E1    sta $e1
 F478: A9 17    lda #$17
 F47A: 8D 03 40 sta $4003
 F47D: 6C D8 00 jmp ($00d8)
-F480: 85 F5    sta $f5
+F480: 85 F5    sta dummy_write_00f5
 F482: EA       nop
 F483: 60       rts
-F484: 85 F5    sta $f5
+F484: 85 F5    sta dummy_write_00f5
 F486: EA       nop
 F487: A5 E3    lda $e3
 F489: 29 20    and #$20
@@ -7039,11 +7141,11 @@ F4A1: 85 D8    sta $d8
 F4A3: A9 66    lda #$66
 F4A5: 85 D9    sta $d9
 F4A7: D0 0A    bne $f4b3
-F4A9: 85 F5    sta $f5
+F4A9: 85 F5    sta dummy_write_00f5
 F4AB: EA       nop
 F4AC: A9 50    lda #$50
 F4AE: 85 D8    sta $d8
-F4B0: 85 F5    sta $f5
+F4B0: 85 F5    sta dummy_write_00f5
 F4B2: EA       nop
 F4B3: A5 D8    lda $d8
 F4B5: 18       clc
@@ -7054,7 +7156,7 @@ F4BC: 69 00    adc #$00
 F4BE: 85 D9    sta $d9
 F4C0: CA       dex
 F4C1: 10 F0    bpl $f4b3
-F4C3: 85 F5    sta $f5
+F4C3: 85 F5    sta dummy_write_00f5
 F4C5: EA       nop
 F4C6: A9 E0    lda #$e0
 F4C8: 85 DA    sta $da
@@ -7071,7 +7173,7 @@ F4DF: 91 D8    sta ($d8), y
 F4E1: A5 E2    lda $e2
 F4E3: 09 40    ora #$40
 F4E5: 85 E2    sta $e2
-F4E7: 85 F5    sta $f5
+F4E7: 85 F5    sta dummy_write_00f5
 F4E9: EA       nop
 F4EA: 60       rts
 F4EB: FA       nop
@@ -7085,7 +7187,7 @@ F4F8: F5 EA    sbc $ea, x
 F4FA: A5 E3    lda $e3
 F4FC: 29 20    and #$20
 F4FE: D0 EA    bne $f4ea
-F500: A9 F5    lda #$f5
+F500: A9 F5    lda #dummy_write_00f5
 F502: 85 EE    sta $ee
 F504: CA       dex
 F505: ED 4C 09 sbc $094c
@@ -7095,7 +7197,7 @@ F50C: A5 E2    lda $e2
 F50E: 09 80    ora #$80
 F510: 85 E2    sta $e2
 F512: 60       rts
-F513: 85 F5    sta $f5
+F513: 85 F5    sta dummy_write_00f5
 F515: 6E A5 E2 ror $e2a5
 F518: 29 0F    and #$0f
 F51A: F0 16    beq $f532
@@ -7107,10 +7209,10 @@ F527: A5 E3    lda $e3
 F529: 09 40    ora #$40
 F52B: 29 DF    and #$df
 F52D: 85 E3    sta $e3
-F52F: C1 F5    cmp ($f5, x)
+F52F: C1 F5    cmp (dummy_write_00f5, x)
 F531: EA       nop
 F532: 60       rts
-F533: 85 F5    sta $f5
+F533: 85 F5    sta dummy_write_00f5
 F535: 6E AD 02 ror $02ad
 F538: 18       clc
 F539: 38       sec
@@ -7121,13 +7223,13 @@ F542: 38       sec
 F543: E9 08    sbc #$08
 F545: 8D 07 18 sta $1807
 F548: 60       rts
-F549: 85 F5    sta $f5
+F549: 85 F5    sta dummy_write_00f5
 F54B: EA       nop
 F54C: A2 02    ldx #$02
-F54E: 85 F5    sta $f5
+F54E: 85 F5    sta dummy_write_00f5
 F550: EA       nop
 F551: A0 07    ldy #$07
-F553: 85 F5    sta $f5
+F553: 85 F5    sta dummy_write_00f5
 F555: 6E B1 D8 ror $d8b1
 F558: 91 DA    sta ($da), y
 F55A: 88       dey
@@ -7143,7 +7245,7 @@ F569: 85 DB    sta $db
 F56B: CA       dex
 F56C: 10 E3    bpl $f551
 F56E: 60       rts
-F56F: 85 F5    sta $f5
+F56F: 85 F5    sta dummy_write_00f5
 F571: EA       nop
 F572: AD 07 18 lda $1807
 F575: 85 D9    sta $d9
@@ -7167,13 +7269,13 @@ F593: 69 10    adc #$10
 F595: 85 D9    sta $d9
 F597: E2 D8    nop #$d8
 F599: 60       rts
-F59A: 85 F5    sta $f5
+F59A: 85 F5    sta dummy_write_00f5
 F59C: 6E A5 E2 ror $e2a5
 F59F: 29 E0    and #$e0
 F5A1: C9 40    cmp #$40
 F5A3: F0 04    beq $f5a9
 F5A5: 60       rts
-F5A6: 85 F5    sta $f5
+F5A6: 85 F5    sta dummy_write_00f5
 F5A8: EA       nop
 F5A9: A9 9B    lda #$9b
 F5AB: 85 D8    sta $d8
@@ -7181,7 +7283,7 @@ F5AD: C9 E2    cmp #$e2
 F5AF: 29 0F    and #$0f
 F5B1: F0 11    beq $f5c4
 F5B3: AA       tax
-F5B4: 85 F5    sta $f5
+F5B4: 85 F5    sta dummy_write_00f5
 F5B6: 6E A5 D8 ror $d8a5
 F5B9: 38       sec
 F5BA: E9 08    sbc #$08
@@ -7198,19 +7300,19 @@ F5D0: F0 10    beq $f5e2
 F5D2: 90 08    bcc $f5dc
 F5D4: EE 02 18 inc $1802
 F5D7: 70 09    bvs $f5e2
-F5D9: 85 F5    sta $f5
+F5D9: 85 F5    sta dummy_write_00f5
 F5DB: EA       nop
 F5DC: CE 02 18 dec $1802
-F5DF: C1 F5    cmp ($f5, x)
+F5DF: C1 F5    cmp (dummy_write_00f5, x)
 F5E1: EA       nop
 F5E2: A5 D9    lda $d9
 F5E4: CD 03 18 cmp $1803
 F5E7: F0 0D    beq $f5f6
 F5E9: EE 03 18 inc $1803
-F5EC: C1 F5    cmp ($f5, x)
+F5EC: C1 F5    cmp (dummy_write_00f5, x)
 F5EE: 6E 20 35 ror $3520
 F5F1: F5 60    sbc $60, x
-F5F3: 85 F5    sta $f5
+F5F3: 85 F5    sta dummy_write_00f5
 F5F5: 6E A5 D8 ror $d8a5
 F5F8: CD 02 18 cmp $1802
 F5FB: F0 0C    beq $f609
@@ -7221,7 +7323,7 @@ F602: B8       clv
 F603: C8       iny
 F604: D8       cld
 F605: E8       inx
-F606: 85 F5    sta $f5
+F606: 85 F5    sta dummy_write_00f5
 F608: EA       nop
 F609: A5 E2    lda $e2
 F60B: 09 20    ora #$20
@@ -7243,15 +7345,15 @@ F628: C9 1E    cmp #$1e
 F62A: B0 07    bcs $f633
 F62C: 69 B2    adc #$b2
 F62E: 30 09    bmi $f639
-F630: 85 F5    sta $f5
+F630: 85 F5    sta dummy_write_00f5
 F632: EA       nop
 F633: 18       clc
 F634: 69 0B    adc #$0b
-F636: 85 F5    sta $f5
+F636: 85 F5    sta dummy_write_00f5
 F638: EA       nop
 F639: 91 D8    sta ($d8), y
 F63B: 60       rts
-F63C: 85 F5    sta $f5
+F63C: 85 F5    sta dummy_write_00f5
 F63E: EA       nop
 F63F: A5 E2    lda $e2
 F641: 10 18    bpl $f65b
@@ -7264,8 +7366,8 @@ F64E: E9 0C    sbc #$0c
 F650: 8D 03 18 sta $1803
 F653: A9 00    lda #$00
 F655: 8D 04 18 sta $1804
-F658: 85 F5    sta $f5
+F658: 85 F5    sta dummy_write_00f5
 F65A: EA       nop
 F65B: 60       rts
-F65C: 45 09    eor $09
-F65E: 41 54    eor ($54, x)
+
+
