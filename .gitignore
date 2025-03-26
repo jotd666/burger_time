@@ -1,0 +1,13 @@
+*.o
+*.zip
+*.pyc
+c
+s
+snapshot
+src/datetime
+*.slave
+*.bak
+graphics.68k
+palette.68k
+sound*.68k
+*.bat
