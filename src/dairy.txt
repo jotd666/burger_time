@@ -15,3 +15,4 @@
 - identified the location where the number of credits is written on screen
 - identified credits variable ($1f) by following the source of the char written for credits
 - removed the non-code parts (we'll use the ROM binary images to read the data)
+- dumped the sprites & tiles using MAME - tile saving edition
