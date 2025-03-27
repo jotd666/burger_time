@@ -1,12 +1,12 @@
 *
-*	Amiga-specific portions of Pooyan
+*	Amiga-specific portions of Burger Time
 *
 * (c) JOTD 2024
 *
 
 
 
-.include "../src/pooyan.inc"
+.include "../src/burger_time.inc"
 .include "custom.i"
 .include "exec_lvos.i"
 .include "dos_lvos.i"

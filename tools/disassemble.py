@@ -1,4 +1,6 @@
 from capstone import *
+import json
+
 
 with open("rom.bin","rb") as f:
     full_contents = f.read()
@@ -7,11 +9,15 @@ mi = Cs(CS_ARCH_MOS65XX, CS_MODE_MOS65XX_6502)
 
 start_address = 0xC000
 offset = 0
+prev_offset = 0
+dummy_write_addresses = []
+
 just_written = False
 with open("disasm.asm","w") as f:
     while True:
         instructions = bytearray(full_contents[offset:])
-        if just_written and offset & 0x104 == 0x104:
+        decrypt = just_written and offset & 0x104 == 0x104
+        if decrypt:
             # we have to decrypt
             bits = "{:08b}".format(instructions[0])
             newbits = ["x"]*8
@@ -31,9 +37,16 @@ with open("disasm.asm","w") as f:
         hexcode = " ".join([f"{x:02X}" for x in i.bytes])
 
         just_written = i.mnemonic == "sta"
-
-        f.write("{:04X}: {:9}{} {}\n".format(i.address, hexcode, i.mnemonic, i.op_str.replace("0x","$")))
+        if decrypt:
+            f.write("  ; dummy_write_decrpyt_trigger")
+            dummy_write_addresses.append(prev_offset+start_address)
+        f.write("\n{:04X}: {:9}{} {}".format(i.address, hexcode, i.mnemonic, i.op_str.replace("0x","$")))
+        prev_offset = offset
 
         offset += i.size
         if offset == 0xF65C-start_address:  # after this there's junk (actually some original source code!)
             break
+    f.write("\n")
+
+with open("dummy_writes.json","w") as f:
+    json.dump(dummy_write_addresses,f,indent=2)

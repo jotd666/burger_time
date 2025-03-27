@@ -1,0 +1,17 @@
+1. First reverse engineering phase (using Notepad++, python & MAME)
+
+- Disassembled the ROM ($C000-$FFFF)
+- Found old remainders of source code in the end. Useful to start naming variables
+- Some opcodes are encrypted, and MAME fails to decrypt them, so disassembly is done again
+  with a custom python script & capstone.
+- MAME sources copied for reference
+- named the variables that MAME cheat reveals (number of lives, time... whatever)
+- First attempt at converting to 68k using my converter tool, had to fix a small
+- issue in the converter. Too soon to work on it, but it was just to test
+- Memory map & I/O copied from MAME source into the disassembly
+- Tagged the addresses of the dummy writes (should have done that firsthand)
+  to be able to remove them grrrr...
+- So... wasted 5 minutes to write a script to fix the already processed asm...
+- identified the location where the number of credits is written on screen
+- identified credits variable ($1f) by following the source of the char written for credits
+- removed the non-code parts (we'll use the ROM binary images to read the data)
