@@ -4433,19 +4433,8 @@ E740: A8       tay
 E741: B9 5A E7 lda $e75a, y
 E744: 85 03    sta $03  ; dummy_write_decrypt_trigger
 E746: 4C 29 E7 jmp $e729  ; prev_crypted a4
-E749: 85 F5    sta dummy_write_00f5
-E74B: EA       nop 
-E74C: 00 62    brk $62
-E74E: 6E 7A 85 ror $857a
-E751: F5 EA    sbc $ea, x
-E753: 00 63    brk $63
-E755: 6F       illegal
-E756: 7B       illegal
-E757: 85 F5    sta dummy_write_00f5
-E759: EA       nop 
-E75A: 00 5A    brk $5a
-E75C: 66 72    ror $72  ; dummy_write_decrypt_trigger
-E75E: 0D F5 EA ora $eaf5  ; prev_crypted 85
+
+E760: EA       nop
 E761: A5 6F    lda $6f
 E763: 30 1E    bmi $e783
 E765: AD 1E 18 lda $181e
@@ -5002,14 +4991,7 @@ F074: 20 8C F0 jsr $f08c
 F077: 20 D1 F0 jsr $f0d1
 F07A: 20 E3 CB jsr $cbe3
 F07D: 60       rts 
-F07E: 00 00    brk $00
-F080: 03       illegal
-F081: 06 09    asl $09
-F083: 0C       illegal
-F084: 00 12    brk $12
-F086: 15 18    ora $18, x
-F088: 1B       illegal
-F089: 1E 85 F5 asl $f585, x
+
 F08C: EA       nop 
 F08D: A4 DA    ldy $da
 F08F: 85 F5    sta dummy_write_00f5
@@ -5392,15 +5374,8 @@ F41C: 8D 02 18 sta $1802
 F41F: 85 F5    sta dummy_write_00f5
 F421: EA       nop 
 F422: 60       rts 
-F423: B4 A4    ldy $a4, x
-F425: 94 84    sty $84, x
-F427: 74       illegal
-F428: 64       illegal
-F429: 54       illegal
-F42A: 44       illegal
-F42B: 34       illegal
-F42C: 24 85    bit $85
-F42E: F5 EA    sbc $ea, x
+
+F42F: EA       nop
 F430: A5 E1    lda $e1
 F432: D0 4F    bne $f483
 F434: A5 E2    lda $e2
@@ -5639,13 +5614,8 @@ F5F6: A5 D8    lda $d8
 F5F8: CD 02 18 cmp $1802
 F5FB: F0 0C    beq $f609
 F5FD: 4C EF F5 jmp $f5ef
-F600: 00 A8    brk game_speed_00a8
-F602: B8       clv 
-F603: C8       iny 
-F604: D8       cld 
-F605: E8       inx 
-F606: 85 F5    sta dummy_write_00f5
-F608: EA       nop 
+
+
 F609: A5 E2    lda $e2
 F60B: 09 20    ora #$20
 F60D: 29 BF    and #$bf
