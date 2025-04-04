@@ -106,7 +106,7 @@ BIT_FIRE = 4
 	.ifdef	RELEASE
 	lea		ram_buffer,a6
 	.else
-	move.l		ram_start_8000,a6
+	move.l		ram_start_0000,a6
 	.endif
 	.endm
 	
@@ -361,8 +361,6 @@ _user:
 
 	
 	move.l	misc_options,d1
-	btst	#0,d1
-	sne		skip_intro_flag
 	btst	#1,d1
 	sne		frameskip
 	.ifndef	RELEASE
@@ -679,12 +677,13 @@ demo_game:
 	* and lower 16-bit match original RAM offsets
 	move.l	a6,d0
 	clr.w	d0
-	add.l	#0x18000,d0
+	add.l	#0x10000,d0
 	move.l	d0,a6
-	move.l	a6,ram_start_8000
+	move.l	a6,ram_start_0000
 	.endif
 
-	jmp			pooyan_reset					| pass control to the mpatrol core
+	lea		rom,a5
+	jmp			burger_time_reset					| pass control to the mpatrol core
 		
 	
 * just in case some hardware calls nmi
@@ -757,7 +756,7 @@ _vblank:
 	addq.b	#1,d0
 	cmp.b	#5,d0
 	bne.b	1f
-	jbsr		pooyan_irq
+	*jbsr		pooyan_irq
 	clr.b	interrupt_mode	
 	clr.b	d0
 1:
@@ -769,7 +768,7 @@ _vblank:
 	
 	subq.w	#1,delay_timer
 		
-	jbsr		pooyan_irq
+	*jbsr		pooyan_irq
 
 	tst.b	frameskip
 	jeq		0f
@@ -874,14 +873,14 @@ osd_update_sprites:
 is_game_playing:
 	move.l	a6,-(a7)
 	GET_RAM_START_IN_A6
-	tst.b	game_in_play_8806(a6)
+
 	move.l	(a7)+,a6
 	rts
 	
 lose_all_lives:
 	move.l	a6,-(a7)
 	GET_RAM_START_IN_A6
-	clr.b	nb_lives_8908(a6)
+
 	move.l	(a7)+,a6
 	rts
 
@@ -889,10 +888,10 @@ add_10000_points:
 	move.l	a6,-(a7)
 	GET_RAM_START_IN_A6
 	movem.w	d0/d7,-(a7)
-	move.b	player_1_score_88A4(a6),d0
+	
 	MOVEQ	#1,d7
 	abcd	d7,d0
-	move.b	d0,player_1_score_88A4(a6)
+
 	movem.w	(a7)+,d0/d7
 	move.l	(a7)+,a6
 	rts
@@ -1020,27 +1019,8 @@ update_bobs_and_hw_sprites:
 	* position hardware sprites *
 	*****************************
 	
-	lea		sprite_ram_9000+0x10,a0	
-*    lea sprite_translation_table,A6
-*	lea		hw_sprite_table,a4
-*	lea	HW_SpriteYTable_16(pc),a1
-	lea	game_sprites+2,a2			| copperlist
-*
-*	| start by the end (drawing priority), except for last sprite
-*	| which has top priority (strange hardware!)
-*	move.l	a0,-(a7)
-*	add.w	#(NB_TARGET_SPRITES-1)*4,a0		| last sprite
-*	* last sprite
-*	jbsr	update_one_hw_sprite
-*	move.l	(a7)+,a0
-*	moveq	#NB_TARGET_SPRITES-2,d7
-*1:
-*	jbsr	update_one_hw_sprite
-*	addq.w	#4,a0
-*	cmp.l	#game_sprites_end,a2
-*	bcc		2f	
-*	dbf		d7,1b
-*
+	lea		sprite_ram_1800,a0	
+
 	* pad last sprite entries with blank
 	move.l	#blank_sprite,d0
 1:
@@ -1087,7 +1067,7 @@ update_bobs_and_hw_sprites:
 	* draw current BOBs *
 	*********************
 
-  	lea		sprite_ram_9000+0x10,a0	
+  	lea		sprite_ram_1800,a0	
     lea _custom,A5
 	move.l	bob_previous_drawed_sprites(pc),a6
 	lea		bob_table,a4
@@ -2299,7 +2279,7 @@ handle_keyboard:
 	cmp.b	#0x50,d0	| F1 key: only 1 wolf
 	bne.b	0f
 	move.w	#0x0FF,_custom+color
-	move.b	#1,nb_wolves_8901(a6)
+
 	st.b	cheat_used
 	
 0:

@@ -6,4 +6,4 @@ with open("../src/burgertime_6502.asm") as f:
 
 for name,offset in sorted(data,key=lambda x:int(x[1],16)):
     if "dummy" not in name:
-        print("{} = 0x{}".format(name,offset))
+        print(f"{name}_{offset} = 0x{offset}")

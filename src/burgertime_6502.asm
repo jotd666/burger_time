@@ -1632,7 +1632,7 @@ CDB6: 60       rts   ; prev_crypted 28
 CF3C: 48       pha   ; dummy_write_decrypt_trigger
 CF3D: AD 03 40 lda $4003  ; prev_crypted cd
 CF40: 29 10    and #$10
-CF42: F0 F1    beq $cf35
+CF42: F0 F1    beq $cf35	; bogus
 CF44: 8A       txa 
 CF45: 48       pha   ; dummy_write_decrypt_trigger
 CF46: 98       tya   ; prev_crypted 54
@@ -5611,7 +5611,7 @@ F5F8: CD 02 18 cmp $1802
 F5FB: F0 0C    beq $f609
 F5FD: 4C EF F5 jmp $f5ef
 
-
+F608: EA       nop
 F609: A5 E2    lda $e2
 F60B: 09 20    ora #$20
 F60D: 29 BF    and #$bf

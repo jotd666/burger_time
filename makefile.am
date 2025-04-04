@@ -28,10 +28,10 @@ WHDASM = vasmm68k_mot -DDATETIME -I$(HDBASE)/amiga39_JFF_OS/include -I$(WHDBASE)
 
 
 # leave MAIN_OBJ first
-OBJS = $(MAIN_OBJ) sounds.o amiga_shared.o $(PROGNAME).o $(PROGNAME)_ram.o graphics.o $(PROGNAME)_rom.o vbr.o ReadJoyPad.o ptplayer.o 
+OBJS = $(MAIN_OBJ) amiga_shared.o sounds.o $(PROGNAME).o ram.o graphics.o rom.o vbr.o ReadJoyPad.o ptplayer.o 
 
-all : $(PROGNAME).o
-#all: $(AMIGASRC)/graphics.68k $(AMIGASRC)/sounds.68k $(MAIN) $(WHDLOADER) $(WHDLOADER_CHIP)
+all : $(PROGNAME).o $(MAIN) $(WHDLOADER) $(WHDLOADER_CHIP)
+#all: $(AMIGASRC)/graphics.68k $(AMIGASRC)/sounds.68k 
 
 
 clean:
@@ -48,10 +48,10 @@ $(AMIGASRC)/sounds.68k: $(ASSETS)/convert_sounds.py
 $(MAIN): $(OBJS)
 	$(GCC_BIN)/m68k-amigaos-ld -o $(MAIN) $(OBJS)
 
-$(PROGNAME)_ram.o: $(PROGNAME)_ram.68k
-	$(ASM) $(PROGNAME)_ram.68k -o $(PROGNAME)_ram.o
-$(PROGNAME)_rom.o: $(PROGNAME)_rom.68k
-	$(ASM) $(PROGNAME)_rom.68k -o $(PROGNAME)_rom.o
+ram.o: ram.68k
+	$(ASM) ram.68k -o ram.o
+rom.o: rom.68k
+	$(ASM) rom.68k -o rom.o
 $(PROGNAME).o: $(PROGNAME).68k $(PROGNAME).inc data.inc sounds.inc
 	$(ASM) $(PROGNAME).68k -o $(PROGNAME).o
 amiga.o: $(AMIGASRC)/amiga.68k $(PROGNAME).inc $(AMIGASRC)/ReadJoyPad.i $(AMIGASRC)/palette.68k

@@ -16,3 +16,16 @@
 - identified credits variable ($1f) by following the source of the char written for credits
 - removed the non-code parts (we'll use the ROM binary images to read the data)
 - dumped the sprites & tiles using MAME - tile saving edition
+- re-worked the decryption because it was wrong. Also crossed the data with a custom MAME
+  build where decrypted opcodes + offsets were logged (very useful!)
+  
+2. Build the executable
+
+- keeping old private versions of "graphics.68k", and other generated stuff copied from pooyan
+  just for it to link
+- extracted data offsets
+- enhanced 6502 to 68k converter :)
+- ran the conversion to 68k
+- started to fix .error directives, adapted code
+- fixed missing entrypoints
+- coded the important "get_address" function to select which memory bank is read/written to

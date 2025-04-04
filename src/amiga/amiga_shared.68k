@@ -12,7 +12,7 @@
 * sound engine and also highscore management, common to all versions
 	
 .include "dos_lvos.i"
-.include "pooyan.inc"
+.include "burger_time.inc"
 .include "sounds.inc"
 
 SCORE_FILE_SIZE = 3+30*3
@@ -21,7 +21,7 @@ SCORE_FILE_SIZE = 3+30*3
 	.ifdef	RELEASE
 	lea		ram_buffer,a6
 	.else
-	move.l		ram_start_8000,a6
+	move.l		ram_start_0000,a6
 	.endif
 	.endm
 	
@@ -44,29 +44,7 @@ osd_read_high_scores:
 2:
 	* from DOS: just copy buffer
 	GET_RAM_START_IN_A6
-	* first just copy buffer as contiguous 
 
-	lea		high_score_buffer(pc),a0
-	lea	high_score_88A8(a6),a1
-	move.b	(a0)+,(a1)+
-	move.b	(a0)+,(a1)+
-	move.b	(a0)+,(a1)+
-	lea	high_score_table_8A00(a6),a1
-	move.w	#30-1,d0
-0:
-	move.b	(a0)+,(a1)+
-	dbf		d0,0b
-	lea	play_time_table_89C0(a6),a1
-	move.w	#30-1,d0
-0:
-	move.b	(a0)+,(a1)+
-	dbf		d0,0b
-	lea	high_score_names_8E00(a6),a1
-	move.w	#30-1,d0
-0:
-	move.b	(a0)+,(a1)+
-	dbf		d0,0b
-1:
 	movem.l	(a7)+,d0-d7/a0-a6
 	rts
 	
@@ -79,26 +57,7 @@ osd_write_high_scores:
 	GET_RAM_START_IN_A6
 	* first just copy buffer as contiguous 
 
-	lea		high_score_buffer(pc),a1
-	lea	high_score_88A8(a6),a0
-	move.b	(a0)+,(a1)+
-	move.b	(a0)+,(a1)+
-	move.b	(a0)+,(a1)+
-	lea	high_score_table_8A00(a6),a0
-	move.w	#30-1,d0
-0:
-	move.b	(a0)+,(a1)+
-	dbf		d0,0b
-	lea	play_time_table_89C0(a6),a0
-	move.w	#30-1,d0
-0:
-	move.b	(a0)+,(a1)+
-	dbf		d0,0b
-	lea	high_score_names_8E00(a6),a0
-	move.w	#30-1,d0
-0:
-	move.b	(a0)+,(a1)+
-	dbf		d0,0b
+
 
 
 	st.b	highscore_needs_saving
@@ -207,20 +166,8 @@ osd_sound_start:
 	jbsr	_mt_stopfx
 	jra		10f
 1:
-	cmp.b	#WOLF_FALLING_SND,d0		| this fucks up the music and has little interest: skip it!
-	jeq		10f
 	
-	* ongoing sfx when killing the music, so we have to ignore them and use a hack
-	jbsr		is_game_playing
-	jne		1f
-	cmp.b	#CREDIT_SND,d0
-	jne		1f
-	jbsr	osd_music_stop
-1:
-	cmp.b	#PLAYER_FALLING_SND,d0		| this is coded as a tune in the game not a sound
-	jne		1f
-	jbsr	osd_music_stop
-1:
+
 
 	lsl.w	#3,d0
 	lea		sound_table,a0
@@ -271,8 +218,8 @@ osd_sound_start:
 	bsr		force_sound_stop
     lea _custom,a6
  	movem.l	d0/a0,-(a7)
-	lea	pooyan_tunes,a0
-
+	*lea	pooyan_tunes,a0
+	illegal
 	
 	move.b	d1,music_track_start_number
 	move.w	d1,d0
