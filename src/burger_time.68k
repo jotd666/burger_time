@@ -161,7 +161,10 @@ current_player_001f = 0x001f
 player_lives_0029 = 0x0029
 player_pepper_002b = 0x002b
 game_speed_00a8 = 0x00a8
-
+player_attributes_181c = 0x181c
+player_code_181d = 0x181d
+player_y_181e = 0x181E
+player_x_181f = 0x181F
 
 cpu_init:
 	moveq	#0,d0
@@ -203,17 +206,15 @@ get_address:
 	illegal
 0:
 	* above 0x1800
-	cmp.w	#0x2000,a0
+	cmp.w	#0x1820,a0
 	jcs		0f
-	* above 0x2000
-	
+	* above 0x1820
+	lea	address_1820_1FFF_loaded_message,a0
 	jbsr	osd_break
-	nop
-	nop
-	nop
+
 	illegal
 0:
-	* between 0x1800 and 0x2000
+	* between 0x1800 and 0x1820: sprite ram, just write, we'll scan for it
 	sub.w	#0x1800,a0
 	add.l	#sprite_ram_1800,a0
 	POP_SR
@@ -221,22 +222,23 @@ get_address:
 
 address_800_1800_loaded_message:
 	.asciz	"video address 0x0800-0x17FF loaded!"
-address_1400_17FF_loaded_message:
-	.asciz	"color address 0x1400-0x17FF loaded!"
-address_2600_3FFF_loaded_message:
-	.asciz	"video address 0x2600-0x3FFF loaded!"
+address_1820_1FFF_loaded_message:
+	.asciz	"color address 0x1820-0x1FFF loaded!"
+
 	.align	2
 *	map(0x0000, 0x07ff).ram().share("rambase");
 *	map(0x0c00, 0x0c0f).ram().w(m_palette, FUNC(palette_device::write8)).share("palette");
-*	map(0x1000, 0x13ff).ram().share("videoram");   | tiles
-*	map(0x1400, 0x17ff).ram().share("colorram");
+* mirroring is strange here: writing to 0x1000 writes to 0x1800, writing to 0x1020 writes to 0x1801...
+* so those bytes don't affect the tiles but the sprites...
+*	map(0x1000, 0x13ff).ram().share("videoram");   | tiles LSB
+*	map(0x1400, 0x17ff).ram().share("colorram");   | tiles MSB
 *	map(0x1800, 0x1bff).rw(FUNC(btime_state::btime_mirrorvideoram_r), FUNC(btime_state::btime_mirrorvideoram_w)); | sprites
 *	map(0x1c00, 0x1fff).rw(FUNC(btime_state::btime_mirrorcolorram_r), FUNC(btime_state::btime_mirrorcolorram_w));
 *	map(0x4000, 0x4000).portr("P1").nopw();
 *	map(0x4001, 0x4001).portr("P2");
-*	map(0x4002, 0x4002).portr("SYSTEM").w(FUNC(btime_state::btime_video_control_w));
+*	map(0x4002, 0x4002).portr("SYSTEM").w(FUNC(btime_state::btime_video_control_w))
 *	map(0x4003, 0x4003).portr("DSW1").w(m_soundlatch, FUNC(generic_latch_8_device::write));
-*	map(0x4004, 0x4004).portr("DSW2").w(FUNC(btime_state::bnj_scroll1_w));
+*	map(0x4004, 0x4004).portr("DSW2").w(FUNC(btime_state::bnj_scroll1_w));   displays ladder on/off! (0x10 on 0x00 off)
 *	map(0xb000, 0xffff).rom();
 
 *	PORT_START("P1")
@@ -1179,12 +1181,12 @@ l_c480:
 	POP_SR
 	move.b	#0x18,d0                        	| [$c4c2: lda #$18]
 	PUSH_SR
-	GET_ADDRESS	0x181e                     	| [$c4c4: sta $181e]
+	GET_ADDRESS	player_y_181e                     	| [$c4c4: sta $181e]
 	move.b	d0,(a0)                         	| [...]
 	POP_SR
 	move.b	#0x1d,d0                        	| [$c4c7: lda #$1d]
 	PUSH_SR
-	GET_ADDRESS	0x181f                     	| [$c4c9: sta $181f]
+	GET_ADDRESS	player_x_181f                     	| [$c4c9: sta $181f]
 	move.b	d0,(a0)                         	| [...]
 	POP_SR
 	jbsr	l_dd65                            	| [$c4cc: jsr $dd65]
@@ -1265,7 +1267,7 @@ l_c561:
 	move.b	d0,(a0)                         	| [...]
 	GET_ADDRESS	0x1817                     	| [$c589: sta $1817] dummy_write_decrypt_trigger
 	move.b	d0,(a0)                         	| [...]
-	GET_ADDRESS	0x181f                     	| [$c58c: sta $181f] prev_crypted c5  ; dummy_write_decrypt_trigger
+	GET_ADDRESS	player_x_181f                     	| [$c58c: sta $181f] prev_crypted c5  ; dummy_write_decrypt_trigger
 	move.b	d0,(a0)                         	| [...]
 	POP_SR
 	move.b	#0x40,d0                        	| [$c58f: lda #$40] prev_crypted 4d
@@ -1315,7 +1317,7 @@ l_c561:
 	POP_SR
 	move.b	#0x18,d0                        	| [$c5bb: lda #$18]
 	PUSH_SR
-	GET_ADDRESS	0x181e                     	| [$c5bd: sta $181e]
+	GET_ADDRESS	player_y_181e                     	| [$c5bd: sta $181e]
 	move.b	d0,(a0)                         	| [...]
 	POP_SR
 	move.b	#0x01,d0                        	| [$c5c0: lda #$01]
@@ -1362,7 +1364,7 @@ l_c5fa:
 	bpl	l_c621                             	| [$c5fc: bpl $c621]
 	move.b	#0x07,d1                        	| [$c5fe: ldx #$07]
 	jbsr	l_d269                            	| [$c600: jsr $d269]
-	GET_ADDRESS	0x181e                     	| [$c603: lda $181e]
+	GET_ADDRESS	player_y_181e                     	| [$c603: lda $181e]
 	move.b	(a0),d0                         	| [...]
 	cmp.b	#0x22,d0                         	| [$c606: cmp #$22]
 	beq	l_c615                             	| [$c608: beq $c615]
@@ -1374,9 +1376,9 @@ l_c5fa:
                                     	| [$c614: nop]
 l_c615:
 	jbsr	l_d1ad                            	| [$c615: jsr $d1ad]
-	GET_ADDRESS	0x181e                     	| [$c618: inc $181e]
+	GET_ADDRESS	player_y_181e                     	| [$c618: inc $181e]
 	addq.b	#1,(a0)                         	| [...]
-	GET_ADDRESS	0x181e                     	| [$c61b: inc $181e]
+	GET_ADDRESS	player_y_181e                     	| [$c61b: inc $181e]
 	addq.b	#1,(a0)                         	| [...]
                                     	| [$c61e: nop]
                                     	| [$c620: nop]
@@ -1547,28 +1549,24 @@ l_c7c7:
 	move.b	(a0),d2                         	| [...]
 	GET_ADDRESS	0xcdef                     	| [$c7cb: lda $cdef, y]
 	move.b	(a0,d2.w),d0                    	| [...]
-	PUSH_SR
-	GET_ADDRESS	0x181c                     	| [$c7ce: sta $181c]
+	GET_ADDRESS	player_attributes_181c                     	| [$c7ce: sta $181c]
 	move.b	d0,(a0)                         	| [...]
-	POP_SR
 	GET_ADDRESS	0xcdf7                     	| [$c7d1: lda $cdf7, y]
 	move.b	(a0,d2.w),d0                    	| [...]
 	PUSH_SR
-	GET_ADDRESS	0x181d                     	| [$c7d4: sta $181d] dummy_write_decrypt_trigger
+	GET_ADDRESS	player_code_181d                     	| [$c7d4: sta $181d] dummy_write_decrypt_trigger
 	move.b	d0,(a0)                         	| [...]
 	POP_SR
 	GET_ADDRESS	0xcdff                     	| [$c7d7: lda $cdff, y] prev_crypted 5d
 	move.b	(a0,d2.w),d0                    	| [...]
 	PUSH_SR
-	GET_ADDRESS	0x181e                     	| [$c7da: sta $181e] dummy_write_decrypt_trigger
+	GET_ADDRESS	player_y_181e                     	| [$c7da: sta $181e] dummy_write_decrypt_trigger
 	move.b	d0,(a0)                         	| [...]
 	POP_SR
 	GET_ADDRESS	0xce07                     	| [$c7dd: lda $ce07, y] prev_crypted 5d
 	move.b	(a0,d2.w),d0                    	| [...]
-	PUSH_SR
-	GET_ADDRESS	0x181f                     	| [$c7e0: sta $181f]
+	GET_ADDRESS	player_x_181f                     	| [$c7e0: sta $181f]
 	move.b	d0,(a0)                         	| [...]
-	POP_SR
 	move.b	#0x07,d1                        	| [$c7e3: ldx #$07]
 	st.b	d0                                	| [$c7e5: lda #$ff]
                                     	| [$c7e7: nop]
@@ -1726,12 +1724,12 @@ l_c858:
 	POP_SR
 	move.b	#0x18,d0                        	| [$c88e: lda #$18]
 	PUSH_SR
-	GET_ADDRESS	0x181e                     	| [$c890: sta $181e]
+	GET_ADDRESS	player_y_181e                     	| [$c890: sta $181e]
 	move.b	d0,(a0)                         	| [...]
 	POP_SR
 	move.b	#0x1d,d0                        	| [$c893: lda #$1d]
 	PUSH_SR
-	GET_ADDRESS	0x181f                     	| [$c895: sta $181f]
+	GET_ADDRESS	player_x_181f                     	| [$c895: sta $181f]
 	move.b	d0,(a0)                         	| [...]
 	POP_SR
 	st.b	d0                                	| [$c898: lda #$ff]
@@ -3457,7 +3455,7 @@ l_d1ad:
 	CLR_XC_FLAGS                           	| [$d1b9: clc]
 	GET_ADDRESS	0xd24d                     	| [$d1ba: lda $d24d, x]
 	move.b	(a0,d1.w),d0                    	| [...]
-	GET_ADDRESS	0x181e                     	| [$d1bd: adc $181e]
+	GET_ADDRESS	player_y_181e                     	| [$d1bd: adc $181e]
 	move.b	(a0),d4	| [...]
 	addx.b	d4,d0                         	| [...]
 	PUSH_SR
@@ -3467,7 +3465,7 @@ l_d1ad:
 	CLR_XC_FLAGS                           	| [$d1c3: clc]
 	GET_ADDRESS	0xd24e                     	| [$d1c4: lda $d24e, x]
 	move.b	(a0,d1.w),d0                    	| [...]
-	GET_ADDRESS	0x181f                     	| [$d1c7: adc $181f]
+	GET_ADDRESS	player_x_181f                     	| [$d1c7: adc $181f]
 	move.b	(a0),d4	| [...]
 	addx.b	d4,d0                         	| [...]
 	PUSH_SR
@@ -3564,7 +3562,7 @@ l_d236:
 	beq	l_d247                             	| [$d23b: beq $d247]
 	move.b	#0x47,d0                        	| [$d23d: lda #$47]
 	PUSH_SR
-	GET_ADDRESS	0x181d                     	| [$d23f: sta $181d]
+	GET_ADDRESS	player_code_181d                     	| [$d23f: sta $181d]
 	move.b	d0,(a0)                         	| [...]
 	POP_SR
 	GET_ADDRESS	0xc6                       	| [$d242: inc $c6]
@@ -3960,23 +3958,19 @@ l_d46f:
                                     	| [$d48a: nop]
                                     	| [$d48c: nop]
 l_d48d:
-	CLR_XC_FLAGS                           	| [$d48d: clc]
+	                           	| [$d48d: clc]
 	GET_ADDRESS	0xd4fa                     	| [$d48e: adc $d4fa, x]
 	move.b	(a0,d1.w),d4	| [...]
-	addx.b	d4,d0                    	| [...]
-	PUSH_SR
+	add.b	d4,d0                    	| [...]
 	GET_ADDRESS	0x1802                     	| [$d491: sta $1802, y]
-    move.b	d0,(a0,d2.w)                 	| [...]
-	POP_SR
+    move.b	d0,(a0,d2.w)                 	| [...]  change player Y
 	movem.w	(sp)+,d0                       	| [$d494: pla]
 	move.b	d0,d1                           	| [$d495: tax]
                                     	| [$d496: nop]
                                     	| [$d498: nop]
 	clr.b	d0                               	| [$d499: lda #$00]
-	PUSH_SR
 	GET_ADDRESS	0x67                       	| [$d49b: sta $67]
 	move.b	d0,(a0)                         	| [...]
-	POP_SR
                                     	| [$d49d: nop]
                                     	| [$d49f: nop]
 l_d4a0:
@@ -4406,13 +4400,13 @@ l_d7c5:
 	GET_ADDRESS	0xd864                     	| [$d7c9: lda $d864, y]
 	move.b	(a0,d2.w),d0                    	| [...]
 	PUSH_SR
-	GET_ADDRESS	0x181c                     	| [$d7cc: sta $181c] dummy_write_decrypt_trigger
+	GET_ADDRESS	player_attributes_181c                     	| [$d7cc: sta $181c] dummy_write_decrypt_trigger
 	move.b	d0,(a0)                         	| [...]
 	POP_SR
 	GET_ADDRESS	0xd86e                     	| [$d7cf: lda $d86e, y] prev_crypted 5d
 	move.b	(a0,d2.w),d0                    	| [...]
 	PUSH_SR
-	GET_ADDRESS	0x181d                     	| [$d7d2: sta $181d] dummy_write_decrypt_trigger
+	GET_ADDRESS	player_code_181d                     	| [$d7d2: sta $181d] dummy_write_decrypt_trigger
 	move.b	d0,(a0)                         	| [...]
 	POP_SR
 	GET_ADDRESS	0xd869                     	| [$d7d5: lda $d869, y] prev_crypted 5d
@@ -4454,7 +4448,7 @@ l_d7fa:
 	move.b	(a0),d0                         	| [...]
 	lsr.b	#1,d0                            	| [$d7fc: lsr a]
 	move.b	d0,d2                           	| [$d7fd: tay]
-	GET_ADDRESS	0x181d                     	| [$d7fe: lda $181d]
+	GET_ADDRESS	player_code_181d                     	| [$d7fe: lda $181d]
 	move.b	(a0),d0                         	| [...]
 	GET_ADDRESS	0xd86e                     	| [$d801: cmp $d86e, y]
 	cmp.b	(a0,d2.w),d0                     	| [...]
@@ -4462,7 +4456,7 @@ l_d7fa:
 	GET_ADDRESS	0xd873                     	| [$d806: lda $d873, y]
 	move.b	(a0,d2.w),d0                    	| [...]
 	PUSH_SR
-	GET_ADDRESS	0x181d                     	| [$d809: sta $181d]
+	GET_ADDRESS	player_code_181d                     	| [$d809: sta $181d]
 	move.b	d0,(a0)                         	| [...]
 	POP_SR
                                     	| [$d80c: nop]
@@ -4482,7 +4476,7 @@ l_d819:
 	move.b	(a0),d0                         	| [...]
 	lsr.b	#1,d0                            	| [$d81b: lsr a]
 	move.b	d0,d2                           	| [$d81c: tay]
-	GET_ADDRESS	0x181d                     	| [$d81d: lda $181d]
+	GET_ADDRESS	player_code_181d                     	| [$d81d: lda $181d]
 	move.b	(a0),d0                         	| [...]
 	GET_ADDRESS	0xd873                     	| [$d820: cmp $d873, y]
 	cmp.b	(a0,d2.w),d0                     	| [...]
@@ -4490,7 +4484,7 @@ l_d819:
 	GET_ADDRESS	0xd878                     	| [$d825: lda $d878, y]
 	move.b	(a0,d2.w),d0                    	| [...]
 	PUSH_SR
-	GET_ADDRESS	0x181d                     	| [$d828: sta $181d]
+	GET_ADDRESS	player_code_181d                     	| [$d828: sta $181d]
 	move.b	d0,(a0)                         	| [...]
 	POP_SR
                                     	| [$d82b: nop]
@@ -4510,7 +4504,7 @@ l_d838:
 	move.b	(a0),d0                         	| [...]
 	lsr.b	#1,d0                            	| [$d83a: lsr a]
 	move.b	d0,d2                           	| [$d83b: tay]
-	GET_ADDRESS	0x181d                     	| [$d83c: lda $181d]
+	GET_ADDRESS	player_code_181d                     	| [$d83c: lda $181d]
 	move.b	(a0),d0                         	| [...]
 	GET_ADDRESS	0xd878                     	| [$d83f: cmp $d878, y]
 	cmp.b	(a0,d2.w),d0                     	| [...]
@@ -4518,7 +4512,7 @@ l_d838:
 	GET_ADDRESS	0xd87d                     	| [$d844: lda $d87d, y]
 	move.b	(a0,d2.w),d0                    	| [...]
 	PUSH_SR
-	GET_ADDRESS	0x181d                     	| [$d847: sta $181d]
+	GET_ADDRESS	player_code_181d                     	| [$d847: sta $181d]
 	move.b	d0,(a0)                         	| [...]
 	POP_SR
                                     	| [$d84a: nop]
@@ -4557,7 +4551,7 @@ l_d898:
 	beq	l_d8ef                             	| [$d89d: beq $d8ef]
 	cmp.b	#0x08,d0                         	| [$d89f: cmp #$08]
 	beq	l_d8ef                             	| [$d8a1: beq $d8ef]
-	GET_ADDRESS	0x181e                     	| [$d8a3: lda $181e]
+	GET_ADDRESS	player_y_181e                     	| [$d8a3: lda $181e]
 	move.b	(a0),d0                         	| [...]
 	not.b	d0                               	| [$d8a6: eor #$ff]
 	SET_XC_FLAGS                           	| [$d8a8: sec]
@@ -4574,7 +4568,7 @@ l_d898:
 	GET_ADDRESS	0x04                       	| [$d8b2: sta $04]
 	move.b	d0,(a0)                         	| [...]
 	POP_SR
-	GET_ADDRESS	0x181f                     	| [$d8b4: lda $181f]
+	GET_ADDRESS	player_x_181f                     	| [$d8b4: lda $181f]
 	move.b	(a0),d0                         	| [...]
 	and.b	#0xf8,d0                         	| [$d8b7: and #$f8]
 	                           	| [$d8b9: clc]
@@ -5586,13 +5580,13 @@ l_dda4:
 	bne	l_dd9e                             	| [$dda7: bne $dd9e]
 	jbsr	l_e0b6                            	| [$dda9: jsr $e0b6]
 	bne	l_dd9e                             	| [$ddac: bne $dd9e]
-	GET_ADDRESS	0x181e                     	| [$ddae: lda $181e]
+	GET_ADDRESS	player_y_181e                     	| [$ddae: lda $181e]
 	move.b	(a0),d0                         	| [...]
 	PUSH_SR
 	GET_ADDRESS	0x17                       	| [$ddb1: sta $17]
 	move.b	d0,(a0)                         	| [...]
 	POP_SR
-	GET_ADDRESS	0x181f                     	| [$ddb3: lda $181f]
+	GET_ADDRESS	player_x_181f                     	| [$ddb3: lda $181f]
 	move.b	(a0),d0                         	| [...]
 	PUSH_SR
 	GET_ADDRESS	0x18                       	| [$ddb6: sta $18]
@@ -7354,13 +7348,13 @@ l_e760:
 	GET_ADDRESS	0x6f                       	| [$e761: lda $6f]
 	move.b	(a0),d0                         	| [...]
 	bmi	l_e783                             	| [$e763: bmi $e783]
-	GET_ADDRESS	0x181e                     	| [$e765: lda $181e]
+	GET_ADDRESS	player_y_181e                     	| [$e765: lda $181e]
 	move.b	(a0),d0                         	| [...]
 	PUSH_SR
 	GET_ADDRESS	0x03                       	| [$e768: sta $03]
 	move.b	d0,(a0)                         	| [...]
 	POP_SR
-	GET_ADDRESS	0x181f                     	| [$e76a: lda $181f]
+	GET_ADDRESS	player_x_181f                     	| [$e76a: lda $181f]
 	move.b	(a0),d0                         	| [...]
 	PUSH_SR
 	GET_ADDRESS	0x04                       	| [$e76d: sta $04] dummy_write_decrypt_trigger
@@ -7533,7 +7527,7 @@ l_e857:
                                     	| [$e85b: nop]
 l_e85c:
 	PUSH_SR
-	GET_ADDRESS	0x181d                     	| [$e85c: sta $181d]
+	GET_ADDRESS	player_code_181d                     	| [$e85c: sta $181d]
 	move.b	d0,(a0)                         	| [...]
 	POP_SR
 	bne	l_e869                             	| [$e85f: bne $e869]
@@ -7581,7 +7575,7 @@ l_e892:
 	GET_ADDRESS	0xe8d4                     	| [$e892: lda $e8d4, x]
 	move.b	(a0,d1.w),d0                    	| [...]
 	PUSH_SR
-	GET_ADDRESS	0x181d                     	| [$e895: sta $181d]
+	GET_ADDRESS	player_code_181d                     	| [$e895: sta $181d]
 	move.b	d0,(a0)                         	| [...]
 	POP_SR
 	GET_ADDRESS	0xa0                       	| [$e898: dec $a0]
@@ -7629,7 +7623,7 @@ l_e8f2:
 	GET_ADDRESS	0x04                       	| [$e901: sta $04]
 	move.b	d0,(a0)                         	| [...]
 	POP_SR
-	GET_ADDRESS	0x181e                     	| [$e903: lda $181e]
+	GET_ADDRESS	player_y_181e                     	| [$e903: lda $181e]
 	move.b	(a0),d0                         	| [...]
 	                           	| [$e906: clc]
 	add.b	#0x08,d0                        	| [$e907: adc #$08]
@@ -7642,7 +7636,7 @@ l_e8f2:
 	cmp.b	(a0),d0                          	| [...]
 	* bcs=>bcc
 	bcc	l_e971                             	| [$e911: bcs $e971]
-	GET_ADDRESS	0x181f                     	| [$e913: lda $181f]
+	GET_ADDRESS	player_x_181f                     	| [$e913: lda $181f]
 	move.b	(a0),d0                         	| [...]
 	                           	| [$e916: clc]
 	add.b	#0x08,d0                        	| [$e917: adc #$08]

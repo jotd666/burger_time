@@ -28,7 +28,7 @@ ram_start_0000:
 bg_videoram:
 	.skip	0x1000
 sprite_ram_1800:
-	.skip	0x800
+	.skip	0x20
 	
 palette_entries:
 	.skip	0x100
