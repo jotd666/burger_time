@@ -108,7 +108,7 @@ C02C: 85 01    sta $01
 C02E: A9 00    lda #$00
 C030: 85 1A    sta $1a
 C032: 20 0D C7 jsr $c70d
-C035: 85 F7    sta $f7
+C035: 85 F7    sta dummy_write_00f7
 C037: EA       nop 
 C038: A9 FE    lda #$fe
 C03A: 8D 05 50 sta $5005
@@ -203,7 +203,7 @@ C10D: D0 0A    bne $c119
 C10F: A2 02    ldx #$02
 C111: A0 C1    ldy #$c1
 C113: 20 BC C9 jsr $c9bc
-C116: 85 F6    sta $f6
+C116: 85 F6    sta dummy_write_00f6
 C118: EA       nop 
 C119: A5 C6    lda $c6
 C11B: D0 0D    bne $c12a
@@ -211,7 +211,7 @@ C11D: A5 C5    lda $c5
 C11F: F0 03    beq $c124
 C121: 4C 75 C0 jmp $c075
 C124: 4C 7B C0 jmp $c07b
-C127: 85 F7    sta $f7
+C127: 85 F7    sta dummy_write_00f7
 C129: EA       nop 
 C12A: A9 00    lda #$00
 C12C: 85 C6    sta $c6  ; dummy_write_decrypt_trigger
@@ -220,7 +220,7 @@ C130: D0 0B    bne $c13d
 C132: A2 3F    ldx #$3f
 C134: 20 2C CA jsr $ca2c
 C137: 4C 38 C0 jmp $c038
-C13A: 85 F7    sta $f7  ; dummy_write_decrypt_trigger
+C13A: 85 F7    sta dummy_write_00f7  ; dummy_write_decrypt_trigger
 C13C: EA       nop   ; prev_crypted 6e
 C13D: 20 A3 C8 jsr $c8a3
 C140: 20 E3 CB jsr $cbe3
@@ -235,7 +235,7 @@ C152: 4C 75 C0 jmp $c075
 C155: 85 F5    sta dummy_write_00f5  ; dummy_write_decrypt_trigger
 C157: EA       nop   ; prev_crypted 6e
 C158: 4C F1 C1 jmp $c1f1
-C15B: 85 F7    sta $f7  ; dummy_write_decrypt_trigger
+C15B: 85 F7    sta dummy_write_00f7  ; dummy_write_decrypt_trigger
 C15D: EA       nop   ; prev_crypted 6e
 C15E: A6 1F    ldx current_player_001f
 C160: D0 4D    bne $c1af
@@ -248,13 +248,13 @@ C16C: 20 6D C2 jsr $c26d
 C16F: A9 01    lda #$01
 C171: 85 20    sta $20
 C173: 4C 75 C0 jmp $c075
-C176: 85 F7    sta $f7
+C176: 85 F7    sta dummy_write_00f7
 C178: EA       nop 
 C179: A5 29    lda player_lives_0029
 C17B: 10 09    bpl $c186
 C17D: 20 95 C2 jsr $c295
 C180: 20 A3 C8 jsr $c8a3
-C183: 85 F7    sta $f7  ; dummy_write_decrypt_trigger
+C183: 85 F7    sta dummy_write_00f7  ; dummy_write_decrypt_trigger
 C185: EA       nop   ; prev_crypted 6e
 C186: 20 03 C3 jsr $c303
 C189: A9 01    lda #$01
@@ -267,12 +267,12 @@ C196: A9 00    lda #$00
 C198: 8D 05 50 sta $5005
 C19B: A9 01    lda #$01
 C19D: 8D 02 40 sta $4002
-C1A0: 85 F7    sta $f7
+C1A0: 85 F7    sta dummy_write_00f7
 C1A2: EA       nop 
 C1A3: 20 81 C2 jsr $c281
 C1A6: 4C 75 C0 jmp $c075
 C1A9: 4C F1 C1 jmp $c1f1
-C1AC: 85 F7    sta $f7  ; dummy_write_decrypt_trigger
+C1AC: 85 F7    sta dummy_write_00f7  ; dummy_write_decrypt_trigger
 C1AE: EA       nop   ; prev_crypted 6e
 C1AF: A5 2A    lda $2a
 C1B1: 25 29    and player_lives_0029
@@ -283,13 +283,13 @@ C1B9: A9 01    lda #$01
 C1BB: 85 20    sta $20  ; dummy_write_decrypt_trigger
 C1BD: 20 81 C2 jsr $c281  ; prev_crypted 08
 C1C0: 4C 75 C0 jmp $c075
-C1C3: 85 F7    sta $f7  ; dummy_write_decrypt_trigger
+C1C3: 85 F7    sta dummy_write_00f7  ; dummy_write_decrypt_trigger
 C1C5: EA       nop   ; prev_crypted 6e
 C1C6: A5 2A    lda $2a
 C1C8: 10 09    bpl $c1d3
 C1CA: 20 AD C2 jsr $c2ad
 C1CD: 20 A3 C8 jsr $c8a3
-C1D0: 85 F7    sta $f7
+C1D0: 85 F7    sta dummy_write_00f7
 C1D2: EA       nop 
 C1D3: 20 03 C3 jsr $c303
 C1D6: A9 00    lda #$00
@@ -302,7 +302,7 @@ C1E3: A9 00    lda #$00
 C1E5: 8D 02 40 sta $4002
 C1E8: 20 6D C2 jsr $c26d
 C1EB: 4C 75 C0 jmp $c075
-C1EE: 85 F7    sta $f7
+C1EE: 85 F7    sta dummy_write_00f7
 C1F0: EA       nop 
 C1F1: 20 C5 C2 jsr $c2c5
 C1F4: 20 A3 C8 jsr $c8a3
@@ -327,7 +327,7 @@ C21E: A9 00    lda #$00
 C220: 8D 05 50 sta $5005
 C223: A9 01    lda #$01
 C225: 8D 02 40 sta $4002
-C228: 85 F7    sta $f7
+C228: 85 F7    sta dummy_write_00f7
 C22A: EA       nop 
 C22B: A9 01    lda #$01
 C22D: 85 CB    sta $cb
@@ -344,10 +344,10 @@ C242: A5 1D    lda nb_credits_001d
 C244: 05 1E    ora $1e
 C246: F0 05    beq $c24d
 C248: E6 1A    inc $1a
-C24A: 85 F7    sta $f7
+C24A: 85 F7    sta dummy_write_00f7
 C24C: EA       nop 
 C24D: 4C 38 C0 jmp $c038
-C250: 85 F7    sta $f7
+C250: 85 F7    sta dummy_write_00f7
 C252: EA       nop 
 C253: A2 E8    ldx #$e8
 C255: A0 C2    ldy #$c2
@@ -361,7 +361,7 @@ C264: EA       nop
 C265: A2 1F    ldx #$1f
 C267: 20 2C CA jsr $ca2c
 C26A: 60       rts 
-C26B: 85 F7    sta $f7
+C26B: 85 F7    sta dummy_write_00f7
 C26D: EA       nop 
 C26E: A2 D2    ldx #$d2
 C270: A0 C2    ldy #$c2
@@ -370,7 +370,7 @@ C275: A2 E8    ldx #$e8
 C277: A0 C2    ldy #$c2
 C279: 20 BC C9 jsr $c9bc
 C27C: 4C 5D C2 jmp $c25d
-C27F: 85 F7    sta $f7
+C27F: 85 F7    sta dummy_write_00f7
 C281: EA       nop 
 C282: A2 DD    ldx #$dd
 C284: A0 C2    ldy #$c2
@@ -379,7 +379,7 @@ C289: A2 E8    ldx #$e8
 C28B: A0 C2    ldy #$c2
 C28D: 20 BC C9 jsr $c9bc
 C290: 4C 5D C2 jmp $c25d
-C293: 85 F7    sta $f7
+C293: 85 F7    sta dummy_write_00f7
 C295: EA       nop 
 C296: E6 C8    inc $c8
 C298: A2 D2    ldx #$d2
@@ -390,7 +390,7 @@ C2A1: A2 F5    ldx #$f5
 C2A3: A0 C2    ldy #$c2
 C2A5: 20 BC C9 jsr $c9bc
 C2A8: 4C 65 C2 jmp $c265
-C2AB: 85 F7    sta $f7
+C2AB: 85 F7    sta dummy_write_00f7
 C2AD: EA       nop 
 C2AE: E6 C8    inc $c8
 C2B0: A2 DD    ldx #$dd
@@ -401,7 +401,7 @@ C2B9: A2 F5    ldx #$f5
 C2BB: A0 C2    ldy #$c2
 C2BD: 20 BC C9 jsr $c9bc
 C2C0: 4C 65 C2 jmp $c265
-C2C3: 85 F7    sta $f7
+C2C3: 85 F7    sta dummy_write_00f7
 C2C5: EA       nop 
 C2C6: E6 C8    inc $c8
 C2C8: A2 F5    ldx #$f5
@@ -412,7 +412,7 @@ C2CF: 4C 65 C2 jmp $c265
 
 C303: EA       nop 
 C304: A0 00    ldy #$00
-C306: 85 F7    sta $f7
+C306: 85 F7    sta dummy_write_00f7
 C308: EA       nop 
 C309: B9 00 02 lda $0200, y
 C30C: AA       tax 
@@ -423,7 +423,7 @@ C314: 99 00 03 sta $0300, y  ; dummy_write_decrypt_trigger
 C317: C8       iny   ; prev_crypted 64
 C318: D0 EF    bne $c309
 C31A: 60       rts 
-C31B: 85 F6    sta $f6  ; dummy_write_decrypt_trigger
+C31B: 85 F6    sta dummy_write_00f6  ; dummy_write_decrypt_trigger
 C31D: EA       nop   ; prev_crypted 6e
 C31E: A9 00    lda #$00
 C320: 8D 05 50 sta $5005
@@ -433,19 +433,19 @@ C328: A9 80    lda #$80
 C32A: 85 27    sta $27  ; dummy_write_decrypt_trigger
 C32C: 8D 00 40 sta $4000  ; prev_crypted c5  ; dummy_write_decrypt_trigger
 C32F: 60       rts   ; prev_crypted 28
-C330: 85 F6    sta $f6
+C330: 85 F6    sta dummy_write_00f6
 C332: EA       nop 
-C333: 85 F6    sta $f6  ; dummy_write_decrypt_trigger
+C333: 85 F6    sta dummy_write_00f6  ; dummy_write_decrypt_trigger
 C335: EA       nop   ; prev_crypted 6e
 C336: A9 00    lda #$00
 C338: 85 03    sta $03
 C33A: A9 10    lda #$10
 C33C: 85 04    sta $04  ; dummy_write_decrypt_trigger
 C33E: A2 10    ldx #$10  ; prev_crypted 4a
-C340: 85 F6    sta $f6
+C340: 85 F6    sta dummy_write_00f6
 C342: EA       nop 
 C343: A0 00    ldy #$00
-C345: 85 F6    sta $f6  ; dummy_write_decrypt_trigger
+C345: 85 F6    sta dummy_write_00f6  ; dummy_write_decrypt_trigger
 C347: EA       nop   ; prev_crypted 6e
 C348: A9 00    lda #$00
 C34A: 91 03    sta ($03), y  ; dummy_write_decrypt_trigger
@@ -454,14 +454,14 @@ C34D: D0 F9    bne $c348
 C34F: E6 04    inc $04
 C351: CA       dex 
 C352: D0 EF    bne $c343
-C354: 85 F6    sta $f6  ; dummy_write_decrypt_trigger
+C354: 85 F6    sta dummy_write_00f6  ; dummy_write_decrypt_trigger
 C356: EA       nop   ; prev_crypted 6e
 C357: 95 01    sta $01, x
 C359: E8       inx 
 C35A: E0 E1    cpx #$e1
 C35C: D0 F9    bne $c357
 C35E: A2 00    ldx #$00
-C360: 85 F6    sta $f6
+C360: 85 F6    sta dummy_write_00f6
 C362: EA       nop 
 C363: 9D 00 02 sta $0200, x  ; dummy_write_decrypt_trigger
 C366: 9D 00 03 sta $0300, x  ; prev_crypted d5
@@ -474,19 +474,19 @@ C372: 85 34    sta $34  ; dummy_write_decrypt_trigger
 C374: A9 00    lda #$00  ; prev_crypted 4d
 C376: 85 33    sta $33
 C378: A2 23    ldx #$23
-C37A: 85 F6    sta $f6  ; dummy_write_decrypt_trigger
+C37A: 85 F6    sta dummy_write_00f6  ; dummy_write_decrypt_trigger
 C37C: EA       nop   ; prev_crypted 6e
 C37D: BD B3 C3 lda $c3b3, x
 C380: 95 36    sta $36, x
 C382: CA       dex 
 C383: 10 F8    bpl $c37d
-C385: 85 F6    sta $f6  ; dummy_write_decrypt_trigger
+C385: 85 F6    sta dummy_write_00f6  ; dummy_write_decrypt_trigger
 C387: EA       nop   ; prev_crypted 6e
 C388: A0 00    ldy #$00
-C38A: 85 F6    sta $f6  ; dummy_write_decrypt_trigger
+C38A: 85 F6    sta dummy_write_00f6  ; dummy_write_decrypt_trigger
 C38C: EA       nop   ; prev_crypted 6e
 C38D: A2 00    ldx #$00
-C38F: 85 F6    sta $f6
+C38F: 85 F6    sta dummy_write_00f6
 C391: EA       nop 
 C392: BD A3 C3 lda $c3a3, x
 C395: 99 00 0C sta $0c00, y
@@ -800,7 +800,7 @@ C784: F8       sed
 C785: 69 01    adc #$01
 C787: 95 2B    sta player_pepper_002b, x
 C789: D8       cld 
-C78A: 85 F6    sta $f6  ; dummy_write_decrypt_trigger
+C78A: 85 F6    sta dummy_write_00f6  ; dummy_write_decrypt_trigger
 C78C: EA       nop   ; prev_crypted 6e
 C78D: A6 1F    ldx current_player_001f
 C78F: F6 61    inc $61, x
@@ -937,13 +937,13 @@ C89A: 85 A1    sta $a1
 C89C: 85 A2    sta $a2
 C89E: 85 A3    sta $a3
 C8A0: 60       rts 
-C8A1: 85 F6    sta $f6
+C8A1: 85 F6    sta dummy_write_00f6
 C8A3: EA       nop 
 C8A4: A0 00    ldy #$00
 C8A6: 84 03    sty $03
 C8A8: A9 10    lda #$10
 C8AA: 85 04    sta $04
-C8AC: 85 F6    sta $f6
+C8AC: 85 F6    sta dummy_write_00f6
 C8AE: EA       nop 
 C8AF: A9 00    lda #$00
 C8B1: 91 03    sta ($03), y
@@ -1064,7 +1064,7 @@ C99F: 60       rts
 C9BC: EA       nop   ; prev_crypted 6e
 C9BD: 86 03    stx $03  ; dummy_write_decrypt_trigger
 C9BF: 84 04    sty $04  ; prev_crypted c0
-C9C1: 85 F6    sta $f6
+C9C1: 85 F6    sta dummy_write_00f6
 C9C3: EA       nop 
 C9C4: A0 00    ldy #$00
 C9C6: 84 08    sty $08
@@ -1073,7 +1073,7 @@ C9CA: 85 05    sta $05  ; dummy_write_decrypt_trigger
 C9CC: C8       iny   ; prev_crypted 64
 C9CD: B1 03    lda ($03), y
 C9CF: 85 06    sta $06
-C9D1: 85 F6    sta $f6
+C9D1: 85 F6    sta dummy_write_00f6
 C9D3: EA       nop 
 C9D4: C8       iny 
 C9D5: B1 03    lda ($03), y
@@ -1093,7 +1093,7 @@ C9EF: F0 E3    beq $c9d4
 C9F1: A2 0A    ldx #$0a
 C9F3: 20 2C CA jsr $ca2c
 C9F6: 4C D4 C9 jmp $c9d4
-C9F9: 85 F6    sta $f6
+C9F9: 85 F6    sta dummy_write_00f6
 C9FB: EA       nop 
 C9FC: C8       iny 
 C9FD: 18       clc 
@@ -1104,7 +1104,7 @@ CA03: A5 04    lda $04
 CA05: 69 00    adc #$00
 CA07: 85 04    sta $04
 CA09: 4C C4 C9 jmp $c9c4
-CA0C: 85 F6    sta $f6
+CA0C: 85 F6    sta dummy_write_00f6
 CA0E: EA       nop 
 CA0F: 18       clc 
 CA10: A5 05    lda $05
@@ -1116,12 +1116,12 @@ CA1A: 85 06    sta $06
 CA1C: A9 00    lda #$00
 CA1E: 85 08    sta $08
 CA20: F0 B2    beq $c9d4
-CA22: 85 F6    sta $f6
+CA22: 85 F6    sta dummy_write_00f6
 CA24: EA       nop 
 CA25: A9 00    lda #$00
 CA27: 85 C8    sta $c8
 CA29: 60       rts 
-CA2A: 85 F6    sta $f6
+CA2A: 85 F6    sta dummy_write_00f6
 CA2C: EA       nop 
 CA2D: AD 03 40 lda $4003
 CA30: 10 FB    bpl $ca2d
@@ -1139,7 +1139,7 @@ CA40: 48       pha
 CA41: 20 6E D0 jsr $d06e
 CA44: 68       pla 
 CA45: AA       tax 
-CA46: 85 F6    sta $f6
+CA46: 85 F6    sta dummy_write_00f6
 CA48: EA       nop 
 CA49: AD 03 40 lda $4003
 CA4C: 30 FB    bmi $ca49
@@ -1178,7 +1178,7 @@ CA87: F6 EA    inc $ea, x
 CA89: 91 F3    sta ($f3), y
 CA8B: 88       dey 
 CA8C: D0 FB    bne $ca89
-CA8E: 85 F7    sta $f7
+CA8E: 85 F7    sta dummy_write_00f7
 CA90: EA       nop 
 CA91: 60       rts 
 CA92: 85 F5    sta dummy_write_00f5
@@ -1434,7 +1434,7 @@ CC5B: 9D 02 02 sta $0202, x
 CC5E: E8       inx 
 CC5F: D0 F8    bne $cc59
 CC61: 60       rts 
-CC62: 85 F7    sta $f7
+CC62: 85 F7    sta dummy_write_00f7
 CC64: EA       nop 
 CC65: A9 02    lda #$02
 CC67: 85 0B    sta $0b
@@ -1442,7 +1442,7 @@ CC69: A9 02    lda #$02
 CC6B: 85 0C    sta $0c
 CC6D: A9 00    lda #$00
 CC6F: 85 0D    sta $0d
-CC71: 85 F7    sta $f7
+CC71: 85 F7    sta dummy_write_00f7
 CC73: EA       nop 
 CC74: A4 0D    ldy $0d
 CC76: B1 0B    lda ($0b), y
@@ -1460,7 +1460,7 @@ CC8B: 18       clc
 CC8C: 69 04    adc #$04
 CC8E: 85 0D    sta $0d
 CC90: 4C 74 CC jmp $cc74
-CC93: 85 F7    sta $f7
+CC93: 85 F7    sta dummy_write_00f7
 CC95: EA       nop 
 CC96: 60       rts 
 CC97: 85 F5    sta dummy_write_00f5
@@ -1601,7 +1601,7 @@ CD8F: EA       nop   ; prev_crypted 6e
 CD90: 68       pla 
 CD91: A8       tay 
 CD92: 60       rts 
-CD93: 85 F7    sta $f7  ; dummy_write_decrypt_trigger
+CD93: 85 F7    sta dummy_write_00f7  ; dummy_write_decrypt_trigger
 CD95: EA       nop   ; prev_crypted 6e
 CD96: 91 05    sta ($05), y
 CD98: C8       iny 
@@ -1617,7 +1617,7 @@ CDA3: E8       inx
 CDA4: 8A       txa 
 CDA5: 91 05    sta ($05), y  ; dummy_write_decrypt_trigger
 CDA7: 60       rts   ; prev_crypted 28
-CDA8: 85 F7    sta $f7
+CDA8: 85 F7    sta dummy_write_00f7
 CDAA: EA       nop 
 CDAB: 91 05    sta ($05), y  ; dummy_write_decrypt_trigger
 CDAD: C8       iny   ; prev_crypted 64
@@ -1670,7 +1670,7 @@ CF83: 25 26    and $26
 CF85: F0 07    beq $cf8e
 CF87: A9 01    lda #$01
 CF89: 85 F9    sta $f9
-CF8B: 85 F6    sta $f6  ; dummy_write_decrypt_trigger
+CF8B: 85 F6    sta dummy_write_00f6  ; dummy_write_decrypt_trigger
 CF8D: EA       nop   ; prev_crypted 6e
 CF8E: 8D 00 40 sta $4000
 CF91: 68       pla 
@@ -1679,7 +1679,7 @@ CF93: 68       pla
 CF94: AA       tax 
 CF95: 68       pla 
 CF96: 40       rti 
-CF97: 85 F6    sta $f6
+CF97: 85 F6    sta dummy_write_00f6
 CF99: EA       nop 
 CF9A: E6 1E    inc $1e  ; dummy_write_decrypt_trigger
 CF9C: A9 1B    lda #$1b  ; prev_crypted 4d
@@ -1760,7 +1760,7 @@ D025: A2 FF    ldx #$ff
 D027: 9A       txs 
 D028: EA       nop 
 D029: 4C 38 C0 jmp $c038
-D02C: 85 F6    sta $f6
+D02C: 85 F6    sta dummy_write_00f6
 D02E: EA       nop 
 D02F: 4C D4 CF jmp $cfd4
 D032: 85 F5    sta dummy_write_00f5
@@ -1774,7 +1774,7 @@ D03E: EA       nop
 D03F: CA       dex 
 D040: D0 F8    bne $d03a
 D042: 60       rts 
-D043: 85 F6    sta $f6
+D043: 85 F6    sta dummy_write_00f6
 D045: EA       nop 
 D046: A5 F9    lda $f9
 D048: F0 11    beq $d05b
@@ -1784,7 +1784,7 @@ D04F: D0 0A    bne $d05b
 D051: A9 00    lda #$00
 D053: 85 F9    sta $f9
 D055: 20 99 CF jsr $cf99
-D058: 85 F6    sta $f6
+D058: 85 F6    sta dummy_write_00f6
 D05A: EA       nop 
 D05B: 60       rts 
 
@@ -2568,7 +2568,7 @@ D7B5: F0 DA    beq $d791
 D7B7: C9 22    cmp #$22
 D7B9: F0 04    beq $d7bf
 D7BB: 60       rts 
-D7BC: 85 F6    sta $f6  ; dummy_write_decrypt_trigger
+D7BC: 85 F6    sta dummy_write_00f6  ; dummy_write_decrypt_trigger
 D7BE: EA       nop   ; prev_crypted 6e
 D7BF: 4C 57 D8 jmp $d857
 D7C2: 85 F5    sta dummy_write_00f5  ; dummy_write_decrypt_trigger
@@ -2594,7 +2594,7 @@ D7EB: D8       cld
 D7EC: A5 1B    lda $1b
 D7EE: F0 06    beq $d7f6
 D7F0: 20 94 CA jsr $ca94
-D7F3: 85 F6    sta $f6  ; dummy_write_decrypt_trigger
+D7F3: 85 F6    sta dummy_write_00f6  ; dummy_write_decrypt_trigger
 D7F5: EA       nop   ; prev_crypted 6e
 D7F6: 60       rts 
 D7F7: 85 F5    sta dummy_write_00f5
@@ -2607,7 +2607,7 @@ D801: D9 6E D8 cmp $d86e, y
 D804: D0 09    bne $d80f
 D806: B9 73 D8 lda $d873, y
 D809: 8D 1D 18 sta $181d
-D80C: 85 F6    sta $f6
+D80C: 85 F6    sta dummy_write_00f6
 D80E: EA       nop 
 D80F: B9 87 D8 lda $d887, y
 D812: 8D 19 18 sta $1819
@@ -2622,7 +2622,7 @@ D820: D9 73 D8 cmp $d873, y
 D823: D0 09    bne $d82e
 D825: B9 78 D8 lda $d878, y
 D828: 8D 1D 18 sta $181d
-D82B: 85 F6    sta $f6
+D82B: 85 F6    sta dummy_write_00f6
 D82D: EA       nop 
 D82E: B9 8C D8 lda $d88c, y
 D831: 8D 19 18 sta $1819
@@ -2637,7 +2637,7 @@ D83F: D9 78 D8 cmp $d878, y
 D842: D0 09    bne $d84d
 D844: B9 7D D8 lda $d87d, y
 D847: 8D 1D 18 sta $181d
-D84A: 85 F6    sta $f6
+D84A: 85 F6    sta dummy_write_00f6
 D84C: EA       nop 
 D84D: B9 91 D8 lda $d891, y
 D850: 8D 19 18 sta $1819
@@ -4370,11 +4370,7 @@ E6CB: 95 99    sta $99, x
 E6CD: A9 0F    lda #$0f
 E6CF: 20 5D EA jsr $ea5d
 E6D2: 4C 89 E6 jmp $e689
-E6D5: D1 C1    cmp ($c1), y
-E6D7: B1 A1    lda ($a1), y
-E6D9: 91 81    sta ($81), y
-E6DB: 71 61    adc ($61), y
-E6DD: 85 F5    sta dummy_write_00f5
+
 E6DF: EA       nop 
 E6E0: A2 00    ldx #$00
 E6E2: 85 F5    sta dummy_write_00f5
@@ -4904,7 +4900,7 @@ EBB7: 95 99    sta $99, x
 EBB9: A9 0C    lda #$0c
 EBBB: 20 5E EA jsr $ea5e
 EBBE: 4C 78 EB jmp $eb78
-EBC1: 85 F6    sta $f6
+EBC1: 85 F6    sta dummy_write_00f6
 EBC3: EA       nop 
 EBC4: A9 05    lda #$05
 EBC6: 85 2B    sta player_pepper_002b
@@ -4913,7 +4909,7 @@ EBCA: AD 04 40 lda $4004
 EBCD: 29 10    and #$10
 EBCF: D0 05    bne $ebd6
 EBD1: C6 2B    dec player_pepper_002b
-EBD3: 85 F6    sta $f6  ; dummy_write_decrypt_trigger
+EBD3: 85 F6    sta dummy_write_00f6  ; dummy_write_decrypt_trigger
 EBD5: EA       nop   ; prev_crypted 6e
 EBD6: 60       rts 
 

@@ -1,0 +1,42 @@
+
+	.global		ram_start_4000
+	.global		ram_buffer	
+	.global		stack_top
+	.global		bg_videoram
+	.global		palette_entries
+	.global		vb_ticks_count
+	.global		unlimited_credits_flag
+	.global		music_off_flag
+	.ifndef		RELEASE
+
+	.endif
+
+ram_buffer:
+	.ifdef	RELEASE
+	.skip	0x5000-0x4000
+	.else
+	.skip	0x10000
+ram_start_4000:
+	.long	0
+	.endif
+
+bg_videoram:
+	.skip	0x1000
+palette_entries:
+	.skip	0x100
+
+
+	
+	* a lot of room for stack just in case...
+	.skip	0x1000
+stack_top:
+current_bank:
+	.skip	1
+vb_ticks_count:
+	.skip	1
+unlimited_credits_flag:
+	.skip	1
+music_off_flag:
+	.skip	1
+	
+	
