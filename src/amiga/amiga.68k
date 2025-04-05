@@ -170,8 +170,9 @@ start:
 		.global osd_w_videoram
 		.global osd_w_colorram
 		.global osd_update_sprites
-		.global osd_read_dsw1
 		.global osd_read_dsw0
+		.global osd_read_dsw1
+		.global osd_read_dsw2
 		.global osd_read_inputs_1
 		.global osd_read_inputs_0
 
@@ -325,7 +326,20 @@ _user:
 	move.l	a0,playfield_displayed_screen_ptr
 	.endif
 		
-
+	* blank sprites
+	lea		game_sprites,a2
+	
+	* pad last sprite entries with blank
+	move.l	#blank_sprite,d0
+1:
+	move.w	d0,(4,a2)
+	swap	d0
+	move.w	d0,(a2)
+	swap	d0
+	addq	#8,a2
+	cmp.l	#game_sprites_end,a2
+	bcs		1b
+2:
 
 	bsr		set_background_bitplanes
 	bsr		set_bobs_bitplanes
@@ -697,7 +711,7 @@ _vblank:
 	btst	#5,d0
 	beq.b		1f
 
-	clr.b	vbl_sync_flag
+	clr.b	bof_sync_flag
 	
 	move.l	_joypad_state(pc),d1
 	moveq	#1,d0
@@ -729,7 +743,7 @@ _vblank:
 	move.w	#0x20,(intreq,a5)	
 	jra	3f
 1:
-	* has to be copper
+	* has to be copper: set sync
 
 	* we're going to ack copper & software interrupt now
 	* do it twice (040/pistorm bug)
@@ -743,7 +757,6 @@ _vblank:
 	* set base for RAM
 	GET_RAM_START_IN_A6
 	* declare that we're in interrupt mode so osd_disable_interrupts/osd_enable_interrupts
-	st.b	interrupt_mode
 	* is level 1 interrupt set? that would mean that mid-screen interrupt
 	* is the source of the interrupt
 	btst	#2,d0
@@ -754,8 +767,9 @@ _vblank:
 	addq.b	#1,d0
 	cmp.b	#5,d0
 	bne.b	1f
-	*jbsr		pooyan_irq
-	clr.b	interrupt_mode	
+	* TODO: clear the sync flag a few lines later
+	* to simulate an extra vblank
+	st.b	bof_sync_flag
 	clr.b	d0
 1:
 	move.b	d0,mid_screen_interrupt_count
@@ -766,7 +780,7 @@ _vblank:
 	
 	subq.w	#1,delay_timer
 		
-	*jbsr		pooyan_irq
+	st.b	bof_sync_flag
 
 	tst.b	frameskip
 	jeq		0f
@@ -998,16 +1012,6 @@ really_update_tiles:
 	jne		3b
 	rts
 	
-	
-* < A6: hw sprite flag table
-* < A4: hw sprite table
-* < A2: copperlist (hw sprite part)
-* < A1: sprite pos table (Y) for 16-high sprites
-* < A0: target sprite pointer
-
-	
-* drawing order is a bit strange. The last sprite has to be moved at the start of the list.
-* if ((which >= 0x10) && (which <= 0x17)) no sprites!
 
 really_update_sprites:
 update_bobs_and_hw_sprites:
@@ -1017,24 +1021,11 @@ update_bobs_and_hw_sprites:
 	* position hardware sprites *
 	*****************************
 	
-	lea		sprite_ram_1800,a0	
 
-	* pad last sprite entries with blank
-	move.l	#blank_sprite,d0
-1:
-	move.w	d0,(4,a2)
-	swap	d0
-	move.w	d0,(a2)
-	swap	d0
-	addq	#8,a2
-	cmp.l	#game_sprites_end,a2
-	bcs		1b
-2:
 	***********************
 	* erase previous BOBs *
 	***********************
 	
-
 	move.l	bob_previous_drawed_sprites(pc),a4
 	lea		_custom,a5
 	
@@ -1065,7 +1056,8 @@ update_bobs_and_hw_sprites:
 	* draw current BOBs *
 	*********************
 
-  	lea		sprite_ram_1800,a0	
+	GET_RAM_START_IN_A6
+	lea	(0x1800,a6),a0
     lea _custom,A5
 	move.l	bob_previous_drawed_sprites(pc),a6
 	lea		bob_table,a4
@@ -2241,8 +2233,14 @@ osd_read_dsw1:
 	rts
 osd_read_dsw0:
 	* actual dipswitches
-	move.b	dip_switches_0(pc),d0
-	not.b	d0		| active low
+	move.b	#0x3F,d0		| what MAME returns
+	rts
+
+osd_read_dsw2:
+	* actual dipswitches
+	*move.b	dip_switches_2(pc),d0
+	move.b	#0xEB,d0		| default lives, etc..
+
 	rts
 
 	

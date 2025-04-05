@@ -1,37 +1,34 @@
 
 	.global		ram_start_0000
-	.global		sprite_ram_1800
 	.global		ram_buffer	
 	.global		stack_top
-	.global		bg_videoram
 	.global		palette_entries
-	.global		vbl_sync_flag
+	.global		bof_sync_flag
 	.global		no_sync_flag
 	.global		vb_ticks_count
 	.global		break_at_startup_flag
 	.global		infinite_lives_flag
 	.global		invincible_flag
 	.global		music_off_flag
+	.global		player_1_controls
+	.global		player_2_controls
+	.global		fake_5005_byte
+	.global		fake_4003_byte
 	.ifndef		RELEASE
 
 	.endif
 
+* ram also includes video & sprite ram
 ram_buffer:
 	.ifdef	RELEASE
-	.skip	0x800
+	.skip	0x2000
 	.else
 	.skip	0x20000
 ram_start_0000:
 	.long	0
 	.endif
 
-bg_videoram:
-	.skip	0x1000
-sprite_ram_1800:
-	.skip	0x20
-	
-palette_entries:
-	.skip	0x100
+
 
 
 	
@@ -50,8 +47,15 @@ infinite_lives_flag:
 	.skip	1
 music_off_flag:
 	.skip	1
-	
-vbl_sync_flag:
+fake_5005_byte:
+	.skip 1
+fake_4003_byte:
+	.skip 1
+bof_sync_flag:
+	.skip	1
+player_1_controls:
+	.skip	1
+player_2_controls:
 	.skip	1
 no_sync_flag:
 	.skip	1
