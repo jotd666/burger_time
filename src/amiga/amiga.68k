@@ -20,7 +20,7 @@ NO68020 = 1
 
 PREVIOUS_SPRITE_SIZE = 8
 CURRENT_SPRITE_SIZE = 4
-BORDERBLANK = 1
+
 
 
 SPRITE_X_CORRECTION = 24
@@ -68,7 +68,7 @@ _custom = 0xDFF000
 
 OPT_ENABLE_MULTIPLEXED_SPRITES = 0
 
-NB_PLAYFIELD_PLANES = 4
+NB_PLAYFIELD_PLANES = 3
 TOTAL_NB_COLORS = 1<<NB_PLAYFIELD_PLANES
 NB_BYTES_PER_ROW = 40
 
@@ -78,26 +78,24 @@ NB_PLAYFIELD_LINES = NB_LINES
 
 
 SCREEN_PLANE_SIZE = NB_BYTES_PER_ROW*NB_PLAYFIELD_LINES
-RESTORE_SCREEN_PLANE_SIZE = SCREEN_PLANE_SIZE
-RESTORE_SCREEN_SIZE = RESTORE_SCREEN_PLANE_SIZE*NB_PLAYFIELD_PLANES
 
 SCREEN_SIZE = SCREEN_PLANE_SIZE*NB_PLAYFIELD_PLANES
 NB_HOST_SPRITES = 8
 
-NB_TARGET_SPRITES = 24
+NB_TARGET_SPRITES = 8
 
-SPRITE_X = 0
-SPRITE_Y = 1
-SPRITE_CODE = 2
-SPRITE_CLUT = 3
+SPRITE_X = 2
+SPRITE_Y = 3
+SPRITE_CODE = 0
+SPRITE_ATTRIBUTES = 1
 SPRITE_SIZEOF = 4
 
 BIT_INSERT_COIN_1 = 0
 BIT_INSERT_COIN_2 = 1
 BIT_START_1P = 3
 BIT_START_2P = 4
-*BIT_LEFT = 0
-*BIT_RIGHT = 1
+BIT_LEFT = 0
+BIT_RIGHT = 1
 BIT_UP = 2
 BIT_DOWN = 3
 BIT_FIRE = 4
@@ -312,25 +310,25 @@ _user:
 	lea		debug_copperlist,a0
 	move.l	a0,cop1lc(a5)
 	
-	lea		bg_screen_buffer_1,a0
+	lea		bobs_screen_buffer_1,a0
 	addq	#2,a0	| leave 16 bits hidden for left side clipping
-	move.l	a0,bg_screen_data_1
+	move.l	a0,playfield_screen_data_1
 	move.l	a0,playfield_drawed_screen_ptr
 	move.l	a0,playfield_displayed_screen_ptr
 
 
 
 	.ifne	OPT_ENABLE_DOUBLE_BUFFERING
-	lea		bg_screen_buffer_2,a0
+	lea		bobs_screen_buffer_2,a0
 	addq	#2,a0	| leave 16 bits hidden for left side clipping
-	move.l	a0,bg_screen_data_2
+	move.l	a0,playfield_screen_data_2
 	move.l	a0,playfield_displayed_screen_ptr
 	.endif
 		
-	* set them even if reset by game afterwards
-	* avoiding ugly stripe bitplane effect at startup
 
-	bsr		set_static_bitplanes
+
+	bsr		set_background_bitplanes
+	bsr		set_bobs_bitplanes
 
 	move.w	#TOTAL_NB_COLORS,d0
 	lea		palette,a0
@@ -569,7 +567,7 @@ alloc_sprite:
 	lea		host_sprites(pc),a2
 	moveq	#0,d6
 0:
-	cmp.b	(SPRITE_CLUT,a2),d3
+	cmp.b	(SPRITE_ATTRIBUTES,a2),d3
 	bne.b	10f
 	* allocated (else would be -1/invalid) + same clut
 	* check even/odd index
@@ -947,7 +945,7 @@ blit_background:
 	move.w  d4,bltsize(a5)	|rectangle size, starts blit
 	
 	.rept	NB_PLAYFIELD_PLANES-1
-	lea	(RESTORE_SCREEN_PLANE_SIZE,a0),a0
+	lea	(SCREEN_PLANE_SIZE,a0),a0
 	lea	(SCREEN_PLANE_SIZE,a1),a1
 	WAIT_BLIT
 	* second bitplane
@@ -1042,7 +1040,7 @@ update_bobs_and_hw_sprites:
 	
 
 	* clear previous positions
-	lea	background_restore_buffer,a0
+	lea	restore_buffer,a0
 	move.l	playfield_drawed_screen_ptr(pc),a1
 	move.w	#NB_TARGET_SPRITES-1,d7
 1:
@@ -1129,7 +1127,7 @@ update_one_bob:
 	move.l	(a1),(a1,d2.w)
 	move.b	(TARGET_SPRITE_CODE,a0),d1
 	lsr.b	#2,d2
-	lea		unregistered_sprite_clut_error(pc),a0
+	lea		unregistered_SPRITE_ATTRIBUTES_error(pc),a0
 	jbsr	osd_break
 	move.l	(a1),d4
 	jeq		2f			| just in case fallback not working
@@ -1439,8 +1437,8 @@ switch_screen_buffers:
 	lea		playfield_drawed_screen_ptr(pc),a0
 	lea		bob_previous_positions_1(pc),a2
 	lea		bob_previous_positions_2(pc),a3
-	move.l	bg_screen_data_1,a1
-	move.l	bg_screen_data_2,a5
+	move.l	playfield_screen_data_1,a1
+	move.l	playfield_screen_data_2,a5
 	* also switch previous state memory
 	cmp.l	(a0),a1
 	bne.b	2f
@@ -1454,7 +1452,7 @@ switch_screen_buffers:
 	move.l	a3,bob_previous_displayed_sprites
 	move.l	a2,bob_previous_drawed_sprites
 
-	jbra		set_static_bitplanes
+	jbra		set_bobs_bitplanes
 	.endif
 	
 	
@@ -1591,7 +1589,7 @@ platform_init:
 	* disable extra mid-screen interrupt, as it would be too fast (NTSC)
 	move.w	#0x1FE,intreq_block_game
 0:
-    move.w #0x200+(NB_PLAYFIELD_PLANES<<12),bplcon0(a5)
+    move.w #0x6600,bplcon0(a5)		| dual playfield!
 
  	*         VVHH
     move.w #0x2499,diwstrt(a5)
@@ -1603,8 +1601,6 @@ platform_init:
     move.w #0x0038,ddfstrt(a5)
     move.w #0x00D0,ddfstop(a5)
 
-	* restrict borders: we don't see bobs on the borders!
-	* try to hide color 0 on the border (except on OCS)
 
     move.w #0,bplcon1(a5)
 	moveq	#0,d0
@@ -1847,7 +1843,7 @@ update_bg_tile:
 	move.l	#SCREEN_PLANE_SIZE,d5
 	move.w	#NB_PLAYFIELD_PLANES-1,d4
 	move.l	playfield_drawed_screen_ptr,a1
-	lea		background_restore_buffer,a3
+	lea		restore_buffer,a3
 
 
 	lea		mulNB_BYTES_PER_ROW_table,A2
@@ -2082,13 +2078,22 @@ HW_SpriteYTable_\height:
 
 	DEF_HW_SPRITE_Y_TABLE	16
 
-set_static_bitplanes:
+set_background_bitplanes:
 	movem.l	a0-a1/d0-d2,-(a7)
- 	lea	bitplanes+2,a0
+    lea		bg_screen_buffer,a0   | this isn't double-buffered, no need!
+	move.l	a0,d0
+	lea	background_bitplanes+2,a0
     moveq #NB_PLAYFIELD_PLANES-1,d1
  	move.l	#SCREEN_PLANE_SIZE,d2
-    move.l	playfield_displayed_screen_ptr(pc),d0
-1:
+ 	jra		set_bitplanes
+
+set_bobs_bitplanes:
+	movem.l	a0-a1/d0-d2,-(a7)
+ 	lea	bobs_bitplanes+2,a0
+    moveq #NB_PLAYFIELD_PLANES-1,d1
+ 	move.l	#SCREEN_PLANE_SIZE,d2
+    move.l	playfield_displayed_screen_ptr(pc),d0   | this isn't double-buffered, no need!
+set_bitplanes:
     swap d0
     move.w d0,(a0)
     swap d0
@@ -2396,7 +2401,7 @@ write_videoram_out_of_range_error:
 	.asciz	"write videoram out of range (D7)"
 write_colorram_out_of_range_error:
 	.asciz	"write colorram out of range (D7)"
-unregistered_sprite_clut_error:
+unregistered_SPRITE_ATTRIBUTES_error:
 	.asciz	"unregistered sprite clut (D1=code, D2=clut)"
 game_tile_not_registered_error:
 	.asciz	"game tile (in D2) not registered"
@@ -2496,10 +2501,10 @@ one_out_of_five:
 	.word	0
 
 
-bg_screen_data_1:
+playfield_screen_data_1:
 	.long	0
 	.ifne	OPT_ENABLE_DOUBLE_BUFFERING
-bg_screen_data_2:
+playfield_screen_data_2:
 	.long	0
 	.endif
 	
@@ -2509,8 +2514,7 @@ playfield_drawed_screen_ptr:
 	.long	0
 playfield_displayed_screen_ptr:
 	.long	0
-panel_screen_ptr:
-	.long	0
+
 
 
 	.include	"sound_entries.68k"
@@ -2590,6 +2594,15 @@ tile_log_table:
 	.set	bpoff,bpoff+4
 	.endr
 	.endm
+	
+.macro	DECL_EVEN_BITPLANES	bpoff_start,nb_planes
+	.set	bpoff,\bpoff_start
+	.rept	\nb_planes
+	dc.w  bplpt+bpoff,0
+	dc.w  bplpt+bpoff+2,0
+	.set	bpoff,bpoff+8
+	.endr
+	.endm
 
 	
 .macro	DECL_COLORS	offset,nb_colors
@@ -2634,8 +2647,10 @@ game_copperlist:
 
 	* enable sprite colors now
 
-bitplanes:
-	DECL_BITPLANES	0,NB_PLAYFIELD_PLANES
+bobs_bitplanes:
+	DECL_EVEN_BITPLANES	0,3
+background_bitplanes:
+	DECL_EVEN_BITPLANES	4,3
 
 *game_sprite_colors:
 *	DECL_COLORS	16,16
@@ -2644,7 +2659,7 @@ game_sprites:
 game_sprites_end:
 
 game_colors:
-	DECL_COLORS	0,TOTAL_NB_COLORS
+	DECL_COLORS	0,16
 
 
 	* priority: BOBs playfield on top
@@ -2670,10 +2685,6 @@ intreq_block_game:
 	| no bobs from now on, get a LOT of drawing time
 	.word	 intreq,0x8010
 
-	* black color sprites
-	*DECL_COLORS	16,16
-
-
 	
      .long    -2					
 	.ascii	"ENDCPLST"
@@ -2684,16 +2695,20 @@ intreq_block_game:
 	
 		.section .bsschip
 		
+
+bg_screen_buffer:
+	.skip	SCREEN_SIZE
+	.skip	8
+	.skip	8	
 	
-	
-background_restore_buffer:
-	.skip	RESTORE_SCREEN_SIZE
+restore_buffer:
+	.skip	SCREEN_SIZE
 		
-bg_screen_buffer_1:
+bobs_screen_buffer_1:
 	.skip	SCREEN_SIZE
 	*.skip	NB_BYTES_PER_ROW*12*3
 	.ifne	OPT_ENABLE_DOUBLE_BUFFERING
-bg_screen_buffer_2:
+bobs_screen_buffer_2:
 	.skip	SCREEN_SIZE
 	.skip	NB_BYTES_PER_ROW*12*3
 	.endif
