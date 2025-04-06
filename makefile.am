@@ -37,8 +37,8 @@ all : $(PROGNAME).o $(MAIN) $(WHDLOADER) $(WHDLOADER_CHIP)
 clean:
 	del $(OBJS) "$(MAIN)"
 	
-#$(AMIGASRC)/graphics.68k: $(ASSETS)/convert_graphics.py
-#	cmd /c $(ASSETS)\convert_graphics.py
+$(AMIGASRC)/graphics.68k: $(ASSETS)/convert_graphics.py
+	cmd /c $(ASSETS)\convert_graphics.py
 
 #$(AMIGASRC)/sounds.68k: $(ASSETS)/convert_sounds.py $(ASSETS)/../sounds/$(PROGNAME)_conv.mod
 $(AMIGASRC)/sounds.68k: $(ASSETS)/convert_sounds.py 

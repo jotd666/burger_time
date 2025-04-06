@@ -9,7 +9,8 @@
 * we don't want to mask those at each X,Y indexed instruction
 * for performance reasons
 
-
+	.include	"burger_time.inc"
+	
 	.macro	SBC_X	address
 	INVERT_XC_FLAGS
 	GET_ADDRESS	\address
@@ -158,18 +159,42 @@
 	POP_SR
 	.endm
 
+	.macro GET_UNCHECKED_ADDRESS	offset
+	move.l	a6,a0
+	add.l	#\offset,a0	| can be > 0x7FFF
+	.endm
+
 	* doesn't check anything, but osd_w_videoram will
 	.macro GET_SCREEN_ADDRESS_Y	offset
-	lea	(a6,\offset),a0
+	GET_UNCHECKED_ADDRESS	\offset
 	READ_LE_WORD	a0
-	add.w	d2,a0
 	add.l	a6,a0
+	add.w	d2,a0
 	.endm
 	
 	.macro GET_UNCHECKED_ADDRESS_Y	offset
-	lea	(a6,\offset),a0
+	GET_UNCHECKED_ADDRESS	\offset
 	READ_LE_WORD	a0
 	add.l	a6,a0
+	.endm
+	
+	
+	.macro	WRITE_DX_TO_SCREEN		reg,address
+	lea	(a6,\address),a0
+	exg		d0,\reg
+	jbsr	osd_w_videoram
+	exg		d0,\reg
+	.endm
+	
+	.macro	WRITE_D0_TO_SCREEN		address
+	lea	(a6,\address),a0
+	jbsr	osd_w_videoram
+	.endm
+	.macro	WRITE_D1_TO_SCREEN		address
+	WRITE_DX_TO_SCREEN		d1,\address
+	.endm
+	.macro	WRITE_D2_TO_SCREEN		address
+	WRITE_DX_TO_SCREEN		d2,\address
 	.endm
 	
 timer1_0013 = 0x0013
@@ -996,8 +1021,7 @@ l_c3d9:
 	GET_ADDRESS	0x5b                       	| [$c3f5: ldx $5b]
 	move.b	(a0),d1                         	| [...]
 	addq.b	#1,d1                           	| [$c3f7: inx]
-	GET_ADDRESS	0x12d5                     	| [$c3f8: stx $12d5]
-	move.b	d1,(a0)                         	| [...]
+	WRITE_D1_TO_SCREEN	0x12d5                     	| [$c3f8: stx $12d5]
 	GET_ADDRESS	0x5a                       	| [$c3fb: lda $5a]
 	move.b	(a0),d0                         	| [...]
 	and.b	#0xf0,d0                         	| [$c3fd: and #$f0]
@@ -1007,15 +1031,11 @@ l_c3d9:
 	                            	| [$c402: lsr a]
 	move.b	d0,d1                           	| [$c403: tax]
 	addq.b	#1,d1                           	| [$c404: inx]
-	GET_ADDRESS	0x12d6                     	| [$c405: stx $12d6]
-	move.b	d1,(a0)                         	| [...]
+	WRITE_D1_TO_SCREEN	0x12d6                     	| [$c405: stx $12d6]
 	move.b	#0x01,d1                        	| [$c408: ldx #$01]
-	GET_ADDRESS	0x12d7                     	| [$c40a: stx $12d7]
-	move.b	d1,(a0)                         	| [...]
-	GET_ADDRESS	0x12d8                     	| [$c40d: stx $12d8]
-	move.b	d1,(a0)                         	| [...]
-	GET_ADDRESS	0x12d9                     	| [$c410: stx $12d9]
-	move.b	d1,(a0)                         	| [...]
+	WRITE_D1_TO_SCREEN	0x12d7                     	| [$c40a: stx $12d7]
+	WRITE_D1_TO_SCREEN	0x12d8                     	| [$c40d: stx $12d8]
+	WRITE_D1_TO_SCREEN	0x12d9                     	| [$c410: stx $12d9]
 	rts                                    	| [$c413: rts]
                                     	| [$c414: nop]
 l_c416:
@@ -1659,12 +1679,10 @@ l_c858:
 	rts                                    	| [$c8a0: rts]
                                     	| [$c8a1: nop]
 clear_screen_c8a3:
-	rts	| TEMP!!!!
-	
     * load 0x03 with 0x1000                      	| [$c8a3: nop]
-	clr.b	d2                               	| [$c8a4: ldy #$00]
-	GET_ADDRESS	0x03                       	| [$c8a6: sty $03]
-	move.b	d2,(a0)                         	| [...]
+	moveq	#0,d2                               	| [$c8a4: ldy #$00]
+	GET_ADDRESS 0x03                       	| [$c8a6: sty $03]
+	move.b	d2,(a0)				| [...]
 	move.b	#0x10,d0                        	| [$c8a8: lda #$10]
 	GET_ADDRESS	0x04                       	| [$c8aa: sta $04]
 	move.b	d0,(a0)                         	| [...]
@@ -1672,7 +1690,7 @@ clear_screen_c8a3:
                                     	| [$c8ae: nop]
 l_c8af:
 	clr.b	d0                               	| [$c8af: lda #$00]
-	GET_SCREEN_ADDRESS_Y	0x03                     	| [$c8b1: sta ($03), y]
+	GET_SCREEN_ADDRESS_Y	0x03                | [$c8b1: sta ($03), y]
 	jbsr	osd_w_videoram                    	| [...]
 	addq.b	#1,d2                           	| [$c8b3: iny]
 	bne	l_c8af                             	| [$c8b4: bne $c8af]
@@ -2026,43 +2044,32 @@ l_ca94:
 	move.b	d2,d0                           	| [$ca95: tya]
 	movem.w	d0,-(sp)                       	| [$ca96: pha]
 	move.b	#0x51,d2                        	| [$ca97: ldy #$51]
-	PUSH_SR
-	GET_ADDRESS	0x103a                     	| [$ca99: sty $103a]
-	move.b	d2,(a0)                         	| [...]
-	POP_SR
+	WRITE_D2_TO_SCREEN	0x103a                     	| [$ca99: sty $103a]
 	addq.b	#1,d2                           	| [$ca9c: iny]
-	PUSH_SR
-	GET_ADDRESS	0x103b                     	| [$ca9d: sty $103b]
-	move.b	d2,(a0)                         	| [...]
-	POP_SR
+	WRITE_D2_TO_SCREEN	0x103b                     	| [$ca9d: sty $103b]
 	addq.b	#1,d2                           	| [$caa0: iny]
-	PUSH_SR
-	GET_ADDRESS	0x103c                     	| [$caa1: sty $103c]
-	move.b	d2,(a0)                         	| [...]
-	POP_SR
+	WRITE_D2_TO_SCREEN	0x103c                     	| [$caa1: sty $103c]
 	GET_ADDRESS	current_player_001f        	| [$caa4: ldx current_player_001f]
 	move.b	(a0),d1                         	| [...]
 	GET_ADDRESS	player_pepper_002b         	| [$caa6: lda player_pepper_002b, x]
 	move.b	(a0,d1.w),d0                    	| [...]
-	lsr.b	#1,d0                            	| [$caa8: lsr a]
-	lsr.b	#1,d0                            	| [$caa9: lsr a]
-	lsr.b	#1,d0                            	| [$caaa: lsr a]
-	lsr.b	#1,d0                            	| [$caab: lsr a]
+	lsr.b	#4,d0                            	| [$caa8: lsr a]
+	                            	| [$caa9: lsr a]
+	                            	| [$caaa: lsr a]
+	                            	| [$caab: lsr a]
 	move.b	d0,d2                           	| [$caac: tay]
 	beq	l_cab3                             	| [$caad: beq $cab3]
 	addq.b	#1,d2                           	| [$caaf: iny]
                                     	| [$cab0: nop]
                                     	| [$cab2: nop]
 l_cab3:
-	GET_ADDRESS	0x105b                     	| [$cab3: sty $105b]
-	move.b	d2,(a0)                         	| [...]
+	WRITE_D2_TO_SCREEN	0x105b                     	| [$cab3: sty $105b]
 	GET_ADDRESS	player_pepper_002b         	| [$cab6: lda player_pepper_002b, x]
 	move.b	(a0,d1.w),d0                    	| [...]
 	and.b	#0x0f,d0                         	| [$cab8: and #$0f]
 	move.b	d0,d2                           	| [$caba: tay]
 	addq.b	#1,d2                           	| [$cabb: iny]
-	GET_ADDRESS	0x105c                     	| [$cabc: sty $105c]
-	move.b	d2,(a0)                         	| [...]
+	WRITE_D2_TO_SCREEN	0x105c                     	| [$cabc: sty $105c]
 	move.w	(sp)+,d0                       	| [$cabf: pla]
 	move.b	d0,d2                           	| [$cac0: tay]
 	rts                                    	| [$cac1: rts]
@@ -3166,7 +3173,7 @@ l_d104:
                                     	| [$d10f: nop]
 l_d111:
                                     	| [$d111: nop]
-	GET_ADDRESS	0x1367                     	| [$d112: lda $1367]
+	GET_UNCHECKED_ADDRESS	0x1367                     	| [$d112: lda $1367]
 	move.b	(a0),d0                         	| [...]
 	GET_ADDRESS	0xd155                     	| [$d115: cmp $d155]
 	cmp.b	(a0),d0                          	| [...]
@@ -3177,7 +3184,8 @@ l_d111:
 l_d11f:
 	GET_ADDRESS	0xd155                     	| [$d11f: lda $d155, y]
 	move.b	(a0,d2.w),d0                    	| [...]
-	GET_ADDRESS	0x1367                     	| [$d122: sta $1367, y] dummy_write_decrypt_trigger
+	BREAKPOINT	"screen write d122!!"
+	GET_ADDRESS	0x1367                     	| [$d122: sta $1367, y] TODO screen
     move.b	d0,(a0,d2.w)                 	| [...]
 	addq.b	#1,d2                           	| [$d125: iny] prev_crypted 64
 	cmp.b	#0x11,d2                         	| [$d126: cpy #$11]
@@ -3190,7 +3198,8 @@ l_d11f:
 l_d132:
 	GET_ADDRESS	0xd166                     	| [$d132: lda $d166, y]
 	move.b	(a0,d2.w),d0                    	| [...]
-	GET_ADDRESS	0x13ab                     	| [$d135: sta $13ab, y]
+	BREAKPOINT	"screen write d135!!"
+	GET_ADDRESS	0x13ab                     	| [$d135: sta $13ab, y]  TODO screen
     move.b	d0,(a0,d2.w)                 	| [...]
 	addq.b	#1,d2                           	| [$d138: iny]
 	cmp.b	#0x06,d2                         	| [$d139: cpy #$06]
@@ -3211,8 +3220,7 @@ l_d13f:
 	and.b	#0x0f,d0                         	| [$d14a: and #$0f]
 	move.b	d0,d1                           	| [$d14c: tax]
 	addq.b	#1,d1                           	| [$d14d: inx]
-	GET_ADDRESS	0x13b3                     	| [$d14e: stx $13b3]
-	move.b	d1,(a0)                         	| [...]
+	WRITE_D1_TO_SCREEN	0x13b3                     	| [$d14e: stx $13b3]
                                     	| [$d151: nop]
                                     	| [$d153: nop]
 l_d154:
@@ -7604,10 +7612,8 @@ l_e9ff:
 	GET_ADDRESS	0x5a                       	| [$ea19: adc $5a]
 	move.b	(a0),d4	| [...]
 	abcd	d4,d0                         	| [...]
-	PUSH_SR
 	GET_ADDRESS	0x5c                       	| [$ea1b: sta $5c, x]
     move.b	d0,(a0,d1.w)                 	| [...]
-	POP_SR
 	GET_ADDRESS	0x5d                       	| [$ea1d: lda $5d, x]
 	move.b	(a0,d1.w),d0                    	| [...]
 	GET_ADDRESS	0x5b                       	| [$ea1f: adc $5b]
