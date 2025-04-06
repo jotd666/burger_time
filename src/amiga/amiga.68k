@@ -30,8 +30,8 @@ Y_MAX = 256
 
 
 BASE_BPLCON2_VALUE = 0x0064		| sprites above all playfields
-SCREEN_TILE_ADDRESS = 0x8400
-SCREEN_COLOR_ADDRESS = 0x8000
+SCREEN_TILE_ADDRESS = 0x1000
+SCREEN_COLOR_ADDRESS = 0x1400
 
 
 
@@ -173,8 +173,10 @@ start:
 		.global osd_read_dsw0
 		.global osd_read_dsw1
 		.global osd_read_dsw2
+		.global	osd_set_scroll_1
 		.global osd_read_inputs_1
 		.global osd_read_inputs_0
+		
 
 
 		.global	is_game_playing
@@ -332,9 +334,9 @@ _user:
 	* pad last sprite entries with blank
 	move.l	#blank_sprite,d0
 1:
-	move.w	d0,(4,a2)
+	move.w	d0,(6,a2)
 	swap	d0
-	move.w	d0,(a2)
+	move.w	d0,(2,a2)
 	swap	d0
 	addq	#8,a2
 	cmp.l	#game_sprites_end,a2
@@ -695,6 +697,10 @@ demo_game:
 	.endif
 
 	lea		rom,a5
+	* enable interrupts. Game doesn't use them
+	* but relies on vbl sync flags
+	moveq	#1,d0
+	jbsr	osd_interrupt_control
 	jmp			burger_time_reset					| pass control to the mpatrol core
 		
 	
@@ -1688,7 +1694,9 @@ osd_interrupt_control:
 	move.w	#0x0030,_custom+intena
 	rts
 
-
+osd_set_scroll_1:
+	rts
+	
 osd_w_colorram:
  	movem.l	d0/d1/d7/a0/a1,-(a7)
 	move.l	a0,d7		| save address
@@ -1697,7 +1705,7 @@ osd_w_colorram:
 	jmi		2f
 	.endif
 	* no need as screen color address is 0x8000
-	*sub.w	#SCREEN_COLOR_ADDRESS-0x8000,d7
+	*sub.w	#SCREEN_COLOR_ADDRESS-0x1000,d7
 	.ifndef	RELEASE
 	*bmi.b	2f
 	cmp.w	#0x400,d7
@@ -1705,7 +1713,7 @@ osd_w_colorram:
 
 2:
 	* should not happen
-	add.w	#SCREEN_COLOR_ADDRESS-0x8000,d7
+	add.w	#SCREEN_COLOR_ADDRESS-0x1000,d7
 	lea		write_colorram_out_of_range_error(pc),a0
 	jbsr	osd_break
 	nop	
@@ -1750,7 +1758,7 @@ osd_w_videoram:
 	.ifndef	RELEASE
 	jmi		2f
 	.endif
-	sub.w	#SCREEN_TILE_ADDRESS-0x8000,d7
+	sub.w	#SCREEN_TILE_ADDRESS-0x1000,d7
 	.ifndef	RELEASE
 	bmi.b	2f
 	cmp.w	#0x400,d7
@@ -2231,6 +2239,7 @@ osd_read_dsw1:
 	move.b	dip_switches_1(pc),d0
 	not.b	d0		| active low
 	rts
+	
 osd_read_dsw0:
 	* actual dipswitches
 	move.b	#0x3F,d0		| what MAME returns
@@ -2639,7 +2648,6 @@ debug_color:
 	* main copperlist
 game_copperlist:
 	* all sprites have the same palette no need to specify odd or even
-	* on color bank 1
 	
 	* black color background plane
 

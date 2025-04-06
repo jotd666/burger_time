@@ -29,3 +29,11 @@
 - started to fix .error directives, adapted code
 - fixed missing entrypoints
 - coded the important "get_address" function to select which memory bank is read/written to
+
+3. Booting
+
+- changed read/write from/to $400x addresses to relevant DSW reads or scroll writes
+- ensured that copper interrupt happens in properly set copperlist
+  (else no copper => no sync => program stuck)
+- now we have to figure out where screen writes occur to perform osd_w_videoram calls
+  and display tiles on screen (we'll see for sprites later)
