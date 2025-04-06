@@ -671,8 +671,7 @@ alloc_sprite:
 	* hopefully if we save buffer in A1 we can reproduce the issue at will!
 	.ifndef	RELEASE
 	lea			sprite_buffer(pc),a1
-	lea			sprite_allocation_error,a0
-	jbsr	osd_break
+	BREAKPOINT	"sprite allocation error"
 	.endif
 	* in release mode, just discard this sprite, maybe we'll get away with it!
 	rts
@@ -984,15 +983,20 @@ blit_background:
 * instead of 0x400 each frame.
 
 really_update_tiles:
+	GET_RAM_START_IN_A6
+	add.w	#SCREEN_TILE_ADDRESS,a6 | LSB
 	lea		_custom,a5
 	WAIT_BLIT
-	GET_RAM_START_IN_A6
-	lea		(0x400,a6),a5
+
+	lea		(0x400,a6),a5			| attributes/MSB
 	lea		tiles_row_flags(pc),a1
 	moveq	#0,d3
+	
+
 3:
 	tst.b	(a1)+
 	jeq		2f
+	
 	lea		tiles_refresh_table(pc),a0
 	subq.b	#1,(-1,a1)
 	move.w	#0x1F,d2
@@ -1004,8 +1008,10 @@ really_update_tiles:
 	jeq		1f
 	subq.b	#1,(-1,a0)	| decrease dirty counter
 	* read tile & color codes from RAM
-	move.b	(a6,d7.w),d1
+	moveq	#0,d0
 	move.b	(a5,d7.w),d0
+	lsl.w	#8,d0
+	move.b	(a6,d7.w),d0
 	movem.l	d2/d3/d7/a0/a1/a5,-(a7)
 	jbsr	update_bg_tile
 	movem.l	(a7)+,d2/d3/d7/a0/a1/a5
@@ -1125,8 +1131,7 @@ update_one_bob:
 	move.l	(a1),(a1,d2.w)
 	move.b	(TARGET_SPRITE_CODE,a0),d1
 	lsr.b	#2,d2
-	lea		unregistered_SPRITE_ATTRIBUTES_error(pc),a0
-	jbsr	osd_break
+	BREAKPOINT	"unregistered sprite clut (D1=code, D2=clut)"
 	move.l	(a1),d4
 	jeq		2f			| just in case fallback not working
 100:
@@ -1714,9 +1719,7 @@ osd_w_colorram:
 2:
 	* should not happen
 	add.w	#SCREEN_COLOR_ADDRESS-0x1000,d7
-	lea		write_colorram_out_of_range_error(pc),a0
-	jbsr	osd_break
-	nop	
+	BREAKPOINT	"write colorram out of range (D7)"
 	bra.b	0f
 	.endif
 1:	
@@ -1726,8 +1729,18 @@ osd_w_colorram:
 3:
 	move.b	d0,(a0)	| update logical grid
 	sub.l	a6,a0
+	sub.w	#SCREEN_COLOR_ADDRESS,a0
 mark_dirty:
 	move.w	a0,d0
+	.ifndef	RELEASE
+	tst		d0
+	jpl		1f
+	cmp.w	#0x400,d0
+	jcs		1f
+	BREAKPOINT	"tile dirty index out of 0-0x400 range (A0)"
+	jra 	0f
+1:
+	.endif
 	lea		tiles_refresh_table(pc),a0
 	add.w	d0,a0
 	lsr.w	#5,d0	| divide by 32
@@ -1758,7 +1771,7 @@ osd_w_videoram:
 	.ifndef	RELEASE
 	jmi		2f
 	.endif
-	sub.w	#SCREEN_TILE_ADDRESS-0x1000,d7
+	sub.w	#SCREEN_TILE_ADDRESS,d7
 	.ifndef	RELEASE
 	bmi.b	2f
 	cmp.w	#0x400,d7
@@ -1767,9 +1780,7 @@ osd_w_videoram:
 2:
 	* should not happen
 	add.w	#SCREEN_TILE_ADDRESS,d7
-	lea		write_videoram_out_of_range_error(pc),a0
-	jbsr	osd_break
-	nop	
+	BREAKPOINT	"write videoram out of range (D7)"
 	bra.b	0b
 	.endif
 1:	
@@ -1777,15 +1788,13 @@ osd_w_videoram:
 	cmp.b	d1,d0
 	beq.b	0b		| already the proper value
 3:
-
-
 	move.b	d0,(a0)	| update logical grid
 	* now set the flag for tile refresh in copper interrupt (so it doesn't
 	* interfere with blits. This game uses a lot of tile animation in the background
 	* as opposed to most games, so updating in real tile isn't an option and kills
 	* the smoothness even in double buffering mode)
 	sub.l	a6,a0
-	sub.w	#0x400,a0
+	sub.w	#SCREEN_TILE_ADDRESS,a0
 	jra		mark_dirty
 
 
@@ -1818,21 +1827,16 @@ compute_tile_xy:
 
 
 
-* addresses 0x8400->0x843F don't map to visible tiles
-* addresses 0x87C0->0x87FF don't map to visible tiles
+
 * each column has 0x20*8 = 256 pixels
 * each visible row has 28*8 = 244 pixels
 
 * < D7: 0-0x400 address
-* < D0: tile code
-* < D1: color code
+* < D0: extended tile code
 
 update_bg_tile:
-	moveq	#0,d2	| mask up to 255
-	move.b	d0,d2
-	moveq	#0,d3
-	move.b	d1,d3			| CLUT
-	
+	move.w	d0,d2	| code
+	*and.w	#0x3FF,d2	| no attributes
 
 	bsr		compute_tile_xy
 	
@@ -1862,34 +1866,26 @@ update_bg_tile:
 	jne		12f
 	add.w	#0x8400,d7
 	lsr.w	#2,d2
-	lea		game_tile_not_registered_error,a0	
+	BREAKPOINT	"game tile (in D2) not registered"	
 
-	jbsr	osd_break
 	jra		11f
 12:
 	.endif
-	move.l	d0,a2
-	move.b	d3,d1
-	and.w	#0xF,d3
-	add.w	d3,d3
-	add.w	d3,d3
-	move.l	(a2,d3.w),d0			| pointer on tile bitplanes for that CLUT
-	jeq		11f						| not necessarily a problem
+	move.l	d0,a2		| directly pointer on tile bitplanes
 
-	move.l	d0,a2					| pointer on bitplanes
-	rol.b	#2,d1			        | modifiers on first bits
-	and.w	#3,d1
-	jeq		standard_tile
-	
-
-	add.w	d1,d1
-	add.w	d1,d1
-	lea		mirror_jump_table(pc),a4
-	move.l	(a4,d1.w),a4
-0:
-	BTST	#6,(_custom+dmaconr)
-	BNE.S	0b
-	jmp		(a4)
+*	rol.b	#2,d1			        | modifiers on first bits
+*	and.w	#3,d1
+*	jeq		standard_tile
+*	
+*
+*	add.w	d1,d1
+*	add.w	d1,d1
+*	lea		mirror_jump_table(pc),a4
+*	move.l	(a4,d1.w),a4
+*0:
+*	BTST	#6,(_custom+dmaconr)
+*	BNE.S	0b
+*	jmp		(a4)
 	
 	.macro	COPY_TILE_PLANE_ROW
 	move.b	d0,(offset,a1)  | buffer
@@ -2094,6 +2090,7 @@ set_bobs_bitplanes:
  	move.l	#SCREEN_PLANE_SIZE,d2
     move.l	playfield_displayed_screen_ptr(pc),d0   | this isn't double-buffered, no need!
 set_bitplanes:
+1:
     swap d0
     move.w d0,(a0)
     swap d0
@@ -2401,20 +2398,7 @@ read_args_string_end:
 	.align	2
 
 
-	.ifndef	RELEASE
-sprite_allocation_error:
-	.asciz	"sprite allocation error"
-write_videoram_out_of_range_error:
-	.asciz	"write videoram out of range (D7)"
-write_colorram_out_of_range_error:
-	.asciz	"write colorram out of range (D7)"
-unregistered_SPRITE_ATTRIBUTES_error:
-	.asciz	"unregistered sprite clut (D1=code, D2=clut)"
-game_tile_not_registered_error:
-	.asciz	"game tile (in D2) not registered"
-	
-	.align	2
-	.endif
+
 
 old_intena:
 	.long	0
