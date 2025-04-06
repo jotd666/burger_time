@@ -173,7 +173,8 @@ sprite_table = [None]*NB_SPRITES
 plane_orientations = [("standard",lambda x:x),
 ("flip",ImageOps.flip),
 ("mirror",ImageOps.mirror),
-("flip_mirror",lambda x:ImageOps.flip(ImageOps.mirror(x)))]
+("flip_mirror",lambda x:ImageOps.flip(ImageOps.mirror(x)))
+]
 
 def read_tileset(img_set,palette,plane_orientation_flags,cache,is_bob):
     next_cache_id = 1
@@ -266,67 +267,68 @@ with open(os.path.join(src_dir,"graphics.68k"),"w") as f:
         dump_asm_bytes(k,f)
 
     f.write("bob_table:\n")
-##    for i,tile_entry in enumerate(sprite_table):
-##        f.write("\t.long\t")
-##        if tile_entry:
-##            prefix = sprite_names.get(i,"bob")
-##            f.write(f"{prefix}_{i:02x}")
-##        else:
-##            f.write("0")
-##        f.write("\n")
-##
-##    for i,tile_entry in enumerate(sprite_table):
-##        if tile_entry:
-##            prefix = sprite_names.get(i,"bob")
-##            f.write(f"{prefix}_{i:02x}:\n")
-##            for j,t in enumerate(tile_entry):
-##                f.write("\t.long\t")
-##                if t:
-##                    f.write(f"{prefix}_{i:02x}_{j:02x}")
-##                else:
-##                    f.write("0")
-##                f.write("\n")
-##
+    for i,tile_entry in enumerate(sprite_table):
+        f.write("\t.long\t")
+        if tile_entry:
+            prefix = sprite_names.get(i,"bob")
+            f.write(f"{prefix}_{i:02x}")
+        else:
+            f.write("0")
+        f.write("\n")
 
-##    for i,tile_entry in enumerate(sprite_table):
-##        if tile_entry:
-##            prefix = sprite_names.get(i,"bob")
-##            for j,t in enumerate(tile_entry):
-##                if t:
-##                    name = f"{prefix}_{i:02x}_{j:02x}"
+    for i,tile_entry in enumerate(sprite_table):
+        if tile_entry:
+            prefix = sprite_names.get(i,"bob")
+            f.write(f"{prefix}_{i:02x}:\n")
+            for j,t in enumerate(tile_entry):
+                f.write("\t.long\t")
+                if t:
+                    f.write(f"{prefix}_{i:02x}_{j:02x}")
+                else:
+                    f.write("0")
+                f.write("\n")
+
 ##
-##                    f.write(f"{name}:\n")
-##                    height = 0
-##                    width = 4
-##                    offset = 0
-##                    for orientation,_ in plane_orientations:
-##                        if orientation in t:
-##                            height = t[orientation]["height"]
-##                            offset = t[orientation]["y_start"]
-##                            break
-##                    else:
-##                        raise Exception(f"height not found for {name}!!")
-##                    for orientation,_ in plane_orientations:
-##                        f.write("* {}\n".format(orientation))
-##                        f.write(f"\t.word\t{height},{width},{offset}\n")
-##                        if orientation in t:
-##                            for bitplane_id in t[orientation]["bitplanes"]:
-##                                f.write("\t.long\t")
-##                                if bitplane_id:
-##                                    f.write(f"bob_plane_{bitplane_id:02d}")
-##                                else:
-##                                    f.write("0")
-##                                f.write("\n")
-##                            if len(t)==1:
-##                                # optim: only standard
-##                                break
-##                        else:
-##                            for _ in range(nb_planes+1):
-##                                f.write("\t.long\t0\n")
-##
-##    f.write("\t.section\t.datachip\n")
-##
-##    for k,v in bob_plane_cache.items():
-##        f.write(f"bob_plane_{v:02d}:")
-##        dump_asm_bytes(k,f)
-##
+    for i,tile_entry in enumerate(sprite_table):
+        if tile_entry:
+            print(tile_entry)
+            prefix = sprite_names.get(i,"bob")
+            for j,t in enumerate(tile_entry):
+                name = f"{prefix}_{i:02x}_{j:02x}"
+
+                f.write(f"{name}:\n")
+                height = 0
+                width = 4
+                offset = 0
+                for orientation,_ in plane_orientations:
+                    if orientation in tile_entry:
+                        ot = tile_entry[orientation]
+
+                        height = ot["height"]
+                        offset = ot["y_start"]
+                        break
+
+                for orientation,_ in plane_orientations:
+                    f.write("* {}\n".format(orientation))
+                    f.write(f"\t.word\t{height},{width},{offset}\n")
+                    if orientation in tile_entry:
+                        for bitplane_id in tile_entry[orientation]["bitplanes"]:
+                            f.write("\t.long\t")
+                            if bitplane_id:
+                                f.write(f"bob_plane_{bitplane_id:02d}")
+                            else:
+                                f.write("0")
+                            f.write("\n")
+                        if len(t)==1:
+                            # optim: only standard
+                            break
+                    else:
+                        for _ in range(nb_planes+1):
+                            f.write("\t.long\t0\n")
+
+    f.write("\t.section\t.datachip\n")
+
+    for k,v in bob_plane_cache.items():
+        f.write(f"bob_plane_{v:02d}:")
+        dump_asm_bytes(k,f)
+

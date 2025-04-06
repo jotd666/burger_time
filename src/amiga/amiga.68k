@@ -173,6 +173,7 @@ start:
 		.global osd_read_dsw1
 		.global osd_read_dsw2
 		.global	osd_set_scroll_1
+		.global	osd_set_background
 		.global osd_read_inputs_1
 		.global osd_read_inputs_0
 		
@@ -1698,7 +1699,39 @@ osd_interrupt_control:
 	move.w	#0x0030,_custom+intena
 	rts
 
+* write to 0x4004
 osd_set_scroll_1:
+	rts
+* write to 0x4003, probably sound not background
+osd_set_background:
+	rts
+
+* python code to switch between 0x1000-0x17FF <=> 0x1800-0x2000
+*def wrap_address(a):
+*    # 0x1182 => 0x184C
+*    q,r = divmod(a&0xFFF,32)
+*    return (0x1800+(32*r)+(q))
+*
+*def unwrap_address(a):
+*    offset = a-0x1800
+*    q,r = divmod(offset,32)
+*    return (0x1000+(32*r)+q)
+
+mirrored_videoram:
+	.ifndef	RELEASE
+	cmp.w	#0x2000,d7
+	jcs		0f
+	BREAKPOINT	"write videoram out of 0x1000-0x1FFF range (D7)"	
+0:
+	.endif
+	* compute valid 0x1000-0x17FF un-mirror
+	sub.w	#0x1800,d7
+	move.w	d7,d1		| save
+	lsr.w	#5,d7		| quotient
+	*add.w	#SCREEN_TILE_ADDRESS,d7
+	and.w	#0x1F,d1
+	lsl.w	#5,d1
+	add.w	d1,d7
 	rts
 	
 * a0=screen address (preserved), d0=tile (preserved)
@@ -1712,6 +1745,11 @@ osd_w_videoram:
 	.ifndef	RELEASE
 	jmi		2f
 	.endif
+	cmp.w	#0x1820,d7
+	jcs		0f
+	jbsr	mirrored_videoram
+	jra		1f
+0:
 	sub.w	#SCREEN_TILE_ADDRESS,d7
 	.ifndef	RELEASE
 	bmi.b	2f
