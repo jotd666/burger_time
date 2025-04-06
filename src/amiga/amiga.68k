@@ -1800,7 +1800,7 @@ osd_w_videoram:
 
 * < D7: 0-0x400
 * > D0: 
-compute_tile_xy_landscape:
+compute_tile_xy:
 	moveq	#0,d0
 	move.b	d7,d0
 	
@@ -1811,19 +1811,19 @@ compute_tile_xy_landscape:
 	lsl.w	#3,d1		| times 8
 	rts
 
-compute_tile_xy:
-	moveq	#0,d0
-	moveq	#0,d1
-	move.w	d7,d1
-	lsr.w	#5,d7		| this is X
-	neg.w	d7
-	add.w	#32,d7
-	and.w	#0x1F,d1	| this is Y
-	*addq.w	#2,d1
-
-	move.b	d7,d0		| this is X
-	lsl.b	#3,d1		| Y times 8
-	rts
+*compute_tile_xy_portrait:
+*	moveq	#0,d0
+*	moveq	#0,d1
+*	move.w	d7,d1
+*	lsr.w	#5,d7		| this is X
+*	neg.w	d7
+*	add.w	#32,d7
+*	and.w	#0x1F,d1	| this is Y
+*	*addq.w	#2,d1
+*
+*	move.b	d7,d0		| this is X
+*	lsl.b	#3,d1		| Y times 8
+*	rts
 
 
 
@@ -1837,6 +1837,7 @@ compute_tile_xy:
 update_bg_tile:
 	move.w	d0,d2	| code
 	*and.w	#0x3FF,d2	| no attributes
+
 
 	bsr		compute_tile_xy
 	
@@ -1864,7 +1865,7 @@ update_bg_tile:
 	move.l	(a0,d2.w),d0		| tile pointer
 	.ifndef	RELEASE
 	jne		12f
-	add.w	#0x8400,d7
+	add.w	#0x1400,d7
 	lsr.w	#2,d2
 	BREAKPOINT	"game tile (in D2) not registered"	
 

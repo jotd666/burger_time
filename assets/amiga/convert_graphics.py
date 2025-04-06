@@ -69,9 +69,11 @@ def load_tileset(image_name,side,tileset_name,used_tiles,dumpdir,dump=False,name
                     else:
                         name = "unknown"
 
-                    img.save(os.path.join(dump_subdir,f"{name}_{tile_number:02x}.png"))
-
+                    img.save(os.path.join(dump_subdir,f"{name}_{tile_number:03x}.png"))
+            else:
+                tileset_1.append(None)
             tile_number += 1
+
 
     return sorted(set(palette)),tileset_1
 
@@ -124,48 +126,6 @@ sprite_names = {}
 sprite_cluts = [[] for _ in range(64)]
 hw_sprite_cluts = [[] for _ in range(64)]
 
-balloon_cluts = [0,1,9,4,0xC,0xF,0xB]
-wolf_cluts = [0,4,0xC]
-
-add_sprite([0x14,0x1B],"arrow")
-add_sprite(0x10,"meat")
-add_sprite(0x1c,"fruit",[6,7]) # strawberry or apple!
-
-add_sprite([0x11,0x25],"player_in_basket_top")
-add_sprite([0x12,0x16],"player_in_basket_bottom")
-add_sprite(0xA,"basket_top")
-add_sprite([7,0xF],"basket_bottom")
-
-
-add_sprite(0,"small_rock")
-add_sprite(1,"upside_down_wolf",wolf_cluts)
-add_sprite([3,4,9],"pooyan",cluts=[0,1,8,0xF])
-add_sprite([6,0x1D,0xB],"falling_wolf",wolf_cluts)
-
-add_sprite(0x3A,"points",[0xF])           # 1600
-add_sprite(0x37,"points",[8,2,3])  # 100, 200, 50
-add_sprite(0x39,"points",[3,2])  # 400, 800
-
-
-
-add_sprite(0x2C,"facing_boss",[4])
-
-add_sprite(range(0x26,0x2A),"wolf",wolf_cluts)
-add_sprite(range(0x20,0x25),"balloon",balloon_cluts)  # 0: yellow
-add_sprite(range(0x3B,0x3F),"balloon",balloon_cluts)  # 0: yellow
-add_sprite([0x2,0x2d],"baloon",balloon_cluts)
-
-add_sprite([0x17,0x18,0x13],"bow")
-add_sprite([0x30,0x3F,0x35,0x38],"rock")
-
-add_sprite(range(0x31,0x35),"burst",[0,1,4,5,7,9,0xF])
-add_sprite([0x15,0x1E],"mama")
-add_sprite([0xD,0x36],"buuyan",[5])
-
-
-add_sprite([0x19,0x1F,0x2a,0x2B],"wolf",wolf_cluts)
-add_sprite(range(0x2e,0x30),"ladder_wolf",[0])
-add_sprite([0xe,0x1A,0xC,5,8],"falling_player")
 
 
 sprites_path = os.path.join(this_dir,os.path.pardir,"sheets")
@@ -189,8 +149,9 @@ lost_tiles = {0x31,0x32,0x33}
 used_tiles = set(range(0,0x6E)) | set(range(0xC0,0xD0)) | set(range(0x200,0x380)) | lost_tiles
 tp,tile_set = load_tileset(os.path.join(sprites_path,"tiles.png"),8,"tiles",used_tiles,dump_dir,dump=dump_it,name_dict=None)
 
+
 tile_palette.update(tp)
-used_tiles = set(range(0x20,0x7C)) - lost_tiles
+used_sprites = set(range(0x20,0x7C)) - lost_tiles
 sp,sprite_set = load_tileset(os.path.join(sprites_path,"sprites.png"),16,"sprites",used_tiles,dump_dir,dump=dump_it,name_dict=sprite_names)
 tile_palette.update(sp)
 
@@ -277,7 +238,7 @@ with open(os.path.join(src_dir,"graphics.68k"),"w") as f:
     for i,tile_entry in enumerate(tile_table):
         f.write("\t.long\t")
         if tile_entry:
-            f.write(f"tile_{i:02x}")
+            f.write(f"tile_{i:03x}")
         else:
             f.write("0")
         f.write("\n")
@@ -285,7 +246,7 @@ with open(os.path.join(src_dir,"graphics.68k"),"w") as f:
 
     for i,tile_entry in enumerate(tile_table):
         if tile_entry:
-            name = f"tile_{i:02x}"
+            name = f"tile_{i:03x}"
 
             f.write(f"{name}:\n")
 
