@@ -90,15 +90,15 @@ SPRITE_CODE = 0
 SPRITE_ATTRIBUTES = 1
 SPRITE_SIZEOF = 4
 
-BIT_INSERT_COIN_1 = 0
-BIT_INSERT_COIN_2 = 1
-BIT_START_1P = 3
-BIT_START_2P = 4
-BIT_LEFT = 0
-BIT_RIGHT = 1
-BIT_UP = 2
-BIT_DOWN = 3
-BIT_FIRE = 4
+
+BIT_START_1P = 0
+BIT_START_2P = 1
+* wrong!!
+BIT_LEFT = 3
+BIT_RIGHT = 4
+BIT_UP = 5
+BIT_DOWN = 6
+BIT_FIRE = 7
 
 .macro	GET_RAM_START_IN_A6	
 	.ifdef	RELEASE
@@ -174,8 +174,6 @@ start:
 		.global osd_read_dsw2
 		.global	osd_set_scroll_1
 		.global	osd_set_background
-		.global osd_read_inputs_1
-		.global osd_read_inputs_0
 		
 
 
@@ -2119,48 +2117,7 @@ seed:
 	dc.l	0x12345678
 
 
-	
-osd_read_inputs_0:
-	moveq	#-1,d0
-	movem.l	a0/d1,-(a7)
-	lea		keyboard_table(pc),a0
-	* misc control keys
-	tst.b	(6,a0)		| "6" key like in MAME
-	beq.b	0f
-	bclr	#BIT_INSERT_COIN_2,d0
-0:
-	tst.b	(5,a0)		| "5" key like in MAME
-	beq.b	0f
-	bclr	#BIT_INSERT_COIN_1,d0
-0:
-	tst.b	(1,a0)		| "1" key like in MAME
-	beq.b	0f
-	bclr	#BIT_START_1P,d0
-0:
-	tst.b	(2,a0)		| "2" key like in MAME
-	beq.b	0f
-	bclr	#BIT_START_2P,d0
-0:	
 
-	bsr		is_game_playing
-	jne	1f
-	move.l	_joypad_state,d1
-	* game not playing, we can insert coin/start with joypad
-	btst	#JPB_BTN_RED,d1		| "5" key like in MAME
-	beq.b	0f
-	bclr	#BIT_INSERT_COIN_1,d0
-0:
-	btst	#JPB_BTN_UP,d1		| "1" key like in MAME
-	beq.b	0f
-	bclr	#BIT_START_1P,d0
-0:
-	btst	#JPB_BTN_DOWN,d1		| "2" key like in MAME
-	beq.b	0f
-	bclr	#BIT_START_2P,d0
-0:	
-1:	
-	movem.l	(a7)+,a0/d1
-	rts
 	
 osd_read_inputs_1:
 	moveq	#-1,d0
@@ -2231,13 +2188,44 @@ osd_read_dsw1:
 	* actual dipswitches
 	move.b	dip_switches_1(pc),d0
 	not.b	d0		| active low
+	move.b	#0xBF,d0	| what MAME returns
 	rts
 	
 osd_read_dsw0:
-	* actual dipswitches
-	move.b	#0x3F,d0		| what MAME returns
+	move.b	#0x3F,d0
+	movem.l	a0/d1,-(a7)
+	lea		keyboard_table(pc),a0
+	tst.b	(1,a0)		| "1" key like in MAME
+	beq.b	0f
+	bclr	#BIT_START_1P,d0
+0:
+	tst.b	(2,a0)		| "2" key like in MAME
+	beq.b	0f
+	bclr	#BIT_START_2P,d0
+0:	
+
+*	bsr		is_game_playing
+*	jne	1f
+*	move.l	_joypad_state,d1
+*	* game not playing, we can insert coin/start with joypad
+*	btst	#JPB_BTN_RED,d1		| "5" key like in MAME
+*	beq.b	0f
+*	bclr	#BIT_INSERT_COIN_1,d0
+*0:
+*	btst	#JPB_BTN_UP,d1		| "1" key like in MAME
+*	beq.b	0f
+*	bclr	#BIT_START_1P,d0
+*0:
+*	btst	#JPB_BTN_DOWN,d1		| "2" key like in MAME
+*	beq.b	0f
+*	bclr	#BIT_START_2P,d0
+*0:	
+*1:	
+	movem.l	(a7)+,a0/d1
+	or.b	dsw0_value_high_bit,d0
 	rts
 
+	
 osd_read_dsw2:
 	* actual dipswitches
 	*move.b	dip_switches_2(pc),d0
@@ -2278,6 +2266,16 @@ handle_keyboard:
     bsr	toggle_pause
 0:
 
+	cmp.b	#5,d0
+	jne	0f
+	movem.l	d0-a6,-(a7)
+	GET_RAM_START_IN_A6
+	lea		rom,a5
+	move.b	#0x40,dsw0_value_high_bit	| COIN 1
+	jbsr	burger_time_coin_inserted
+	move.b	#0,dsw0_value_high_bit
+	movem.l (a7)+,d0-a6
+0:
 	btst	#4,cheat_flags+3
 	jeq		10f
 	* cheat keys
@@ -2439,6 +2437,9 @@ dip_switches_1:
 		.byte	0
 dip_switches_0:
 		.byte	0
+
+dsw0_value_high_bit:
+	.byte	0
 
 
 mid_screen_interrupt_count:

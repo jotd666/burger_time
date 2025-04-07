@@ -339,7 +339,7 @@ address_over_2000_loaded_message:
 *	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNUSED )
 *	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNUSED )
 *
-*	PORT_START("SYSTEM")
+*	PORT_START("SYSTEM") / DSW0
 *	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_START1 )
 *	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_START2 )
 *	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_TILT )
@@ -398,6 +398,7 @@ address_over_2000_loaded_message:
 * < A5: ROM
 * < A6: RAM
 burger_time_coin_inserted:
+	jbsr	cpu_init
 	jra		credit_inserted_interrupt_cf3c                             	| [$c000: jmp $cf3c]
 	
 * < A5: ROM
@@ -775,16 +776,12 @@ l_c22b:
 	POP_SR
 	GET_ADDRESS	0x32                       	| [$c237: lda $32]
 	move.b	(a0),d0                         	| [...]
-	PUSH_SR
 	GET_ADDRESS	0xce                       	| [$c239: sta $ce]
 	move.b	d0,(a0)                         	| [...]
-	POP_SR
 	jbsr	l_eff3                            	| [$c23b: jsr $eff3]
 	clr.b	d1                               	| [$c23e: ldx #$00]
-	PUSH_SR
 	GET_ADDRESS	0x1b                       	| [$c240: stx $1b]
 	move.b	d1,(a0)                         	| [...]
-	POP_SR
 	GET_ADDRESS	nb_credits_001d            	| [$c242: lda nb_credits_001d]
 	move.b	(a0),d0                         	| [...]
 	GET_ADDRESS	0x1e                       	| [$c244: ora $1e]
@@ -1907,10 +1904,8 @@ l_ca0f:                           	| [$ca0f: clc]
                                     	| [$ca24: nop]
 l_ca25:
 	clr.b	d0                               	| [$ca25: lda #$00]
-	PUSH_SR
 	GET_ADDRESS	0xc8                       	| [$ca27: sta $c8]
 	move.b	d0,(a0)                         	| [...]
-	POP_SR
 	rts                                    	| [$ca29: rts]
                                     	| [$ca2a: nop]
 screen_mainloop_ca2c:
@@ -2720,23 +2715,23 @@ credit_inserted_interrupt_cf3c:
 	                            	| [$cf5a: lsr a]
 	                            	| [$cf5b: lsr a]
 	move.b	d0,d2                           	| [$cf5c: tay]
-	jbsr	l_d034                            	| [$cf5d: jsr $d034]
+	jbsr	cpu_delay_d034                            	| [$cf5d: jsr $d034]
 	jbsr	osd_read_dsw0                     	| [$cf60: lda $4002]
 	and.b	#0xc0,d0                         	| [$cf63: and #$c0]
 	beq	l_cf8e                             	| [$cf65: beq $cf8e]
 	GET_ADDRESS	0x26                       	| [$cf67: sta $26]
 	move.b	d0,(a0)                         	| [...]
-	jbsr	l_d034                            	| [$cf69: jsr $d034]
+	jbsr	cpu_delay_d034                            	| [$cf69: jsr $d034]
 	jbsr	osd_read_dsw0                     	| [$cf6c: lda $4002]
 	GET_ADDRESS	0x26                       	| [$cf6f: and $26]
 	and.b	(a0),d0                          	| [...]
 	beq	l_cf8e                             	| [$cf71: beq $cf8e]
-	jbsr	l_d034                            	| [$cf73: jsr $d034]
+	jbsr	cpu_delay_d034                            	| [$cf73: jsr $d034]
 	jbsr	osd_read_dsw0                     	| [$cf76: lda $4002]
 	GET_ADDRESS	0x26                       	| [$cf79: and $26]
 	and.b	(a0),d0                          	| [...]
 	beq	l_cf8e                             	| [$cf7b: beq $cf8e]
-	jbsr	l_d034                            	| [$cf7d: jsr $d034]
+	jbsr	cpu_delay_d034                            	| [$cf7d: jsr $d034]
 	jbsr	osd_read_dsw0                     	| [$cf80: lda $4002]
 	GET_ADDRESS	0x26                       	| [$cf83: and $26]
 	and.b	(a0),d0                          	| [...]
@@ -2747,7 +2742,7 @@ credit_inserted_interrupt_cf3c:
                                     	| [$cf8b: nop] dummy_write_decrypt_trigger
                                     	| [$cf8d: nop] prev_crypted 6e
 l_cf8e:
-	GET_ADDRESS	0x4000                     	| [$cf8e: sta $4000]
+	GET_ADDRESS	0x4000                     	| [$cf8e: sta $4000] port 1
 	move.b	d0,(a0)                         	| [...]
 	move.w	(sp)+,d0                       	| [$cf91: pla]
 	move.b	d0,d2                           	| [$cf92: tay]
@@ -2839,13 +2834,14 @@ l_d003:
 		| [$d005: sed]
 	CLR_XC_FLAGS                           	| [$d006: clc]
 	GET_ADDRESS	0xd05c                     	| [$d007: adc $d05c, x]
-	move.b	(a0,d1.w),d4	| [...]
+	move.b	(a0,d1.w),d4	| [...] credit per coin
 	abcd	d4,d0                    	| [...]
+	* maxxed out?
 	GET_ADDRESS	0xd064                     	| [$d00a: cmp $d064, y]
 	cmp.b	(a0,d2.w),d0                     	| [...]
 	* bcc=>bcs
 	bcs	l_d015                             	| [$d00d: bcc $d015]
-	GET_ADDRESS	0xd064                     	| [$d00f: lda $d064, y]
+	GET_ADDRESS	0xd064                     	| [$d00f: lda $d064, y] max nb credits (9)
 	move.b	(a0,d2.w),d0                    	| [...]
                                     	| [$d012: nop]
                                     	| [$d014: nop]
@@ -2855,16 +2851,17 @@ l_d015:
                                     	| [$d017: cld]
 	GET_ADDRESS	0x1e                       	| [$d018: dec $1e]
 	subq.b	#1,(a0)                         	| [...]
-	GET_ADDRESS	0x1b                       	| [$d01a: lda $1b]
-	move.b	(a0),d0                         	| [...]
-	bne	l_d02f                             	| [$d01c: bne $d02f]
+	* debounce shit?? skipped!!
+	*GET_ADDRESS	0x1b                       	| [$d01a: lda $1b]
+	*move.b	(a0),d0                         	| [...]
+	*bne	l_d02f                             	| [$d01c: bne $d02f]
+	moveq 	#0,d0
 	GET_ADDRESS	0x4000                     	| [$d01e: sta $4000]
 	move.b	d0,(a0)                         	| [...]
 	move.b	#0x01,d0                        	| [$d021: lda #$01]
 	GET_ADDRESS	0x1a                       	| [$d023: sta $1a]
 	move.b	d0,(a0)                         	| [...]
-	jbsr	osd_break                               	| [$d025: ldx #$ff]
-		| [$d027: txs]
+	lea		stack_top,a7				| [$d025: ldx #$ff]
                                     	| [$d028: nop]
 	jra	l_c038                             	| [$d029: jmp $c038]
                                     	| [$d02c: nop]
@@ -2872,23 +2869,22 @@ l_d015:
 l_d02f:
 	jra	l_cfd4                             	| [$d02f: jmp $cfd4]
                                     	| [$d032: nop]
-l_d034:
-                                    	| [$d034: nop]
-	move.b	#0xe7,d1                        	| [$d035: ldx #$e7]
-                                    	| [$d037: nop]
-                                    	| [$d039: nop]
-l_d03a:
-	GET_ADDRESS	0xff                       	| [$d03a: lda $ff]
-	move.b	(a0),d0                         	| [...]
-	GET_ADDRESS	0xff                       	| [$d03c: lda $ff]
-	move.b	(a0),d0                         	| [...]
-                                    	| [$d03e: nop]
-	subq.b	#1,d1                           	| [$d03f: dex]
-	bne	l_d03a                             	| [$d040: bne $d03a]
+cpu_delay_d034:
+											| [$d034: nop]
+*	move.b	#0xe7,d1                        	| [$d035: ldx #$e7]
+*                                    	| [$d037: nop]
+*                                    	| [$d039: nop]
+*l_d03a:
+*	GET_ADDRESS	0xff                       	| [$d03a: lda $ff]
+*	move.b	(a0),d0                         	| [...]
+*	GET_ADDRESS	0xff                       	| [$d03c: lda $ff]
+*	move.b	(a0),d0                         	| [...]
+*                                    	| [$d03e: nop]
+*	subq.b	#1,d1                           	| [$d03f: dex]
+*	bne	l_d03a                             	| [$d040: bne $d03a]
 	rts                                    	| [$d042: rts]
                                     	| [$d043: nop]
-l_d045:
-                                    	| [$d045: nop]
+l_d045:                                    	| [$d045: nop]
 	GET_ADDRESS	0xf9                       	| [$d046: lda $f9]
 	move.b	(a0),d0                         	| [...]
 	beq	l_d05b                             	| [$d048: beq $d05b]
@@ -2896,6 +2892,7 @@ l_d045:
 	and.b	#0xc0,d0                         	| [$d04d: and #$c0]
 	bne	l_d05b                             	| [$d04f: bne $d05b]
 	clr.b	d0                               	| [$d051: lda #$00]
+	* reached when a credit is inserted
 	GET_ADDRESS	0xf9                       	| [$d053: sta $f9]
 	move.b	d0,(a0)                         	| [...]
 	jbsr	l_cf99                            	| [$d055: jsr $cf99]
@@ -2906,18 +2903,18 @@ l_d05b:
 
 
 l_d06e:
-                                    	| [$d06e: nop]
+											| [$d06e: nop]
 	GET_ADDRESS	0x1a                       	| [$d06f: lda $1a]
 	move.b	(a0),d0                         	| [...]
 	beq	l_d091                             	| [$d071: beq $d091]
 	GET_ADDRESS	0x1c                       	| [$d073: lda $1c]
 	move.b	(a0),d0                         	| [...]
-	bne	l_d080                             	| [$d075: bne $d080]
+	bne	check_if_game_start_d080                | [$d075: bne $d080]
 	jbsr	l_d111                            	| [$d077: jsr $d111]
 	jbsr	l_d13f                            	| [$d07a: jsr $d13f]
                                     	| [$d07d: nop]
                                     	| [$d07f: nop]
-l_d080:
+check_if_game_start_d080:
 	jbsr	osd_read_dsw0                     	| [$d080: lda $4002]
 	and.b	#0x01,d0                         	| [$d083: and #$01]
 	beq	l_d095                             	| [$d085: beq $d095]
@@ -3002,11 +2999,10 @@ l_d104:
 	subq.b	#1,d1                           	| [$d106: dex] prev_crypted 66
 	bpl	l_d104                             	| [$d107: bpl $d104]
 	st.b	d1                                	| [$d109: ldx #$ff]
-	jbsr	osd_break	| [$d10b: txs]
+	lea	stack_top,a7	| [$d10b: txs]
 	jra	l_c068                             	| [$d10c: jmp $c068]
                                     	| [$d10f: nop]
 l_d111:
-                                    	| [$d111: nop]
 	GET_UNCHECKED_ADDRESS	0x1367                     	| [$d112: lda $1367]
 	move.b	(a0),d0                         	| [...]
 	GET_ADDRESS	0xd155                     	| [$d115: cmp $d155]
@@ -3018,9 +3014,9 @@ l_d111:
 l_d11f:
 	GET_ADDRESS	0xd155                     	| [$d11f: lda $d155, y]
 	move.b	(a0,d2.w),d0                    	| [...]
-	BREAKPOINT	"screen write d122!!"
-	GET_ADDRESS	0x1367                     	| [$d122: sta $1367, y] TODO screen
-    move.b	d0,(a0,d2.w)                 	| [...]
+	GET_UNCHECKED_ADDRESS	0x1367                     	| [$d122: sta $1367, y]
+	add.w	d2,a0
+    jbsr	osd_w_videoram                 	| [...]
 	addq.b	#1,d2                           	| [$d125: iny] prev_crypted 64
 	cmp.b	#0x11,d2                         	| [$d126: cpy #$11]
 	bne	l_d11f                             	| [$d128: bne $d11f]
@@ -3032,9 +3028,9 @@ l_d11f:
 l_d132:
 	GET_ADDRESS	0xd166                     	| [$d132: lda $d166, y]
 	move.b	(a0,d2.w),d0                    	| [...]
-	BREAKPOINT	"screen write d135!!"
-	GET_ADDRESS	0x13ab                     	| [$d135: sta $13ab, y]  TODO screen
-    move.b	d0,(a0,d2.w)                 	| [...]
+	GET_UNCHECKED_ADDRESS	0x13ab                     	| [$d135: sta $13ab, y]  TODO screen
+	add.w	d2,a0
+    jbsr	osd_w_videoram                 	| [...]
 	addq.b	#1,d2                           	| [$d138: iny]
 	cmp.b	#0x06,d2                         	| [$d139: cpy #$06]
 	bne	l_d132                             	| [$d13b: bne $d132]
@@ -8043,18 +8039,14 @@ l_f14d:
 	move.b	(a0),d0                         	| [...]
 	bpl	l_f15e                             	| [$f155: bpl $f15e]
 	or.b	#0x0f,d0                          	| [$f157: ora #$0f]
-	PUSH_SR
 	GET_ADDRESS	0xe2                       	| [$f159: sta $e2]
 	move.b	d0,(a0)                         	| [...]
-	POP_SR
                                     	| [$f15b: nop] dummy_write_decrypt_trigger
                                     	| [$f15d: nop] prev_crypted 6e
 l_f15e:
 	or.b	#0x80,d0                          	| [$f15e: ora #$80]
-	PUSH_SR
 	GET_ADDRESS	0xe2                       	| [$f160: sta $e2]
 	move.b	d0,(a0)                         	| [...]
-	POP_SR
                                     	| [$f162: nop] dummy_write_decrypt_trigger
                                     	| [$f164: nop] prev_crypted 6e
 l_f165:
@@ -8202,10 +8194,8 @@ l_f1e4:
 l_f206:
 	GET_ADDRESS_Y	0xd8                     	| [$f206: lda ($d8), y]
 	move.b	(a0,d2.w),d0                    	| [...]
-	PUSH_SR
 	GET_ADDRESS_Y	0xda                     	| [$f208: sta ($da), y]
 	move.b	d0,(a0,d2.w)                    	| [...]
-	POP_SR
 	subq.b	#1,d2                           	| [$f20a: dey]
 	bpl	l_f206                             	| [$f20b: bpl $f206]
 	GET_ADDRESS	0xdd                       	| [$f20d: dec $dd]
