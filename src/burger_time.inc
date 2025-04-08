@@ -9,14 +9,10 @@
     OPT_DISABLE_SPRITES=0                       | do not change!
 												| do not change!
 	* cheats to test game                       | do not change!
-    * score is decimal format                   | do not change!
 	* all options must be zeroed for release    | do not change!
     OPT_START_SCORE=0                           | do not change!
 												| do not change!
-	OPT_SKIP_GAME_DEMO=0                        | do not change!
-	OPT_ONLY_ONE_ENEMY=0                        | do not change!
-	OPT_ONLY_ONE_LIFE=0                         | do not change!
-	OPT_START_AT_LEVEL_2=0
+
 	.else
 	
 	* debug release, options can be changed
@@ -25,18 +21,11 @@
     OPT_DISABLE_SPRITES=0
    
 	* cheats to test game
-    * score is decimal format
 	* all options must be zeroed for release
     OPT_START_SCORE=0
 
-	OPT_SKIP_GAME_DEMO=0
-	* when only one enemy:
-	* wolf struct at 8AE0, sprite shadow at 8850
-	* balloon struct at 8B70 (y @8B74), sprite shadow at 8868
-	* 
-	OPT_ONLY_ONE_ENEMY=0
 	OPT_ONLY_ONE_LIFE=0
-	OPT_START_AT_LEVEL_2=0
+
 	
 	
 	.endif
@@ -57,7 +46,35 @@ comment\@:
 	.align	2
 next\@:
 	.endm
-	.endc	
+	.endif	
+	
+
+| write current PC value to some address
+.macro LOGPC	address
+	.ifndef	RELEASE
+     bsr    .next_\@
+.next_\@:
+      addq.l    #6,(a7) | skip this & next instruction
+      move.l    (a7)+,0x\address
+	.endif
+.endm
+
+	.ifdef	RELEASE
+	.macro	TMPBREAK
+	.error  "stray TMPBREAK macro"
+	.endm
+	.macro	TMPWRITE
+	.error  "stray TMPWRITE macro"
+	.endm
+	.else
+	.macro	TMPBREAK
+	BREAKPOINT	"work breakpoint"
+	.endm
+	.macro	TMPWRITE
+	move.b	#0,0x100		| 0x100 is used but only for exceptions
+	.endm
+	.endif
+
 ***
 *** end of BUILD OPTIONS
 ***
@@ -74,13 +91,3 @@ next\@:
    .set _offset_,_offset_+\_size
 .endm
 
-
-| write current PC value to some address
-.macro LOGPC	address
-	.ifndef	RELEASE
-     bsr    .next_\@
-.next_\@:
-      addq.l    #6,(a7) | skip this & next instruction
-      move.l    (a7)+,0x\address
-	.endif
-.endm
