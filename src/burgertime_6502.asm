@@ -2170,6 +2170,13 @@ D3E1: 85 04    sta $04
 D3E3: E6 67    inc $67  ; dummy_write_decrypt_trigger
 D3E5: 6C 05 00 jmp ($0005)  ; prev_crypted ac
 
+jump_table_D3E8:
+    .word	$D3F5  
+	.word	$D3FD  
+	.word	$D42E  
+	.word	$D45F  
+	.word	$D4AD  
+	
 D3F5: A9 00    lda #$00
 D3F7: 85 67    sta $67
 D3F9: 60       rts 
@@ -3790,7 +3797,23 @@ E1C1: BD CA E1 lda $e1ca, x
 E1C4: 85 07    sta $07  ; dummy_write_decrypt_trigger
 E1C6: 6C 06 00 jmp ($0006)  ; prev_crypted ac
 
-
+jump_table_E1C9:
+	.word	$E200  
+	.word	$E218 
+	.word	$E236 
+	.word	$E278  
+	.word	$E2B0  
+	.word	$E2E8  
+	.word	$E400  
+	.word	$E1EC 	| bogus
+	.word	$E1EF  	| bogus
+	.word	$E1F2  	| bogus
+	.word	$E320 
+	.word	$E358 
+	.word	$E390  
+	.word	$E3C8 
+	.word	$E457 
+	.word	$e203 
 E203: 20 BE E5 jsr $e5be
 E206: EE 00 02 inc $0200
 E209: EE 00 02 inc $0200
@@ -5471,6 +5494,14 @@ F4E9: EA       nop
 F4EA: 60       rts 
 
 
+jump_table_f4eb:
+	.word	$f4fa  
+	.word	$f4fa 
+	.word	$f516  
+	.word	$f516  
+	.word	$f50c  
+	.word	$f50c  
+	
 F4FA: A5 E3    lda $e3
 F4FC: 29 20    and #$20
 F4FE: D0 EA    bne $f4ea
