@@ -112,11 +112,6 @@ def add_hw_sprite(index,name,cluts=[0]):
         sprite_names[idx] = name
         hw_sprite_cluts[idx] = cluts
 
-# 24 bit colors that Marconelly reported as the only colors used, we'll see
-#actually_used_colors = ["ff00fb", "0000fb", "0000ab", "2147fb", "0068fb", "00defb",
-#"defffb", "00ff00", "009700", "97de00", "ffff00", "ffb800", "de9700", "b82100", "ff0000",
-#680000"]
-#actually_used_colors = {tuple(int(c[i:i+2],16) for i in range(0,6,2)) for c in actually_used_colors}
 
 nb_planes = 3
 nb_colors = 1<<nb_planes
@@ -126,7 +121,32 @@ sprite_names = {}
 sprite_cluts = [[] for _ in range(64)]
 hw_sprite_cluts = [[] for _ in range(64)]
 
+def add_sprite(values,name):
+    if isinstance(values,int):
+        values = [values]
+    for v in values:
+        sprite_names[v] = name
 
+add_sprite(0x2A,"points_900")
+add_sprite([0x2B,0x37],"points_500")
+add_sprite([0x2C,0x38],"points_1000")
+add_sprite(0x2D,"points_1500")
+add_sprite(0x39,"points_2000")
+add_sprite(0x28,"points_300")
+add_sprite(0x29,"points_600")
+add_sprite(0x34,"points_100")
+add_sprite(0x35,"points_200")
+add_sprite(0x36,"points_300")
+add_sprite(0x2E,"fries")
+add_sprite(0x2F,"ice_cream")
+add_sprite(0x30,"coffee")
+add_sprite(0x3A,"points_4000")
+add_sprite(0x3B,"points_8000")
+add_sprite(0x3C,"points_16000")
+add_sprite(range(0x20,0x28),"pepper")
+add_sprite(range(0x40,0x53),"player")
+add_sprite(range(0x58,0x64),"sausage")
+add_sprite(range(0x64,0x6E),"green_blob")
 
 sprites_path = os.path.join(this_dir,os.path.pardir,"sheets")
 
@@ -154,8 +174,8 @@ tp,tile_set = load_tileset(os.path.join(sprites_path,"tiles.png"),8,"tiles",used
 
 
 tile_palette.update(tp)
-used_sprites = set(range(0x20,0x7C)) - lost_tiles
-sp,sprite_set = load_tileset(os.path.join(sprites_path,"sprites.png"),16,"sprites",used_tiles,dump_dir,dump=dump_it,name_dict=sprite_names)
+used_sprites = set(sprite_names)
+sp,sprite_set = load_tileset(os.path.join(sprites_path,"sprites.png"),16,"sprites",used_sprites,dump_dir,dump=dump_it,name_dict=sprite_names)
 tile_palette.update(sp)
 
 
@@ -276,55 +296,42 @@ with open(os.path.join(src_dir,"graphics.68k"),"w") as f:
             f.write("0")
         f.write("\n")
 
-    for i,tile_entry in enumerate(sprite_table):
-        if tile_entry:
-            prefix = sprite_names.get(i,"bob")
-            f.write(f"{prefix}_{i:02x}:\n")
-            for j,t in enumerate(tile_entry):
-                f.write("\t.long\t")
-                if t:
-                    f.write(f"{prefix}_{i:02x}_{j:02x}")
-                else:
-                    f.write("0")
-                f.write("\n")
+
 
 ##
     for i,tile_entry in enumerate(sprite_table):
         if tile_entry:
-            print(tile_entry)
             prefix = sprite_names.get(i,"bob")
-            for j,t in enumerate(tile_entry):
-                name = f"{prefix}_{i:02x}_{j:02x}"
 
-                f.write(f"{name}:\n")
-                height = 0
-                width = 4
-                offset = 0
-                for orientation,_ in plane_orientations:
-                    if orientation in tile_entry:
-                        ot = tile_entry[orientation]
+            name = f"{prefix}_{i:02x}"
 
-                        height = ot["height"]
-                        offset = ot["y_start"]
-                        break
+            f.write(f"{name}:\n")
+            height = 0
+            width = 4
+            offset = 0
+            for orientation,_ in plane_orientations:
+                if orientation in tile_entry:
+                    ot = tile_entry[orientation]
 
-                for orientation,_ in plane_orientations:
-                    f.write("* {}\n".format(orientation))
-                    f.write(f"\t.word\t{height},{width},{offset}\n")
-                    if orientation in tile_entry:
-                        for bitplane_id in tile_entry[orientation]["bitplanes"]:
-                            f.write("\t.long\t")
-                            if bitplane_id:
-                                f.write(f"bob_plane_{bitplane_id:02d}")
-                            else:
-                                f.write("0")
-                            f.write("\n")
-                        if len(t)==1:
-                            # optim: only standard
-                            break
-                    else:
-                        for _ in range(nb_planes+1):
-                            f.write("\t.long\t0\n")
+                    height = ot["height"]
+                    offset = ot["y_start"]
+                    break
+
+            for orientation,_ in plane_orientations:
+                f.write("* {}\n".format(orientation))
+                f.write(f"\t.word\t{height},{width},{offset}\n")
+                if orientation in tile_entry:
+                    for bitplane_id in tile_entry[orientation]["bitplanes"]:
+                        f.write("\t.long\t")
+                        if bitplane_id:
+                            f.write(f"bob_plane_{bitplane_id:02d}")
+                        else:
+                            f.write("0")
+                        f.write("\n")
+
+                else:
+                    for _ in range(nb_planes+1):
+                        f.write("\t.long\t0\n")
 
     f.write("\t.section\t.datachip\n")
 
