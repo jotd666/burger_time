@@ -146,7 +146,8 @@ add_sprite(0x3C,"points_16000")
 add_sprite(range(0x20,0x28),"pepper")
 add_sprite(range(0x40,0x53),"player")
 add_sprite(range(0x58,0x64),"sausage")
-add_sprite(range(0x64,0x6E),"green_blob")
+add_sprite(range(0x64,0x70),"green_blob")
+add_sprite(range(0x70,0x7C),"egg")
 
 sprites_path = os.path.join(this_dir,os.path.pardir,"sheets")
 

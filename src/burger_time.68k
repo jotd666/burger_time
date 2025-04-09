@@ -243,6 +243,7 @@ get_address:
 	cmp.w	#0x800,a0
 	bcc.b	0f
 	* RAM
+10:
 	add.l	a6,a0
 	POP_SR
 	rts
@@ -258,7 +259,7 @@ get_address:
 0:
 	* above 0x1800
 	cmp.w	#0x1820,a0
-	jcs		10f
+	jcs		10b
 	* above 0x1820
 	cmp.w	#0x2000,a0
 	jcc		0f
