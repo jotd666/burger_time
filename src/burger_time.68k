@@ -1775,6 +1775,7 @@ l_c98d:
 l_c99f:
 	rts                                    	| [$c99f: rts]
 
+* < D1/D2 address in ROM
 l_c9bc:
                                     	| [$c9bc: nop] prev_crypted 6e
 	GET_ADDRESS	0x03                       	| [$c9bd: stx $03] dummy_write_decrypt_trigger
@@ -3406,6 +3407,7 @@ l_D3F5:
                                     	| [$d3fa: nop] dummy_write_decrypt_trigger
                                     	| [$d3fc: nop] prev_crypted 6e
 l_D3FD:
+	TMPWRITE		| reached!!
 	GET_ADDRESS	0x03                       	| [$d3fd: lda $03]
 	move.b	(a0),d0                         	| [...]
 	cmp.b	#0x16,d0                         	| [$d3ff: cmp #$16]
@@ -3541,11 +3543,9 @@ l_D4AD:
 	* bcc=>bcs
 	bcs	l_d4bd                             	| [$d4b1: bcc $d4bd]
 	move.b	#0xdd,d0                        	| [$d4b3: lda #$dd]
-	PUSH_SR
 	GET_ADDRESS	0x1803                     	| [$d4b5: sta $1803, y]
     move.b	d0,(a0,d2.w)                 	| [...]
-	POP_SR
-	bne	l_d4f0                             	| [$d4b8: bne $d4f0] probably bra
+	bra	l_d4f0                             	| [$d4b8: bne $d4f0] probably bra
                                     	| [$d4ba: nop]
                                     	| [$d4bc: nop]
 l_d4bd:
@@ -3628,25 +3628,24 @@ l_d523:
 *	GET_ADDRESS	0x4003                     	| [$d528: lda $4003]
 *	move.b	(a0),d0                         	| [...]
 *	and.b	#0x40,d0                         	| [$d52b: and #$40]
-*	beq	l_d53a                             	| [$d52d: beq $d53a]
+*	beq	counter_period_stuff_d53a                             	| [$d52d: beq $d53a]
 *	GET_ADDRESS	current_player_001f        	| [$d52f: lda current_player_001f]
 *	move.b	(a0),d0                         	| [...]
-*	beq	l_d53a                             	| [$d531: beq $d53a]
+*	beq	counter_period_stuff_d53a                             	| [$d531: beq $d53a]
 *	GET_ADDRESS	0x08                       	| [$d533: dec $08] dummy_write_decrypt_trigger
 *	subq.b	#1,(a0)                         	| [...]
 *	GET_ADDRESS	0x08                       	| [$d535: dec $08] prev_crypted e2  ; dummy_write_decrypt_trigger
 *	subq.b	#1,(a0)                         	| [...]
                                     	| [$d537: nop] prev_crypted c1
                                     	| [$d539: nop]
-l_d53a:
+counter_period_stuff_d53a:
 	GET_ADDRESS	0x08                       	| [$d53a: inc $08] dummy_write_decrypt_trigger
-	addq.b	#1,(a0)                         	| [...]
-	GET_ADDRESS	0x08                       	| [$d53c: inc $08] prev_crypted ea  ; dummy_write_decrypt_trigger
-	addq.b	#1,(a0)                         	| [...]
-	GET_ADDRESS	0x08                       	| [$d53e: inc $08] prev_crypted ea
-	addq.b	#1,(a0)                         	| [...]
-	GET_ADDRESS	0x08                       	| [$d540: lda $08]
-	move.b	(a0),d0                         	| [...]
+	addq.b	#3,(a0)                         	| [...]
+											| [$d53c: inc $08] prev_crypted ea  ; dummy_write_decrypt_trigger
+											| [...]
+											| [$d53e: inc $08] prev_crypted ea
+											| [...]
+	move.b	(a0),d0								| [$d540: lda $08]
 	and.b	#0x0f,d0                         	| [$d542: and #$0f]
 	cmp.b	#0x06,d0                         	| [$d544: cmp #$06]
 	* bcc=>bcs
@@ -3671,8 +3670,9 @@ l_d53a:
 	cmp.b	#0xa0,d0                         	| [$d563: cmp #$a0]
 	beq	l_d585                             	| [$d565: beq $d585]
 	cmp.b	#0xd0,d0                         	| [$d567: cmp #$d0]
-	beq	l_d585                             	| [$d569: beq $d585]
-	bne	l_d585                             	| [$d56b: bne $d585]
+	* returns with Z flag updated (else it would be useless)
+	rts                             	| [$d569: beq $d585]
+	                             	| [$d56b: bne $d585]
                                     	| [$d56d: nop] dummy_write_decrypt_trigger
                                     	| [$d56f: nop] prev_crypted 6e
 l_d570:
@@ -5410,10 +5410,8 @@ l_e059:
 	move.b	(a0),d0                         	| [...]
 	and.b	#0x0f,d0                         	| [$e05e: and #$0f]
 	or.b	#0x60,d0                          	| [$e060: ora #$60]
-	PUSH_SR
 	GET_ADDRESS	0xa9                       	| [$e062: sta $a9, x]
     move.b	d0,(a0,d1.w)                 	| [...]
-	POP_SR
 	jbsr	l_d3c3                            	| [$e064: jsr $d3c3]
 	rts                                    	| [$e067: rts]
                                     	| [$e068: nop]
