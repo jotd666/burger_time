@@ -283,7 +283,7 @@ get_address:
 0:
 	cmp.w	#0x4001,a0
 	jne		0f
-	* player 2 controls
+	* player 2 controls (cocktail, so useless)
 	lea		player_2_controls,a0
 	jra		10f
 	
@@ -3267,9 +3267,9 @@ l_d2ac:
 	move.b	(a0,d1.w),d0                    	| [...]
 	and.b	#0xf0,d0                         	| [$d2dd: and #$f0]
 	beq	l_d34a                             	| [$d2df: beq $d34a]
-	GET_ADDRESS	0xa9                       	| [$d2e1: inc $a9, x]
+	                       	| [$d2e1: inc $a9, x]
     addq.b	#1,(a0,d1.w)                 	| [...]
-	GET_ADDRESS	0xa9                       	| [$d2e3: lda $a9, x]
+	                       	| [$d2e3: lda $a9, x]
 	move.b	(a0,d1.w),d0                    	| [...]
 	and.b	#0xf3,d0                         	| [$d2e5: and #$f3]
 	GET_ADDRESS	0xa9                       	| [$d2e7: sta $a9, x]

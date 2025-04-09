@@ -173,6 +173,7 @@ lost_tiles = {0x31,0x32,0x33}
 used_tiles = rset(0,0x6E) | rset(0xa0,0xF2) | rset(0x11C,0x120) | rset(0x200,0x380) | lost_tiles
 tp,tile_set = load_tileset(os.path.join(sprites_path,"tiles.png"),8,"tiles",used_tiles,dump_dir,dump=dump_it,name_dict=None)
 
+bp,background_set = load_tileset(os.path.join(sprites_path,"background.png"),16,"background",rset(0,14),dump_dir,dump=dump_it,name_dict=None)
 
 tile_palette.update(tp)
 used_sprites = set(sprite_names)
@@ -182,9 +183,10 @@ tile_palette.update(sp)
 
 full_palette = sorted(tile_palette)
 
+background_palette = sorted(bp)
+background_palette += (nb_colors-len(background_palette)) * [(0x10,0x20,0x30)]
 
-
-# pad just in case we don't have 16 colors (but we have)
+# pad just in case we don't have 8 colors (but we have)
 full_palette += (nb_colors-len(full_palette)) * [(0x10,0x20,0x30)]
 
 sprite_table = [None]*NB_SPRITES
@@ -251,12 +253,49 @@ tile_table = read_tileset(tile_set,full_palette,[True,False,False,False],cache=t
 bob_plane_cache = {}
 sprite_table = read_tileset(sprite_set,full_palette,[True,False,True,False],cache=bob_plane_cache, is_bob=True)
 
+background_plane_cache = {}
+background_table = read_tileset(background_set,background_palette,[True,False,False,False],cache=background_plane_cache, is_bob=False)
+
 with open(os.path.join(src_dir,"palette.68k"),"w") as f:
+    f.write("playfield_palette:\n")
     bitplanelib.palette_dump(full_palette,f,bitplanelib.PALETTE_FORMAT_ASMGNU)
+    f.write("background_palette:\n")
+    bitplanelib.palette_dump(background_palette,f,bitplanelib.PALETTE_FORMAT_ASMGNU)
 
 with open(os.path.join(src_dir,"graphics.68k"),"w") as f:
     f.write("\t.global\tcharacter_table\n")
     f.write("\t.global\tbob_table\n")
+    f.write("\t.global\tbackground_table\n")
+
+    f.write("background_table:\n")
+
+    for i,tile_entry in enumerate(background_table):
+        f.write("\t.long\t")
+        if tile_entry:
+            f.write(f"background_{i:02x}")
+        else:
+            f.write("0")
+        f.write("\n")
+
+
+    for i,tile_entry in enumerate(background_table):
+        if tile_entry:
+            name = f"background_{i:02x}"
+
+            f.write(f"{name}:\n")
+
+            for bitplane_id in tile_entry["standard"]["bitplanes"]:
+                f.write("\t.long\t")
+                if bitplane_id:
+                    f.write(f"background_plane_{bitplane_id:02d}")
+                else:
+                    f.write("0")
+                f.write("\n")
+
+    for k,v in background_plane_cache.items():
+        f.write(f"background_plane_{v:02d}:")
+        dump_asm_bytes(k,f)
+
 
     f.write("character_table:\n")
 
