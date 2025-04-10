@@ -2210,7 +2210,7 @@ l_cbc4:
 	move.b	(a0,d1.w),d0                    	| [...]
 l_cbc9:
 	or.b	#0x10,d0                          	| [$cbc9: ora #$10]
-	jbsr	osd_set_scroll_1               | [$cbcb: sta $4004] dummy_write_decrypt_trigger
+	jbsr	osd_background_command               | [$cbcb: sta $4004] dummy_write_decrypt_trigger
 	movem.w	(sp)+,d0                       	| [$cbce: pla] prev_crypted 2c
 	move.b	d0,d1                           	| [$cbcf: tax]
 	rts                                    	| [$cbd0: rts]
@@ -2247,7 +2247,7 @@ l_cbf1:
 	cmp.b	#0x08,d1                         	| [$cbfe: cpx #$08]
 	bne	l_cbf1                             	| [$cc00: bne $cbf1]
 	clr.b	d0                               	| [$cc02: lda #$00]
-	jbsr	osd_set_scroll_1                     	| [$cc04: sta $4004]
+	jbsr	osd_background_command                     	| [$cc04: sta $4004]
 	move.b	#0x01,d1                        	| [$cc07: ldx #$01]
 	* each time screen changes, this is called
 	jbsr	screen_mainloop_ca2c                            	| [$cc09: jsr $ca2c]
@@ -2695,7 +2695,7 @@ l_cf99:
 	GET_ADDRESS	0x1e                       	| [$cf9a: inc $1e] dummy_write_decrypt_trigger
 	addq.b	#1,(a0)                         	| [...]
 	move.b	#0x1b,d0                        	| [$cf9c: lda #$1b] prev_crypted 4d
-	jbsr	osd_set_background                     	| [$cf9e: sta $4003]
+	jbsr	osd_sound_command                     	| [$cf9e: sta $4003]
 	GET_ADDRESS	0x02                       	| [$cfa1: lda $02]
 	move.b	(a0),d0                         	| [...]
 	cmp.b	#0x80,d0                         	| [$cfa3: cmp #$80]
@@ -7147,7 +7147,7 @@ l_ea5e:
 	move.b	d0,d1                           	| [$ea64: tax]
 	GET_ADDRESS	0xea71                     	| [$ea65: lda $ea71, x]
 	move.b	(a0,d1.w),d0                    	| [...]
-	jbsr	osd_set_background                     	| [$ea68: sta $4003]
+	jbsr	osd_sound_command                     	| [$ea68: sta $4003]
                                     	| [$ea6b: nop]
                                     	| [$ea6d: nop]
 l_ea6e:
@@ -7621,7 +7621,7 @@ l_f11a:
 	bne	l_f134                             	| [$f126: bne $f134]
 	jbsr	l_f2b8                            	| [$f128: jsr $f2b8]
 	clr.b	d0                               	| [$f12b: lda #$00]
-	jbsr	osd_set_background                     	| [$f12d: sta $4003]
+	jbsr	osd_sound_command                     	| [$f12d: sta $4003]
 	rts                                    	| [$f130: rts]
                                     	| [$f131: nop]
                                     	| [$f133: nop]
@@ -7909,7 +7909,7 @@ l_f351:
 	cmp.b	#0x01,d0                         	| [$f355: cmp #$01]
 	bne	l_f361                             	| [$f357: bne $f361]
 	move.b	#0x1e,d0                        	| [$f359: lda #$1e]
-	jbsr	osd_set_background                | [$f35b: sta $4003] dummy_write_decrypt_trigger
+	jbsr	osd_sound_command                | [$f35b: sta $4003] dummy_write_decrypt_trigger
                                     	| [$f35e: nop] prev_crypted c1
                                     	| [$f360: nop]
 l_f361:
@@ -7997,7 +7997,7 @@ l_f3ca:
 	GET_ADDRESS	0xee                       	| [$f3ca: sta $ee] dummy_write_decrypt_trigger
 	move.b	d0,(a0)                         	| [...]
 	move.b	#0x15,d0                        	| [$f3cc: lda #$15] prev_crypted 4d
-	jbsr	osd_set_background                     	| [$f3ce: sta $4003]
+	jbsr	osd_sound_command                     	| [$f3ce: sta $4003]
                                     	| [$f3d1: nop]
                                     	| [$f3d3: nop]
 l_f3d4:
@@ -8080,7 +8080,7 @@ l_f448:
 	cmp.b	#0x03,d0                         	| [$f455: cmp #$03]
 	beq	l_f45f                             	| [$f457: beq $f45f]
 	move.b	#0x11,d0                        	| [$f459: lda #$11]
-	jbsr	osd_set_background                     	| [$f45b: sta $4003]
+	jbsr	osd_sound_command                     	| [$f45b: sta $4003]
                                     	| [$f45e: nop]
 l_f45f:
 	GET_ADDRESS	0xee                       	| [$f45f: lda $ee]
@@ -8108,7 +8108,7 @@ l_f45f:
 	GET_ADDRESS	0xe1                       	| [$f476: sta $e1]
 	move.b	d0,(a0)                         	| [...]
 	move.b	#0x17,d0                        	| [$f478: lda #$17]
-	jbsr	osd_set_background                     	| [$f47a: sta $4003]
+	jbsr	osd_sound_command                     	| [$f47a: sta $4003]
 	rts                           	| [$f47d: jmp ($00d8)]
                                     	| [$f480: nop]
                                     	| [$f482: nop]

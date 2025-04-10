@@ -170,8 +170,8 @@ start:
 		.global osd_read_dsw0
 		.global osd_read_dsw1
 		.global osd_read_dsw2
-		.global	osd_set_scroll_1
-		.global	osd_set_background
+		.global	osd_background_command
+		.global	osd_sound_command
 		
 
 
@@ -1687,11 +1687,12 @@ osd_interrupt_control:
 	move.w	#0x0030,_custom+intena
 	rts
 
-* write to 0x4004
-osd_set_scroll_1:
+* write to 0x4004, background change
+osd_background_command:
 	rts
-* write to 0x4003, probably sound not background
-osd_set_background:
+	
+* write to 0x4003, probably sound
+osd_sound_command:
 	rts
 
 * python code to switch between 0x1000-0x17FF <=> 0x1800-0x2000
