@@ -1689,7 +1689,31 @@ osd_interrupt_control:
 
 * write to 0x4004, background change
 osd_background_command:
+	and.w	#0x1F,d0
+	bclr	#4,d0
+	jeq		1f
+	* change background
+	* MAME code is strange and hard to follow. I recorded the
+	* writes to 0x4004 while skipping levels instead...
+	lea	level_table(pc),a1
+	move.b	(a1,d0.w),d0	| register value => offset
+	lsl.w	#8,d0		| times 256 to adjust offset
 	rts
+1:
+	* clear background
+	rts
+
+
+level_table:
+	.byte	1
+	.byte	2
+	.byte	3
+	.byte	0
+	.byte	5
+	.byte	-1
+	.byte	-1
+	.byte	4
+	.align	2
 	
 * write to 0x4003, probably sound
 osd_sound_command:
