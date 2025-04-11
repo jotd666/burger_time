@@ -163,15 +163,16 @@ start:
 	.global		_dosbase
 	.global		cheat_used
 * osd layer		
-		.global osd_interrupt_control
-		.global osd_break		| for debug	
-		.global osd_blitz		| for debug
-		.global osd_w_videoram
-		.global osd_read_dsw0
-		.global osd_read_dsw1
-		.global osd_read_dsw2
-		.global	osd_background_command
-		.global	osd_sound_command
+	.global osd_interrupt_control
+	.global osd_break		| for debug	
+	.global osd_blitz		| for debug
+	.global osd_w_videoram
+	.global osd_read_dsw0
+	.global osd_read_dsw1
+	.global osd_read_dsw2
+	.global	osd_set_background
+	.global	osd_clear_background
+	.global	osd_sound_command
 		
 
 
@@ -1014,7 +1015,7 @@ really_update_tiles:
 	lsl.w	#8,d0
 	move.b	(a6,d7.w),d0
 	movem.l	d2/d3/d7/a0/a1/a5,-(a7)
-	jbsr	update_bg_tile
+	jbsr	update_fg_tile
 	movem.l	(a7)+,d2/d3/d7/a0/a1/a5
 1:
 	addq	#1,d7
@@ -1687,33 +1688,42 @@ osd_interrupt_control:
 	move.w	#0x0030,_custom+intena
 	rts
 
-* write to 0x4004, background change
-osd_background_command:
-	and.w	#0x1F,d0
-	bclr	#4,d0
-	jeq		1f
-	* change background
-	* MAME code is strange and hard to follow. I recorded the
-	* writes to 0x4004 while skipping levels instead...
-	lea	level_table(pc),a1
-	move.b	(a1,d0.w),d0	| register value => offset
-	lsl.w	#8,d0		| times 256 to adjust offset
-	rts
+osd_set_background:
+	move.w	#0xFF,d3
+	moveq	#0,d0
+	moveq	#0,d1
+0:
+	move.b	(a0)+,d2
+	movem.l	d0-d1/a0,-(a7)
+	jbsr	update_bg_tile
+	movem.l	(a7)+,d0-d1/a0
+	addq	#2,d0
+	cmp.b	#0x20,d0
+	jne		1f
+	moveq	#0,d0
+	add.w	#0x10,d1
 1:
-	* clear background
+	dbf		d3,0b
 	rts
-
-
-level_table:
-	.byte	1
-	.byte	2
-	.byte	3
-	.byte	0
-	.byte	5
-	.byte	-1
-	.byte	-1
-	.byte	4
-	.align	2
+	
+osd_clear_background:
+	move.w	#0xFF,d3
+	moveq	#0,d0
+	moveq	#0,d1
+0:
+	moveq	#0,d2
+	movem.l	d0-d1/a0,-(a7)
+	jbsr	update_bg_tile
+	movem.l	(a7)+,d0-d1/a0
+	addq	#2,d0
+	cmp.b	#0x20,d0
+	jne		1f
+	moveq	#0,d0
+	add.w	#0x10,d1
+1:
+	dbf		d3,0b
+	rts
+	
 	
 * write to 0x4003, probably sound
 osd_sound_command:
@@ -1805,6 +1815,38 @@ osd_w_videoram:
 	movem.l	(a7)+,d0/d1/d7/a0/a1
 	rts	
 	
+	.macro	COPY_TILE_PLANE_ROW
+	move.b	d0,(offset,a1)  | buffer
+	move.b	d0,(offset,a3)  | backbuffer
+	.endm
+	
+	.macro	CLEAR_TILE_PLANE
+	.set	offset,0
+	.rept	8
+	clr.b	(offset,a1)
+	clr.b	(offset,a3)
+	.set	offset,offset+NB_BYTES_PER_ROW
+	.endr	
+	.endm
+	
+	.macro	TILE_NEXT_PLANE
+	add.w	d5,a1
+	add.w	d5,a3
+	.endm
+
+	
+	.macro	COPY_TILE16_PLANE_ROW
+	move.w	d0,(offset,a1)  | buffer
+	.endm
+	
+	.macro	CLEAR_TILE16_PLANE
+	.set	offset,0
+	.rept	16
+	clr.w	(offset,a1)
+	.set	offset,offset+NB_BYTES_PER_ROW
+	.endr	
+	.endm
+
 
 * < D7: 0-0x400
 * > D0: 
@@ -1834,6 +1876,60 @@ compute_tile_xy:
 *	rts
 
 
+* < D0: X (in coords)
+* < D1: Y (in pixels)
+* < D2: tile code
+update_bg_tile:
+
+	lea		background_table,a0
+
+	
+	* updating bitplanes
+	move.l	#SCREEN_PLANE_SIZE,d5
+	move.w	#NB_PLAYFIELD_PLANES-1,d4
+	lea		bg_screen_buffer,a1
+
+
+	lea		mulNB_BYTES_PER_ROW_table,A2
+	add.w	d1,d1
+	move.w	(a2,d1.w),d1
+	add.w	d1,d0
+	add.w	d0,a1
+	
+	add.w	d2,d2
+	add.w	d2,d2	
+	move.l	(a0,d2.w),d0		| tile pointer
+	.ifndef	RELEASE
+	jne		12f
+	lsr.w	#2,d2
+	BREAKPOINT	"background tile (in D2) not registered"	
+
+	jra		11f
+12:
+	.endif
+	move.l	d0,a2		| directly pointer on tile bitplanes
+
+	* just copy
+
+4:
+	move.l	(a2)+,d0		| next plane
+	jeq		5f
+	move.l	d0,a0
+	.set	offset,0
+	.rept	16
+	move.w	(a0)+,d0
+	COPY_TILE16_PLANE_ROW
+	.set	offset,offset+NB_BYTES_PER_ROW
+	.endr
+41:
+	TILE_NEXT_PLANE
+	dbf		d4,4b
+0:
+	rts
+5:
+	CLEAR_TILE16_PLANE
+	jra		41b
+
 
 
 * each column has 0x20*8 = 256 pixels
@@ -1842,7 +1938,7 @@ compute_tile_xy:
 * < D7: 0-0x400 address
 * < D0: extended tile code
 
-update_bg_tile:
+update_fg_tile:
 	move.w	d0,d2	| code
 	*and.w	#0x3FF,d2	| no attributes
 
@@ -1896,24 +1992,6 @@ update_bg_tile:
 *	BNE.S	0b
 *	jmp		(a4)
 	
-	.macro	COPY_TILE_PLANE_ROW
-	move.b	d0,(offset,a1)  | buffer
-	move.b	d0,(offset,a3)  | backbuffer
-	.endm
-	
-	.macro	CLEAR_TILE_PLANE
-	.set	offset,0
-	.rept	8
-	clr.b	(offset,a1)
-	clr.b	(offset,a3)
-	.set	offset,offset+NB_BYTES_PER_ROW
-	.endr	
-	.endm
-	
-	.macro	TILE_NEXT_PLANE
-	add.w	d5,a1
-	add.w	d5,a3
-	.endm
 	
 standard_tile:
 
@@ -2643,9 +2721,9 @@ game_copperlist:
 	* enable sprite colors now
 
 bobs_bitplanes:
-	DECL_EVEN_BITPLANES	0,3
-background_bitplanes:
 	DECL_EVEN_BITPLANES	4,3
+background_bitplanes:
+	DECL_EVEN_BITPLANES	0,3
 
 *game_sprite_colors:
 *	DECL_COLORS	16,16
@@ -2653,9 +2731,9 @@ game_sprites:
 	DECL_SPRITES
 game_sprites_end:
 
-game_colors:
-	DECL_COLORS	0,8
 background_colors:
+	DECL_COLORS	0,8
+game_colors:
 	DECL_COLORS	8,8
 
 	* priority: BOBs playfield on top

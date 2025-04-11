@@ -224,8 +224,6 @@ cpu_init:
 	moveq	#0,d5
 	moveq	#0,d6
 	moveq	#0,d7
-
-
 	rts
 
 get_address:
@@ -396,6 +394,9 @@ address_over_2000_loaded_message:
 *	PORT_DIPUNUSED_DIPLOC( 0x20, 0x20, "SW2:6" )  // should be OFF according to the manual
 *	PORT_DIPUNUSED_DIPLOC( 0x40, 0x40, "SW2:7" )  // should be OFF according to the manual
 *	PORT_DIPUNUSED_DIPLOC( 0x80, 0x80, "SW2:8" )  // should be OFF according to the manual
+
+
+
 
 	.global	burger_time_coin_inserted
 	.global	burger_time_reset
@@ -2210,7 +2211,7 @@ l_cbc4:
 	move.b	(a0,d1.w),d0                    	| [...]
 l_cbc9:
 	or.b	#0x10,d0                          	| [$cbc9: ora #$10]
-	jbsr	osd_background_command               | [$cbcb: sta $4004] dummy_write_decrypt_trigger
+	jbsr	write_to_4004               | [$cbcb: sta $4004] dummy_write_decrypt_trigger
 	movem.w	(sp)+,d0                       	| [$cbce: pla] prev_crypted 2c
 	move.b	d0,d1                           	| [$cbcf: tax]
 	rts                                    	| [$cbd0: rts]
@@ -2247,7 +2248,7 @@ l_cbf1:
 	cmp.b	#0x08,d1                         	| [$cbfe: cpx #$08]
 	bne	l_cbf1                             	| [$cc00: bne $cbf1]
 	clr.b	d0                               	| [$cc02: lda #$00]
-	jbsr	osd_background_command                     	| [$cc04: sta $4004]
+	jbsr	write_to_4004                     	| [$cc04: sta $4004]
 	move.b	#0x01,d1                        	| [$cc07: ldx #$01]
 	* each time screen changes, this is called
 	jbsr	screen_mainloop_ca2c                            	| [$cc09: jsr $ca2c]
@@ -8500,6 +8501,47 @@ l_f63e:
 l_f65b:
 	rts                                    	| [$f65b: rts]
 
+
+* write to 0x4004, background change
+* < D0: value
+write_to_4004:
+	movem.l	d0-a6,-(a7)
+	move.b	d0,d4		| save
+	and.w	#0x1F,d0
+	bclr	#4,d0
+	jeq		1f
+	* change background
+	* MAME code is strange and hard to follow. I recorded the
+	* writes to 0x4004 while skipping levels instead...
+	lea	level_table(pc),a0
+	move.b	(a0,d0.w),d0	| register value => offset
+	jpl		0f
+	BREAKPOINT	"illegal value for background index (in D4)"
+0:
+	lsl.w	#8,d0		| times 256 to adjust offset
+	lea background_tilemap,a0
+	add.w	d0,a0
+	jbsr	osd_set_background
+	jra		2f
+1:
+	* clear background
+	jbsr	osd_clear_background
+2:
+	movem.l	(a7)+,d0-a6
+	rts
+
+
+level_table:
+	.byte	1
+	.byte	2
+	.byte	3
+	.byte	0
+	.byte	5
+	.byte	-1
+	.byte	-1
+	.byte	4
+	.align	2
+	
 * dump of "ab03.6b" which contains background tilemaps
 
 background_tilemap:
