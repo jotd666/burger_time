@@ -137,12 +137,13 @@
 	jbsr	get_address
 	.endm
 
-	.macro GET_ADDRESS_X	offset
-	GET_ADDRESS	\offset
-	lea	(a0,d1.w),a0
-	READ_LE_WORD	a0
-	jbsr	get_address
-	.endm
+* direct,X zero page mode isn't used in the game!
+*	.macro GET_ADDRESS_X	offset
+*	GET_ADDRESS	\offset
+*	lea	(a0,d1.w),a0
+*	READ_LE_WORD	a0
+*	jbsr	get_address
+*	.endm
 
 	.macro GET_INDIRECT_ADDRESS	offset
 	GET_ADDRESS	\offset
@@ -622,7 +623,7 @@ l_c12a:
 
 l_c13d:
 	* either switch players, or continue with current player
-	jbsr	clear_screen_c8a3                            	| [$c13d: jsr $c8a3]
+	jbsr	clear_screen_and_sprites_c8a3                            	| [$c13d: jsr $c8a3]
 	jbsr	l_cbe3                            	| [$c140: jsr $cbe3]
 	GET_ADDRESS	two_player_game_0021                       	| [$c143: lda $21]
 	move.b	(a0),d0                         	| [...]
@@ -666,7 +667,7 @@ l_c179:
 	move.b	(a0),d0                         	| [...]
 	bpl	l_c186                             	| [$c17b: bpl $c186]
 	jbsr	l_c295                            	| [$c17d: jsr $c295]
-	jbsr	clear_screen_c8a3                            	| [$c180: jsr $c8a3]
+	jbsr	clear_screen_and_sprites_c8a3                            	| [$c180: jsr $c8a3]
                                     	| [$c183: nop] dummy_write_decrypt_trigger
                                     	| [$c185: nop] prev_crypted 6e
 l_c186:
@@ -717,7 +718,7 @@ l_c1c6:
 	move.b	(a0),d0                         	| [...]
 	bpl	l_c1d3                             	| [$c1c8: bpl $c1d3]
 	jbsr	l_c2ad                            	| [$c1ca: jsr $c2ad]
-	jbsr	clear_screen_c8a3                            	| [$c1cd: jsr $c8a3]
+	jbsr	clear_screen_and_sprites_c8a3                            	| [$c1cd: jsr $c8a3]
                                     	| [$c1d0: nop]
                                     	| [$c1d2: nop]
 l_c1d3:
@@ -742,7 +743,7 @@ l_c1d3:
                                     	| [$c1f0: nop]
 game_over_c1f1:
 	jbsr	l_c2c5                            	| [$c1f1: jsr $c2c5]
-	jbsr	clear_screen_c8a3                            	| [$c1f4: jsr $c8a3]
+	jbsr	clear_screen_and_sprites_c8a3                            	| [$c1f4: jsr $c8a3]
 	move.b	#0xfe,d0                        	| [$c1f7: lda #$fe]
 	GET_ADDRESS	0x5005                     	| [$c1f9: sta $5005] dummy_write_decrypt_trigger
 	move.b	d0,(a0)                         	| [...]
@@ -766,7 +767,7 @@ game_over_c1f1:
 	GET_ADDRESS	0xce                       	| [$c20f: sta $ce]
 	move.b	d0,(a0)                         	| [...]
 	jbsr	l_eff3                            	| [$c211: jsr $eff3]
-	jbsr	clear_screen_c8a3                            	| [$c214: jsr $c8a3]
+	jbsr	clear_screen_and_sprites_c8a3                            	| [$c214: jsr $c8a3]
 	* cocktail mode? flip screen
 *	GET_ADDRESS	0x4003                     	| [$c217: lda $4003]
 *	move.b	(a0),d0                         	| [...]
@@ -1028,7 +1029,7 @@ set_palette_c392:
 
 l_c3d9:
                                     	| [$c3d9: nop]
-	jbsr	clear_screen_c8a3                            	| [$c3da: jsr $c8a3]
+	jbsr	clear_screen_and_sprites_c8a3                            	| [$c3da: jsr $c8a3]
 	jbsr	l_cbe3                            	| [$c3dd: jsr $cbe3]
 	move.b	#0x0f,d1                        	| [$c3e0: ldx #$0f]
 	move.b	#0xce,d2                        	| [$c3e2: ldy #$ce]
@@ -1061,7 +1062,7 @@ l_c3d9:
                                     	| [$c414: nop]
 l_c416:
                                     	| [$c416: nop]
-	jbsr	clear_screen_c8a3                            	| [$c417: jsr $c8a3]
+	jbsr	clear_screen_and_sprites_c8a3                            	| [$c417: jsr $c8a3]
 	jbsr	l_cbe3                            	| [$c41a: jsr $cbe3]
 	move.b	#0x0f,d1                        	| [$c41d: ldx #$0f]
 	move.b	#0xce,d2                        	| [$c41f: ldy #$ce]
@@ -1418,7 +1419,7 @@ l_c748:
                                     	| [$c765: nop] dummy_write_decrypt_trigger
 l_c767:
                                     	| [$c767: nop] prev_crypted 6e
-	jbsr	clear_screen_c8a3                            	| [$c768: jsr $c8a3]
+	jbsr	clear_screen_and_sprites_c8a3                            	| [$c768: jsr $c8a3]
 	GET_ADDRESS	0x20                       	| [$c76b: lda $20]
 	move.b	(a0),d0                         	| [...]
 	bne	l_c79b                             	| [$c76d: bne $c79b]
@@ -1637,7 +1638,7 @@ l_c858:
 	move.b	d0,(a0)                       	| [$c89e: sta $a3]
 	rts                                    	| [$c8a0: rts]
                                     	| [$c8a1: nop]
-clear_screen_c8a3:
+clear_screen_and_sprites_c8a3:
     * load 0x03 with 0x1000                      	| [$c8a3: nop]
 	moveq	#0,d2                               	| [$c8a4: ldy #$00]
 	GET_ADDRESS 0x03                       	| [$c8a6: sty $03]
@@ -1659,6 +1660,7 @@ l_c8af:
 	move.b	(a0),d0                         	| [...]
 	cmp.b	#0x18,d0                         	| [$c8ba: cmp #$18]
 	bne	l_c8af                             	| [$c8bc: bne $c8af]
+	
 	move.b	#0x01,d1                        	| [$c8be: ldx #$01]
 	jbsr	wait_a_while_ca2c                            	| [$c8c0: jsr $ca2c]
 	rts                                    	| [$c8c3: rts]
@@ -1957,7 +1959,6 @@ l_ca6c:
 l_ca76:
 	move.b	#0xc8,d0                        	| [$ca76: lda #$c8] life character
 l_ca78:
-	jbsr	osd_break
 	GET_SCREEN_ADDRESS_Y	0xf3                     	| [$ca78: sta ($f3), y]
 	jbsr	osd_w_videoram                    	| [...]
 	subq.b	#1,d2                           	| [$ca7a: dey]
@@ -2491,7 +2492,7 @@ l_ccb2:
 	move.b	(a0),d0                         	| [...]
 	and.b	#0x0f,d0                         	| [$ccfc: and #$0f]
 	cmp.b	#0x0f,d0                         	| [$ccfe: cmp #$0f]
-	beq	l_cd37                             	| [$cd00: beq $cd37]
+	beq	draw_tray_cd37                             	| [$cd00: beq $cd37]
 	clr.b	d2                               	| [$cd02: ldy #$00]
 	GET_ADDRESS	0x07                       	| [$cd04: lda $07]
 	move.b	(a0),d0                         	| [...]
@@ -2525,17 +2526,18 @@ l_cd1a:
 	move.b	#0x20,d2                        	| [$cd2c: ldy #$20]
 	jbsr	l_cdaa                            	| [$cd2e: jsr $cdaa]
 	jra	l_cd90                             	| [$cd31: jmp $cd90]
-l_cd37:
+	
+draw_tray_cd37:
 	SET_XC_FLAGS                           	| [$cd37: sec]
 	GET_ADDRESS	0x05                       	| [$cd38: lda $05]
 	move.b	(a0),d0                         	| [...]
-	sub.b	#0x21,d0                           	| [$cd3a: sbc #$21]
-	GET_ADDRESS	0x05                       	| [$cd3c: sta $05] dummy_write_decrypt_trigger
+	SBC_IMM	0x21                           	| [$cd3a: sbc #$21]
+										| [$cd3c: sta $05] dummy_write_decrypt_trigger
 	move.b	d0,(a0)                         	| [...]
 	GET_ADDRESS	0x06                       	| [$cd3e: lda $06] prev_crypted c9
 	move.b	(a0),d0                         	| [...]
 	SBC_IMM	0x00                           	| [$cd40: sbc #$00]
-	GET_ADDRESS	0x06                       	| [$cd42: sta $06] dummy_write_decrypt_trigger
+										| [$cd42: sta $06] dummy_write_decrypt_trigger
 	move.b	d0,(a0)                         	| [...]
 	clr.b	d2                               	| [$cd44: ldy #$00] prev_crypted 48
 	GET_ADDRESS	0x07                       	| [$cd46: lda $07]
@@ -2551,11 +2553,10 @@ l_cd37:
 	jbsr	osd_w_videoram                    	| [...]
 	GET_ADDRESS	0x07                       	| [$cd52: inc $07] dummy_write_decrypt_trigger
 	addq.b	#1,(a0)                         	| [...]
-	GET_ADDRESS	0x07                       	| [$cd54: lda $07] prev_crypted c9
+										| [$cd54: lda $07] prev_crypted c9
 	move.b	(a0),d0                         	| [...]
 	move.b	#0x21,d2                        	| [$cd56: ldy #$21]
-	GET_SCREEN_ADDRESS_Y	0x05                     	| [$cd58: sta ($05), y]
-								* TODO optimize 
+	GET_SCREEN_ADDRESS_Y	0x05                | [$cd58: sta ($05), y]
 	jbsr	osd_w_videoram                    	| [...]
 	addq.b	#1,d2                           	| [$cd5a: iny]
 	GET_SCREEN_ADDRESS_Y	0x05                     	| [$cd5b: sta ($05), y] dummy_write_decrypt_trigger
@@ -2613,7 +2614,6 @@ l_cd90:
 	rts                                    	| [$cd92: rts]
      
 	 | [$cd93: nop] dummy_write_decrypt_trigger
-	 * to optimize TODO (increase a0 don't recompute address)
 l_cd95:
                                     	| [$cd95: nop] prev_crypted 6e
 	GET_SCREEN_ADDRESS_Y	0x05                     	| [$cd96: sta ($05), y]
@@ -2906,7 +2906,7 @@ l_d095:
 	clr.b	d0                               	| [$d0a4: lda #$00]
 	GET_ADDRESS	0x1a                       	| [$d0a6: sta $1a]
 	move.b	d0,(a0)                         	| [...]
-	jbsr	clear_screen_c8a3                            	| [$d0a8: jsr $c8a3]
+	jbsr	clear_screen_and_sprites_c8a3                            	| [$d0a8: jsr $c8a3]
 	jbsr	l_cbe3                            	| [$d0ab: jsr $cbe3]
 	move.b	#0xe8,d1                        	| [$d0ae: ldx #$e8]
 	move.b	#0xc2,d2                        	| [$d0b0: ldy #$c2]
@@ -2940,7 +2940,7 @@ l_d0c9:
 	clr.b	d0                               	| [$d0dd: lda #$00]
 	GET_ADDRESS	0x1a                       	| [$d0df: sta $1a]
 	move.b	d0,(a0)                         	| [...]
-	jbsr	clear_screen_c8a3                            	| [$d0e1: jsr $c8a3]
+	jbsr	clear_screen_and_sprites_c8a3                            	| [$d0e1: jsr $c8a3]
 	jbsr	l_cbe3                            	| [$d0e4: jsr $cbe3]
 	move.b	#0xd2,d1                        	| [$d0e7: ldx #$d2]
 	move.b	#0xc2,d2                        	| [$d0e9: ldy #$c2]
@@ -7528,7 +7528,7 @@ l_f0b6:
                                     	| [$f0cf: nop]
 l_f0d1:
                                     	| [$f0d1: nop]
-	jbsr	clear_screen_c8a3                            	| [$f0d2: jsr $c8a3]
+	jbsr	clear_screen_and_sprites_c8a3                            	| [$f0d2: jsr $c8a3]
 	jbsr	l_f1dc                            	| [$f0d5: jsr $f1dc]
 	jbsr	l_f2f8                            	| [$f0d8: jsr $f2f8]
 	move.b	#0x05,d0                        	| [$f0db: lda #$05]
