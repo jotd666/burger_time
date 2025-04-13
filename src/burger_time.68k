@@ -205,6 +205,7 @@
 	WRITE_DX_TO_SCREEN		d2,\address
 	.endm
 	
+enemy_index_times_4_0009 = 0x0009
 timer1_0013 = 0x0013
 timer1_0014 = 0x0014
 timer1_0015 = 0x0015
@@ -224,6 +225,7 @@ current_level_0063 = 0x0063
 active_character_array_0068 = 0x0068 
 pepper_status_006e = 0x006e   | 0xff: inactive
 game_speed_00a8 = 0x00a8
+control_bits_and_frame_array_00a9 = 0x00a9
 pepper_y_181a = 0x181a
 pepper_x_181b = 0x181b
 player_attributes_181c = 0x181c
@@ -232,7 +234,13 @@ player_y_181e = 0x181E
 player_x_181f = 0x181F
 bonus_life_thousands_005a = 0x005a
 bonus_life_tenth_thousands_005b = 0x005B
+player_current_direction_00bb = 0x00BB
 coin_inserted_flag_00f9 = 0x00f9
+player_died_00c6 = 0x00C6   | 0xFF: ends update loop and start a new life
+direction_left = 2
+direction_right = 4
+direction_up = 6
+direction_down = 8
 
 cpu_init:
 	moveq	#0,d0
@@ -600,9 +608,9 @@ l_c10b:
                                     	| [$c116: nop]
                                     	| [$c118: nop]
 l_c119:
-	GET_ADDRESS	0xc6                       	| [$c119: lda $c6]
+	GET_ADDRESS	player_died_00c6                       	| [$c119: lda $c6]
 	move.b	(a0),d0                         	| [...]
-	bne	l_c12a                             	| [$c11b: bne $c12a]
+	bne	end_game_mainloop_c12a                             	| [$c11b: bne $c12a]
 	GET_ADDRESS	0xc5                       	| [$c11d: lda $c5]
 	move.b	(a0),d0                         	| [...]
 	beq	l_c124                             	| [$c11f: beq $c124]
@@ -611,9 +619,10 @@ l_c124:
 	jra	wait_for_sync_c07b                             	| [$c124: jmp $c07b]
                                     	| [$c127: nop]
                                     	| [$c129: nop]
-l_c12a:
-	clr.b	d0                               	| [$c12a: lda #$00]
-
+end_game_mainloop_c12a:
+											| [$c12a: lda #$00]
+	GET_ADDRESS	player_died_00c6            | [$c12c: sta $c6]
+	clr.b	(a0)                         	| [...]
 	GET_ADDRESS	game_really_playing_001b                       	| [$c12e: lda $1b] prev_crypted c9
 	move.b	(a0),d0                         	| [...]
 	bne	l_c13d                             	| [$c130: bne $c13d]
@@ -1165,7 +1174,7 @@ l_c480:
 	GET_ADDRESS	0x180b                     	| [$c4af: sta $180b]
 	move.b	d0,(a0)                         	| [...]
 	move.b	#0x40,d0                        	| [$c4b2: lda #$40]
-	GET_ADDRESS	0xa9                       	| [$c4b4: sta $a9]
+	GET_ADDRESS	control_bits_and_frame_array_00a9                       	| [$c4b4: sta $a9]
 	move.b	d0,(a0)                         	| [...]
 	GET_ADDRESS	0xaa                       	| [$c4b6: sta $aa]
 	move.b	d0,(a0)                         	| [...]
@@ -1256,7 +1265,7 @@ l_c561:
 	GET_ADDRESS	player_x_181f                     	| [$c58c: sta $181f] prev_crypted c5  ; dummy_write_decrypt_trigger
 	move.b	d0,(a0)                         	| [...]
 	move.b	#0x40,d0                        	| [$c58f: lda #$40] prev_crypted 4d
-	GET_ADDRESS	0xa9                       	| [$c591: sta $a9]
+	GET_ADDRESS	control_bits_and_frame_array_00a9                       	| [$c591: sta $a9]
 	move.b	d0,(a0)                         	| [...]
 	GET_ADDRESS	0xaa                       	| [$c593: sta $aa] dummy_write_decrypt_trigger
 	move.b	d0,(a0)                         	| [...]
@@ -1542,7 +1551,7 @@ l_c802:
                                     	| [$c80b: nop]
                                     	| [$c80d: nop]
 l_c80e:
-	GET_ADDRESS	0xa9                       	| [$c80e: sta $a9, x]
+	GET_ADDRESS	control_bits_and_frame_array_00a9                       	| [$c80e: sta $a9, x]
     move.b	d0,(a0,d1.w)                 	| [...]
 	subq.b	#1,d1                           	| [$c810: dex]
 	bpl	l_c80e                             	| [$c811: bpl $c80e]
@@ -1616,7 +1625,7 @@ l_c858:
 	GET_ADDRESS	0x180b                     	| [$c87f: sta $180b]
 	move.b	d0,(a0)                         	| [...]
 	move.b	#0x80,d0                        	| [$c882: lda #$80]
-	GET_ADDRESS	0xa9                       	| [$c884: sta $a9]
+	GET_ADDRESS	control_bits_and_frame_array_00a9                       	| [$c884: sta $a9]
 	move.b	d0,(a0)                         	| [...]
 	GET_ADDRESS	0xaa                       	| [$c886: sta $aa]
 	move.b	d0,(a0)                         	| [...]
@@ -3218,12 +3227,12 @@ l_d27b:
 	move.b	(a0,d1.w),d0                    	| [...]
 	GET_ADDRESS	0x99                       	| [$d27d: sta $99, x]
     move.b	d0,(a0,d1.w)                 	| [...]
-	GET_ADDRESS	0xa9                       	| [$d27f: lda $a9, x]
+	GET_ADDRESS	control_bits_and_frame_array_00a9                       	| [$d27f: lda $a9, x]
 	move.b	(a0,d1.w),d0                    	| [...]
 	and.b	#0x0f,d0                         	| [$d281: and #$0f]
 	GET_ADDRESS	0x03                       	| [$d283: sta $03]
 	move.b	d0,(a0)                         	| [...]
-	GET_ADDRESS	0xa9                       	| [$d285: lda $a9, x]
+	GET_ADDRESS	control_bits_and_frame_array_00a9                       	| [$d285: lda $a9, x]
 	move.b	(a0,d1.w),d0                    	| [...]
 	lsr.b	#3,d0                            	| [$d287: lsr a]
 	                            	| [$d288: lsr a]
@@ -3283,7 +3292,7 @@ l_d2ac:
 	move.b	(a0),d2                         	| [...]
 	GET_ADDRESS	0x1801                     	| [$d2cb: sta $1801, y]
     move.b	d0,(a0,d2.w)                 	| [...]
-	GET_ADDRESS	0xa9                       	| [$d2ce: lda $a9, x]
+	GET_ADDRESS	control_bits_and_frame_array_00a9                       	| [$d2ce: lda $a9, x]
 	move.b	(a0,d1.w),d0                    	| [...]
 	lsr.b	#4,d0                            	| [$d2d0: lsr a]
 	                            	| [$d2d1: lsr a]
@@ -3293,7 +3302,7 @@ l_d2ac:
 	or.b	#0x01,d0                          	| [$d2d6: ora #$01]
 	GET_ADDRESS	0x1800                     	| [$d2d8: sta $1800, y]
     move.b	d0,(a0,d2.w)                 	| [...]
-	GET_ADDRESS	0xa9                       	| [$d2db: lda $a9, x]
+	GET_ADDRESS	control_bits_and_frame_array_00a9                       	| [$d2db: lda $a9, x]
 	move.b	(a0,d1.w),d0                    	| [...]
 	and.b	#0xf0,d0                         	| [$d2dd: and #$f0]
 	beq	l_d34a                             	| [$d2df: beq $d34a]
@@ -3302,7 +3311,7 @@ l_d2ac:
 	                       	| [$d2e3: lda $a9, x]
 	move.b	(a0,d1.w),d0                    	| [...]
 	and.b	#0xf3,d0                         	| [$d2e5: and #$f3]
-	GET_ADDRESS	0xa9                       	| [$d2e7: sta $a9, x]
+	GET_ADDRESS	control_bits_and_frame_array_00a9                       	| [$d2e7: sta $a9, x]
     move.b	d0,(a0,d1.w)                 	| [...]
 	GET_ADDRESS	0x08                       	| [$d2e9: stx $08]
 	move.b	d1,(a0)                         	| [...]
@@ -3342,7 +3351,7 @@ l_d309:
 l_d314:
 	GET_ADDRESS	0x09                       	| [$d314: ldy $09]
 	move.b	(a0),d2                         	| [...]
-	GET_ADDRESS	0xa9                       	| [$d316: lda $a9, x]
+	GET_ADDRESS	control_bits_and_frame_array_00a9                       	| [$d316: lda $a9, x]
 	move.b	(a0,d1.w),d0                    	| [...]
 	bmi	l_d327                             	| [$d318: bmi $d327]
 	GET_ADDRESS	0x1803                     	| [$d31a: lda $1803, y]
@@ -3370,16 +3379,16 @@ l_d331:
     move.b	d0,(a0,d2.w)                 	| [...]
                                     	| [$d336: nop] prev_crypted c1
                                     	| [$d338: nop]
-	GET_ADDRESS	0xa9                       	| [$d339: lda $a9, x]
+	GET_ADDRESS	control_bits_and_frame_array_00a9                       	| [$d339: lda $a9, x]
 	move.b	(a0,d1.w),d0                    	| [...]
 	and.b	#0xf0,d0                         	| [$d33b: and #$f0]
 	beq	l_d34a                             	| [$d33d: beq $d34a]
-	GET_ADDRESS	0xa9                       	| [$d33f: inc $a9, x]
+	GET_ADDRESS	control_bits_and_frame_array_00a9                       	| [$d33f: inc $a9, x]
     addq.b	#1,(a0,d1.w)                 	| [...]
-	GET_ADDRESS	0xa9                       	| [$d341: lda $a9, x]
+	GET_ADDRESS	control_bits_and_frame_array_00a9                       	| [$d341: lda $a9, x]
 	move.b	(a0,d1.w),d0                    	| [...]
 	and.b	#0xf3,d0                         	| [$d343: and #$f3]
-	GET_ADDRESS	0xa9                       	| [$d345: sta $a9, x] dummy_write_decrypt_trigger
+	GET_ADDRESS	control_bits_and_frame_array_00a9                       	| [$d345: sta $a9, x] dummy_write_decrypt_trigger
     move.b	d0,(a0,d1.w)                 	| [...]
                                     	| [$d347: nop] prev_crypted c1
                                     	| [$d349: nop]
@@ -3388,7 +3397,7 @@ l_d34a:
 
 l_d3c3:
                                     	| [$d3c3: nop]
-	GET_ADDRESS	0xa9                       	| [$d3c4: lda $a9, x]
+	GET_ADDRESS	control_bits_and_frame_array_00a9                       	| [$d3c4: lda $a9, x]
 	move.b	(a0,d1.w),d0                    	| [...]
 	lsr.b	#3,d0                            	| [$d3c6: lsr a] do it 3 times not 4
 	                            	| [$d3c7: lsr a]
@@ -4687,7 +4696,7 @@ l_dbdc:
 l_dbe0:
 	GET_ADDRESS	0x70                       	| [$dbe0: stx $70]
 	move.b	d1,(a0)                         	| [...]
-	GET_ADDRESS	0xa9                       	| [$dbe2: lda $a9, x]
+	GET_ADDRESS	control_bits_and_frame_array_00a9                       	| [$dbe2: lda $a9, x]
 	move.b	(a0,d1.w),d0                    	| [...]
 	GET_ADDRESS	0x71                       	| [$dbe4: sta $71] dummy_write_decrypt_trigger
 	move.b	d0,(a0)                         	| [...]
@@ -4762,11 +4771,11 @@ l_dc45:
 l_dc4e:
 	GET_ADDRESS	0x70                       	| [$dc4e: ldx $70]
 	move.b	(a0),d1                         	| [...]
-	GET_ADDRESS	0xa9                       	| [$dc50: lda $a9, x]
+	GET_ADDRESS	control_bits_and_frame_array_00a9                       	| [$dc50: lda $a9, x]
 	move.b	(a0,d1.w),d0                    	| [...]
 	and.b	#0x0f,d0                         	| [$dc52: and #$0f]
 	or.b	#0x20,d0                          	| [$dc54: ora #$20]
-	GET_ADDRESS	0xa9                       	| [$dc56: sta $a9, x]
+	GET_ADDRESS	control_bits_and_frame_array_00a9                       	| [$dc56: sta $a9, x]
     move.b	d0,(a0,d1.w)                 	| [...]
 	jra	l_dc6b                             	| [$dc58: jmp $dc6b]
                                     	| [$dc5b: nop]
@@ -4774,11 +4783,11 @@ l_dc4e:
 l_dc5e:
 	GET_ADDRESS	0x70                       	| [$dc5e: ldx $70]
 	move.b	(a0),d1                         	| [...]
-	GET_ADDRESS	0xa9                       	| [$dc60: lda $a9, x]
+	GET_ADDRESS	control_bits_and_frame_array_00a9                       	| [$dc60: lda $a9, x]
 	move.b	(a0,d1.w),d0                    	| [...]
 	and.b	#0x0f,d0                         	| [$dc62: and #$0f]
 	or.b	#0x40,d0                          	| [$dc64: ora #$40]
-	GET_ADDRESS	0xa9                       	| [$dc66: sta $a9, x]
+	GET_ADDRESS	control_bits_and_frame_array_00a9                       	| [$dc66: sta $a9, x]
     move.b	d0,(a0,d1.w)                 	| [...]
                                     	| [$dc68: nop]
                                     	| [$dc6a: nop]
@@ -5053,7 +5062,7 @@ l_dde4:
 l_dded:
 	GET_ADDRESS	0x70                       	| [$dded: ldx $70]
 	move.b	(a0),d1                         	| [...]
-	GET_ADDRESS	0xa9                       	| [$ddef: lda $a9, x]
+	GET_ADDRESS	control_bits_and_frame_array_00a9                       	| [$ddef: lda $a9, x]
 	move.b	(a0,d1.w),d0                    	| [...]
 	GET_ADDRESS	0x71                       	| [$ddf1: sta $71]
 	move.b	d0,(a0)                         	| [...]
@@ -5215,7 +5224,7 @@ l_debb:
 l_decd:
 	GET_ADDRESS	0x70                       	| [$decd: ldx $70]
 	move.b	(a0),d1                         	| [...]
-	GET_ADDRESS	0xa9                       	| [$decf: lda $a9, x]
+	GET_ADDRESS	control_bits_and_frame_array_00a9                       	| [$decf: lda $a9, x]
 	move.b	(a0,d1.w),d0                    	| [...]
 	GET_ADDRESS	0x71                       	| [$ded1: sta $71]
 	move.b	d0,(a0)                         	| [...]
@@ -5424,7 +5433,7 @@ l_e059:
 	move.b	(a0),d0                         	| [...]
 	and.b	#0x0f,d0                         	| [$e05e: and #$0f]
 	or.b	#0x60,d0                          	| [$e060: ora #$60]
-	GET_ADDRESS	0xa9                       	| [$e062: sta $a9, x]
+	GET_ADDRESS	control_bits_and_frame_array_00a9                       	| [$e062: sta $a9, x]
     move.b	d0,(a0,d1.w)                 	| [...]
 	jbsr	l_d3c3                            	| [$e064: jsr $d3c3]
 	rts                                    	| [$e067: rts]
@@ -5437,7 +5446,7 @@ l_e06a:
 	move.b	(a0),d0                         	| [...]
 	and.b	#0x0f,d0                         	| [$e06f: and #$0f]
 	or.b	#0x80,d0                          	| [$e071: ora #$80]
-	GET_ADDRESS	0xa9                       	| [$e073: sta $a9, x]
+	GET_ADDRESS	control_bits_and_frame_array_00a9                       	| [$e073: sta $a9, x]
     move.b	d0,(a0,d1.w)                 	| [...]
 	jbsr	l_d3c3                            	| [$e075: jsr $d3c3]
 	rts                                    	| [$e078: rts]
@@ -5450,7 +5459,7 @@ l_e07b:
 	move.b	(a0),d0                         	| [...]
 	and.b	#0x0f,d0                         	| [$e080: and #$0f]
 	or.b	#0x20,d0                          	| [$e082: ora #$20]
-	GET_ADDRESS	0xa9                       	| [$e084: sta $a9, x]
+	GET_ADDRESS	control_bits_and_frame_array_00a9                       	| [$e084: sta $a9, x]
     move.b	d0,(a0,d1.w)                 	| [...]
 	jbsr	l_d3c3                            	| [$e086: jsr $d3c3]
 	rts                                    	| [$e089: rts]
@@ -5463,7 +5472,7 @@ l_e08c:
 	move.b	(a0),d0                         	| [...]
 	and.b	#0x0f,d0                         	| [$e091: and #$0f]
 	or.b	#0x40,d0                          	| [$e093: ora #$40]
-	GET_ADDRESS	0xa9                       	| [$e095: sta $a9, x]
+	GET_ADDRESS	control_bits_and_frame_array_00a9                       	| [$e095: sta $a9, x]
     move.b	d0,(a0,d1.w)                 	| [...]
 	jbsr	l_d3c3                            	| [$e097: jsr $d3c3]
 	rts                                    	| [$e09a: rts]

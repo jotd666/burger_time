@@ -772,7 +772,7 @@ _vblank:
 	* to simulate ~60 Hz on 50 Hz display
 	move.b	mid_screen_interrupt_count,d0
 	addq.b	#1,d0
-	cmp.b	#5,d0
+	cmp.b	#2,d0
 	bne.b	1f
 	* TODO: clear the sync flag a few lines later
 	* to simulate an extra vblank
