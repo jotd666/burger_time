@@ -1,0 +1,7 @@
+- cannot pick ice cream
+- no sound
+- game is way too slow 8s vs 5s for first screen: time again
+- add cheats level skip invincibility infinite lives
+- let demo roll: lockup at some screen, first background grid is wrong
+- converter: GET_ADDRESS_Y => GET_INDIRECT_ADDRESS + optimize on load address < 0x8000 to report
+- converter: do not optimize st.b d0 leave lda #0xFF,d0 (Z flag!)
