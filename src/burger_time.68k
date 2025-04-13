@@ -211,6 +211,7 @@ game_really_playing_001b = 0x001b
 game_or_demo_playing_001c = 0x001c
 nb_credits_001d = 0x001d
 current_player_001f = 0x001f
+two_player_game_0021 = 0x0021
 player_lives_0029 = 0x0029
 player_pepper_002b = 0x002b
 current_level_0063 = 0x0063
@@ -486,13 +487,13 @@ l_c038:
 	move.b	d0,(a0)                         	| [...]
 	jbsr	l_c416                            	| [$c04a: jsr $c416]
 	st.b	d1                                	| [$c04d: ldx #$ff]
-	jbsr	screen_mainloop_ca2c                            	| [$c04f: jsr $ca2c]
+	jbsr	wait_a_while_ca2c                            	| [$c04f: jsr $ca2c]
 	jbsr	l_c3d9                            	| [$c052: jsr $c3d9]
 	st.b	d1                                	| [$c055: ldx #$ff]
-	jbsr	screen_mainloop_ca2c                            	| [$c057: jsr $ca2c]
+	jbsr	wait_a_while_ca2c                            	| [$c057: jsr $ca2c]
 	jbsr	l_c478                            	| [$c05a: jsr $c478]
 	move.b	#0x3f,d1                        	| [$c05d: ldx #$3f]
-	jbsr	screen_mainloop_ca2c                            	| [$c05f: jsr $ca2c]
+	jbsr	wait_a_while_ca2c                            	| [$c05f: jsr $ca2c]
 	jbsr	l_c561                            	| [$c062: jsr $c561]
                                     	| [$c065: nop]
                                     	| [$c067: nop]
@@ -586,7 +587,7 @@ l_c0ce:
 	bne	l_c10b                             	| [$c0f0: bne $c10b]
 	move.b	#0xfc,d1                        	| [$c0f2: ldx #$fc]
 	move.b	#0xc0,d2                        	| [$c0f4: ldy #$c0]
-	jbsr	l_c9bc                            	| [$c0f6: jsr $c9bc]
+	jbsr	display_text_block_c9bc                            	| [$c0f6: jsr $c9bc]
 	jra	l_c119                             	| [$c0f9: jmp $c119]
 
 l_c10b:
@@ -594,7 +595,7 @@ l_c10b:
 	bne	l_c119                             	| [$c10d: bne $c119]
 	move.b	#0x02,d1                        	| [$c10f: ldx #$02]
 	move.b	#0xc1,d2                        	| [$c111: ldy #$c1]
-	jbsr	l_c9bc                            	| [$c113: jsr $c9bc]
+	jbsr	display_text_block_c9bc                            	| [$c113: jsr $c9bc]
                                     	| [$c116: nop]
                                     	| [$c118: nop]
 l_c119:
@@ -616,27 +617,29 @@ l_c12a:
 	move.b	(a0),d0                         	| [...]
 	bne	l_c13d                             	| [$c130: bne $c13d]
 	move.b	#0x3f,d1                        	| [$c132: ldx #$3f]
-	jbsr	screen_mainloop_ca2c                            	| [$c134: jsr $ca2c]
+	jbsr	wait_a_while_ca2c                            	| [$c134: jsr $ca2c]
 	jra	l_c038                             	| [$c137: jmp $c038]
 
 l_c13d:
+	* either switch players, or continue with current player
 	jbsr	clear_screen_c8a3                            	| [$c13d: jsr $c8a3]
 	jbsr	l_cbe3                            	| [$c140: jsr $cbe3]
-	GET_ADDRESS	0x21                       	| [$c143: lda $21]
+	GET_ADDRESS	two_player_game_0021                       	| [$c143: lda $21]
 	move.b	(a0),d0                         	| [...]
 	bne	l_c15e                             	| [$c145: bne $c15e]
 	GET_ADDRESS	player_lives_0029          	| [$c147: lda player_lives_0029]
 	move.b	(a0),d0                         	| [...]
-	bmi	l_c158                             	| [$c149: bmi $c158]
+	jmi	game_over_c1f1                             	| [$c149: bmi $c158]
 	move.b	#0x01,d0                        	| [$c14b: lda #$01]
 	GET_ADDRESS	0x20                       	| [$c14d: sta $20] dummy_write_decrypt_trigger
 	move.b	d0,(a0)                         	| [...]
-	jbsr	l_c252                            	| [$c14f: jsr $c252] prev_crypted 08
+	jbsr	display_game_ready_c252                            	| [$c14f: jsr $c252] prev_crypted 08
+	* just after "GAME READY" prompt after losing a life
 	jra	game_restart_c075                             	| [$c152: jmp $c075]
                                     	| [$c155: nop] dummy_write_decrypt_trigger
                                     	| [$c157: nop] prev_crypted 6e
-l_c158:
-	jra	l_c1f1                             	| [$c158: jmp $c1f1]
+			
+											| [$c158: jmp $c1f1]
                                     	| [$c15b: nop] dummy_write_decrypt_trigger
                                     	| [$c15d: nop] prev_crypted 6e
 l_c15e:
@@ -690,7 +693,7 @@ l_c1a3:
 	jbsr	l_c281                            	| [$c1a3: jsr $c281]
 	jra	game_restart_c075                             	| [$c1a6: jmp $c075]
 l_c1a9:
-	jra	l_c1f1                             	| [$c1a9: jmp $c1f1]
+	jra	game_over_c1f1                             	| [$c1a9: jmp $c1f1]
                                     	| [$c1ac: nop] dummy_write_decrypt_trigger
                                     	| [$c1ae: nop] prev_crypted 6e
 l_c1af:
@@ -698,7 +701,7 @@ l_c1af:
 	move.b	(a0),d0                         	| [...]
 	GET_ADDRESS	player_lives_0029          	| [$c1b1: and player_lives_0029]
 	and.b	(a0),d0                          	| [...]
-	bmi	l_c1f1                             	| [$c1b3: bmi $c1f1]
+	bmi	game_over_c1f1                             	| [$c1b3: bmi $c1f1]
 	GET_ADDRESS	player_lives_0029          	| [$c1b5: lda player_lives_0029]
 	move.b	(a0),d0                         	| [...]
 	bpl	l_c1c6                             	| [$c1b7: bpl $c1c6]
@@ -737,7 +740,7 @@ l_c1d3:
 	jra	game_restart_c075                             	| [$c1eb: jmp $c075]
                                     	| [$c1ee: nop]
                                     	| [$c1f0: nop]
-l_c1f1:
+game_over_c1f1:
 	jbsr	l_c2c5                            	| [$c1f1: jsr $c2c5]
 	jbsr	clear_screen_c8a3                            	| [$c1f4: jsr $c8a3]
 	move.b	#0xfe,d0                        	| [$c1f7: lda #$fe]
@@ -819,11 +822,12 @@ l_c22b:
 l_c24d:
 	jra	l_c038                             	| [$c24d: jmp $c038]
                                     	| [$c250: nop]
-l_c252:
-                                    	| [$c252: nop]
+										
+* called after losing a life
+display_game_ready_c252:
 	move.b	#0xe8,d1                        	| [$c253: ldx #$e8]
 	move.b	#0xc2,d2                        	| [$c255: ldy #$c2]
-	jbsr	l_c9bc                            	| [$c257: jsr $c9bc]
+	jbsr	display_text_block_c9bc                            	| [$c257: jsr $c9bc]
                                     	| [$c25a: nop]
                                     	| [$c25c: nop]
 l_c25d:
@@ -833,27 +837,27 @@ l_c25d:
                                     	| [$c264: nop]
 l_c265:
 	move.b	#0x1f,d1                        	| [$c265: ldx #$1f]
-	jbsr	screen_mainloop_ca2c                            	| [$c267: jsr $ca2c]
+	jbsr	wait_a_while_ca2c                            	| [$c267: jsr $ca2c]
 	rts                                    	| [$c26a: rts]
                                     	| [$c26b: nop]
 l_c26d:
                                     	| [$c26d: nop]
 	move.b	#0xd2,d1                        	| [$c26e: ldx #$d2]
 	move.b	#0xc2,d2                        	| [$c270: ldy #$c2]
-	jbsr	l_c9bc                            	| [$c272: jsr $c9bc]
+	jbsr	display_text_block_c9bc             | [$c272: jsr $c9bc] GAME READY
 	move.b	#0xe8,d1                        	| [$c275: ldx #$e8]
 	move.b	#0xc2,d2                        	| [$c277: ldy #$c2]
-	jbsr	l_c9bc                            	| [$c279: jsr $c9bc]
+	jbsr	display_text_block_c9bc                            	| [$c279: jsr $c9bc]
 	jra	l_c25d                             	| [$c27c: jmp $c25d]
                                     	| [$c27f: nop]
 l_c281:
                                     	| [$c281: nop]
 	move.b	#0xdd,d1                        	| [$c282: ldx #$dd]
 	move.b	#0xc2,d2                        	| [$c284: ldy #$c2]
-	jbsr	l_c9bc                            	| [$c286: jsr $c9bc]
+	jbsr	display_text_block_c9bc                            	| [$c286: jsr $c9bc]
 	move.b	#0xe8,d1                        	| [$c289: ldx #$e8]
 	move.b	#0xc2,d2                        	| [$c28b: ldy #$c2]
-	jbsr	l_c9bc                            	| [$c28d: jsr $c9bc]
+	jbsr	display_text_block_c9bc                            	| [$c28d: jsr $c9bc]
 	jra	l_c25d                             	| [$c290: jmp $c25d]
                                     	| [$c293: nop]
 l_c295:
@@ -862,12 +866,12 @@ l_c295:
 	addq.b	#1,(a0)                         	| [...]
 	move.b	#0xd2,d1                        	| [$c298: ldx #$d2]
 	move.b	#0xc2,d2                        	| [$c29a: ldy #$c2]
-	jbsr	l_c9bc                            	| [$c29c: jsr $c9bc]
+	jbsr	display_text_block_c9bc                            	| [$c29c: jsr $c9bc]
 	GET_ADDRESS	0xc8                       	| [$c29f: inc $c8]
 	addq.b	#1,(a0)                         	| [...]
 	move.b	#0xf5,d1                        	| [$c2a1: ldx #$f5]
 	move.b	#0xc2,d2                        	| [$c2a3: ldy #$c2]
-	jbsr	l_c9bc                            	| [$c2a5: jsr $c9bc]
+	jbsr	display_text_block_c9bc                            	| [$c2a5: jsr $c9bc]
 	jra	l_c265                             	| [$c2a8: jmp $c265]
                                     	| [$c2ab: nop]
 l_c2ad:
@@ -876,12 +880,12 @@ l_c2ad:
 	addq.b	#1,(a0)                         	| [...]
 	move.b	#0xdd,d1                        	| [$c2b0: ldx #$dd]
 	move.b	#0xc2,d2                        	| [$c2b2: ldy #$c2]
-	jbsr	l_c9bc                            	| [$c2b4: jsr $c9bc]
+	jbsr	display_text_block_c9bc                            	| [$c2b4: jsr $c9bc]
 	GET_ADDRESS	0xc8                       	| [$c2b7: inc $c8]
 	addq.b	#1,(a0)                         	| [...]
 	move.b	#0xf5,d1                        	| [$c2b9: ldx #$f5]
 	move.b	#0xc2,d2                        	| [$c2bb: ldy #$c2]
-	jbsr	l_c9bc                            	| [$c2bd: jsr $c9bc]
+	jbsr	display_text_block_c9bc                            	| [$c2bd: jsr $c9bc]
 	jra	l_c265                             	| [$c2c0: jmp $c265]
                                     	| [$c2c3: nop]
 l_c2c5:
@@ -890,7 +894,7 @@ l_c2c5:
 	addq.b	#1,(a0)                         	| [...]
 	move.b	#0xf5,d1                        	| [$c2c8: ldx #$f5]
 	move.b	#0xc2,d2                        	| [$c2ca: ldy #$c2]
-	jbsr	l_c9bc                            	| [$c2cc: jsr $c9bc]
+	jbsr	display_text_block_c9bc                            	| [$c2cc: jsr $c9bc]
 	jra	l_c265                             	| [$c2cf: jmp $c265]
 
 
@@ -1028,13 +1032,13 @@ l_c3d9:
 	jbsr	l_cbe3                            	| [$c3dd: jsr $cbe3]
 	move.b	#0x0f,d1                        	| [$c3e0: ldx #$0f]
 	move.b	#0xce,d2                        	| [$c3e2: ldy #$ce]
-	jbsr	l_c9bc                            	| [$c3e4: jsr $c9bc]
+	jbsr	display_text_block_c9bc                            	| [$c3e4: jsr $c9bc]
 	move.b	#0x29,d1                        	| [$c3e7: ldx #$29]
 	move.b	#0xce,d2                        	| [$c3e9: ldy #$ce]
-	jbsr	l_c9bc                            	| [$c3eb: jsr $c9bc]
+	jbsr	display_text_block_c9bc                            	| [$c3eb: jsr $c9bc]
 	move.b	#0xbe,d1                        	| [$c3ee: ldx #$be]
 	move.b	#0xce,d2                        	| [$c3f0: ldy #$ce]
-	jbsr	l_c9bc                            	| [$c3f2: jsr $c9bc]
+	jbsr	display_text_block_c9bc                            	| [$c3f2: jsr $c9bc]
 	GET_ADDRESS	bonus_life_tenth_thousands_005b                       	| [$c3f5: ldx $5b]
 	move.b	(a0),d1                         	| [...]
 	addq.b	#1,d1                           	| [$c3f7: inx]
@@ -1061,10 +1065,10 @@ l_c416:
 	jbsr	l_cbe3                            	| [$c41a: jsr $cbe3]
 	move.b	#0x0f,d1                        	| [$c41d: ldx #$0f]
 	move.b	#0xce,d2                        	| [$c41f: ldy #$ce]
-	jbsr	l_c9bc                            	| [$c421: jsr $c9bc]
+	jbsr	display_text_block_c9bc                            	| [$c421: jsr $c9bc]
 	move.b	#0xef,d1                        	| [$c424: ldx #$ef]
 	move.b	#0xce,d2                        	| [$c426: ldy #$ce]
-	jbsr	l_c9bc                            	| [$c428: jsr $c9bc]
+	jbsr	display_text_block_c9bc                            	| [$c428: jsr $c9bc]
 	move.b	#0xc9,d0                        	| [$c42b: lda #$c9]
 	GET_ADDRESS	0x03                       	| [$c42d: sta $03]
 	move.b	d0,(a0)                         	| [...]
@@ -1184,7 +1188,7 @@ l_c480:
                                     	| [$c4d1: nop]
 l_c4d2:
 	move.b	#0x01,d1                        	| [$c4d2: ldx #$01]
-	jbsr	screen_mainloop_ca2c                            	| [$c4d4: jsr $ca2c]
+	jbsr	wait_a_while_ca2c                            	| [$c4d4: jsr $ca2c]
 	GET_ADDRESS	timer1_0013                	| [$c4d7: inc timer1_0013]
 	addq.b	#1,(a0)                         	| [...]
 	move.b	#0x07,d1                        	| [$c4d9: ldx #$07]
@@ -1208,9 +1212,9 @@ l_c4e4:
 l_c4fc:
 	move.b	#0x0f,d1                        	| [$c4fc: ldx #$0f]
 	move.b	#0xc5,d2                        	| [$c4fe: ldy #$c5]
-	jbsr	l_c9bc                            	| [$c500: jsr $c9bc]
+	jbsr	display_text_block_c9bc                            	| [$c500: jsr $c9bc]
 	st.b	d1                                	| [$c503: ldx #$ff]
-	jbsr	screen_mainloop_ca2c                            	| [$c505: jsr $ca2c]
+	jbsr	wait_a_while_ca2c                            	| [$c505: jsr $ca2c]
 	clr.b	d0                               	| [$c508: lda #$00]
 	GET_ADDRESS	0x19                       	| [$c50a: sta $19] dummy_write_decrypt_trigger
 	move.b	d0,(a0)                         	| [...]
@@ -1294,7 +1298,7 @@ l_c561:
                                     	| [$c5cb: nop]
 l_c5cc:
 	move.b	#0x01,d1                        	| [$c5cc: ldx #$01]
-	jbsr	screen_mainloop_ca2c                            	| [$c5ce: jsr $ca2c]
+	jbsr	wait_a_while_ca2c                            	| [$c5ce: jsr $ca2c]
 	GET_ADDRESS	timer1_0013                	| [$c5d1: inc timer1_0013]
 	addq.b	#1,(a0)                         	| [...]
 	bne	l_c5d8                             	| [$c5d3: bne $c5d8]
@@ -1312,11 +1316,11 @@ l_c5d8:
 	bcs	l_c621                             	| [$c5e3: bcc $c621]
 	move.b	#0x30,d1                        	| [$c5e5: ldx #$30]
 	move.b	#0xc6,d2                        	| [$c5e7: ldy #$c6]
-	jbsr	l_c9bc                            	| [$c5e9: jsr $c9bc]
+	jbsr	display_text_block_c9bc                            	| [$c5e9: jsr $c9bc]
 	st.b	d1                                	| [$c5ec: ldx #$ff]
-	jbsr	screen_mainloop_ca2c                            	| [$c5ee: jsr $ca2c]
+	jbsr	wait_a_while_ca2c                            	| [$c5ee: jsr $ca2c]
 	move.b	#0x40,d1                        	| [$c5f1: ldx #$40]
-	jbsr	screen_mainloop_ca2c                            	| [$c5f3: jsr $ca2c]
+	jbsr	wait_a_while_ca2c                            	| [$c5f3: jsr $ca2c]
 	rts                                    	| [$c5f6: rts]
                                     	| [$c5f7: nop]
                                     	| [$c5f9: nop]
@@ -1553,7 +1557,7 @@ l_c80e:
 	move.b	d0,(a0)                         	| [...]
 	jbsr	l_da89                            	| [$c81f: jsr $da89]
 	jbsr	l_c8c6                            	| [$c822: jsr $c8c6]
-	GET_ADDRESS	0x21                       	| [$c825: lda $21]
+	GET_ADDRESS	two_player_game_0021                       	| [$c825: lda $21]
 	move.b	(a0),d0                         	| [...]
 	beq	l_c834                             	| [$c827: beq $c834]
 	GET_ADDRESS	current_player_001f        	| [$c829: lda current_player_001f]
@@ -1656,23 +1660,23 @@ l_c8af:
 	cmp.b	#0x18,d0                         	| [$c8ba: cmp #$18]
 	bne	l_c8af                             	| [$c8bc: bne $c8af]
 	move.b	#0x01,d1                        	| [$c8be: ldx #$01]
-	jbsr	screen_mainloop_ca2c                            	| [$c8c0: jsr $ca2c]
+	jbsr	wait_a_while_ca2c                            	| [$c8c0: jsr $ca2c]
 	rts                                    	| [$c8c3: rts]
                                     	| [$c8c4: nop]
 l_c8c6:
                                     	| [$c8c6: nop]
 	move.b	#0x35,d1                        	| [$c8c7: ldx #$35]
 	move.b	#0xc9,d2                        	| [$c8c9: ldy #$c9]
-	jbsr	l_c9bc                            	| [$c8cb: jsr $c9bc]
+	jbsr	display_text_block_c9bc                            	| [$c8cb: jsr $c9bc]
 	move.b	#0x29,d1                        	| [$c8ce: ldx #$29]
 	move.b	#0xc9,d2                        	| [$c8d0: ldy #$c9]
-	jbsr	l_c9bc                            	| [$c8d2: jsr $c9bc]
-	GET_ADDRESS	0x21                       	| [$c8d5: lda $21]
+	jbsr	display_text_block_c9bc                            	| [$c8d2: jsr $c9bc]
+	GET_ADDRESS	two_player_game_0021                       	| [$c8d5: lda $21]
 	move.b	(a0),d0                         	| [...]
 	beq	l_c8e3                             	| [$c8d7: beq $c8e3]
 	move.b	#0x40,d1                        	| [$c8d9: ldx #$40]
 	move.b	#0xc9,d2                        	| [$c8db: ldy #$c9]
-	jbsr	l_c9bc                            	| [$c8dd: jsr $c9bc]
+	jbsr	display_text_block_c9bc                            	| [$c8dd: jsr $c9bc]
                                     	| [$c8e0: nop]
                                     	| [$c8e2: nop]
 l_c8e3:
@@ -1680,7 +1684,7 @@ l_c8e3:
                                     	| [$c8e4: nop]
 unknown_c8e6:
                                     	| [$c8e6: nop]
-	GET_ADDRESS	0x21                       	| [$c8e7: lda $21]
+	GET_ADDRESS	two_player_game_0021                       	| [$c8e7: lda $21]
 	move.b	(a0),d0                         	| [...]
 	beq	l_c928                             	| [$c8e9: beq $c928]
 	GET_ADDRESS	timer1_0013                	| [$c8eb: lda timer1_0013]
@@ -1692,14 +1696,14 @@ unknown_c8e6:
 	bne	l_c900                             	| [$c8f3: bne $c900]
 	move.b	#0x2f,d1                        	| [$c8f5: ldx #$2f]
 	move.b	#0xc9,d2                        	| [$c8f7: ldy #$c9]
-	jbsr	l_c9bc                            	| [$c8f9: jsr $c9bc]
+	jbsr	display_text_block_c9bc                            	| [$c8f9: jsr $c9bc]
 	rts                                    	| [$c8fc: rts]
                                     	| [$c8fd: nop]
                                     	| [$c8ff: nop]
 l_c900:
 	move.b	#0x46,d1                        	| [$c900: ldx #$46]
 	move.b	#0xc9,d2                        	| [$c902: ldy #$c9]
-	jbsr	l_c9bc                            	| [$c904: jsr $c9bc]
+	jbsr	display_text_block_c9bc                            	| [$c904: jsr $c9bc]
 	rts                                    	| [$c907: rts]
                                     	| [$c908: nop]
                                     	| [$c90a: nop]
@@ -1711,14 +1715,14 @@ l_c90b:
 	bne	l_c91e                             	| [$c911: bne $c91e]
 	move.b	#0x29,d1                        	| [$c913: ldx #$29]
 	move.b	#0xc9,d2                        	| [$c915: ldy #$c9]
-	jbsr	l_c9bc                            	| [$c917: jsr $c9bc]
+	jbsr	display_text_block_c9bc                            	| [$c917: jsr $c9bc]
 	rts                                    	| [$c91a: rts]
                                     	| [$c91b: nop] dummy_write_decrypt_trigger
                                     	| [$c91d: nop] prev_crypted 6e
 l_c91e:
 	move.b	#0x40,d1                        	| [$c91e: ldx #$40]
 	move.b	#0xc9,d2                        	| [$c920: ldy #$c9]
-	jbsr	l_c9bc                            	| [$c922: jsr $c9bc]
+	jbsr	display_text_block_c9bc                            	| [$c922: jsr $c9bc]
                                     	| [$c925: nop] dummy_write_decrypt_trigger
                                     	| [$c927: nop] prev_crypted 6e
 l_c928:
@@ -1796,7 +1800,7 @@ l_c99f:
 	rts                                    	| [$c99f: rts]
 
 * < D1/D2 address in ROM
-l_c9bc:
+display_text_block_c9bc:
                                     	| [$c9bc: nop] prev_crypted 6e
 	GET_ADDRESS	0x03                       	| [$c9bd: stx $03] dummy_write_decrypt_trigger
 	move.b	d1,(a0)                         	| [...]
@@ -1843,7 +1847,7 @@ l_c9d4:
 	move.b	(a0),d0                         	| [...]
 	beq	l_c9d4                             	| [$c9ef: beq $c9d4]
 	move.b	#0x0a,d1                        	| [$c9f1: ldx #$0a]
-	jbsr	screen_mainloop_ca2c                            	| [$c9f3: jsr $ca2c]
+	jbsr	wait_a_while_ca2c                            	| [$c9f3: jsr $ca2c]
 	jra	l_c9d4                             	| [$c9f6: jmp $c9d4]
                                     	| [$c9f9: nop]
                                     	| [$c9fb: nop]
@@ -1858,7 +1862,7 @@ l_c9fc:
 	move.b	d0,(a0)                         	| [...]
 	GET_ADDRESS	0x04                       	| [$ca03: lda $04]
 	move.b	(a0),d0                         	| [...]
-	move.b	#0x00,d4	| [$ca05: adc #$00]
+	moveq	#0x00,d4	| [$ca05: adc #$00]
 	addx.b	d4,d0                        	| [$ca05: adc #$00]
 	GET_ADDRESS	0x04                       	| [$ca07: sta $04]
 	move.b	d0,(a0)                         	| [...]
@@ -1874,7 +1878,7 @@ l_ca0f:                           	| [$ca0f: clc]
 	move.b	d0,(a0)                         	| [...]
 	GET_ADDRESS	0x06                       	| [$ca16: lda $06]
 	move.b	(a0),d0                         	| [...]
-	move.b	#0x00,d4	| [$ca18: adc #$00]
+	moveq	#0x00,d4	| [$ca18: adc #$00]
 	addx.b	d4,d0                        	| [$ca18: adc #$00]
 	GET_ADDRESS	0x06                       	| [$ca1a: sta $06]
 	move.b	d0,(a0)                         	| [...]
@@ -1890,7 +1894,7 @@ l_ca25:
 	move.b	d0,(a0)                         	| [...]
 	rts                                    	| [$ca29: rts]
                                     	| [$ca2a: nop]
-screen_mainloop_ca2c:
+wait_a_while_ca2c:
                                     	| [$ca2c: nop]
 wait_for_sync_ca2d:
 	tst.b	bof_sync_flag                     	| [$ca2d: lda $4003]
@@ -1941,7 +1945,7 @@ display_player_lives_ca54:
 	clr.b	d0                               	| [$ca6a: lda #$00]
 	* clear column
 l_ca6c:
-	lea	(0x184c,a6),a0
+	GET_UNCHECKED_ADDRESS	0x184c
 	lea	(a0,d2.w),a0			| [$ca6c: sta $184c, y]
 	jbsr	osd_w_videoram		 	| [...]
 	subq.b	#1,d2                           	| [$ca6f: dey]
@@ -2151,7 +2155,7 @@ l_cb5e:
 	move.b	d0,(a0)                         	| [...]
 	GET_ADDRESS	0x06                       	| [$cb6c: lda $06] prev_crypted c9
 	move.b	(a0),d0                         	| [...]
-	move.b	#0x00,d4	| [$cb6e: adc #$00]
+	moveq	#0x00,d4	| [$cb6e: adc #$00]
 	addx.b	d4,d0                        	| [$cb6e: adc #$00]
 	GET_ADDRESS	0x06                       	| [$cb70: sta $06]
 	move.b	d0,(a0)                         	| [...]
@@ -2270,7 +2274,7 @@ l_cbf1:
 	jbsr	write_to_4004                     	| [$cc04: sta $4004]
 	move.b	#0x01,d1                        	| [$cc07: ldx #$01]
 	* each time screen changes, this is called
-	jbsr	screen_mainloop_ca2c                            	| [$cc09: jsr $ca2c]
+	jbsr	wait_a_while_ca2c                            	| [$cc09: jsr $ca2c]
 	rts                                    	| [$cc0c: rts]
                                     	| [$cc0d: nop]
 l_cc0f:
@@ -2525,7 +2529,7 @@ l_cd37:
 	SET_XC_FLAGS                           	| [$cd37: sec]
 	GET_ADDRESS	0x05                       	| [$cd38: lda $05]
 	move.b	(a0),d0                         	| [...]
-	SBC_IMM	0x21                           	| [$cd3a: sbc #$21]
+	sub.b	#0x21,d0                           	| [$cd3a: sbc #$21]
 	GET_ADDRESS	0x05                       	| [$cd3c: sta $05] dummy_write_decrypt_trigger
 	move.b	d0,(a0)                         	| [...]
 	GET_ADDRESS	0x06                       	| [$cd3e: lda $06] prev_crypted c9
@@ -2597,7 +2601,7 @@ l_cd37:
 	move.b	d0,(a0)                         	| [...]
 	GET_ADDRESS	0x06                       	| [$cd87: lda $06] prev_crypted c9
 	move.b	(a0),d0                         	| [...]
-	move.b	#0x00,d4	| [$cd89: adc #$00]
+	moveq	#0x00,d4	| [$cd89: adc #$00]
 	addx.b	d4,d0                        	| [$cd89: adc #$00]
 	GET_ADDRESS	0x06                       	| [$cd8b: sta $06] dummy_write_decrypt_trigger
 	move.b	d0,(a0)                         	| [...]
@@ -2890,7 +2894,7 @@ l_d091:
 l_d095:
 	jbsr	l_d16e                            	| [$d095: jsr $d16e]
 	clr.b	d0                               	| [$d098: lda #$00]
-	GET_ADDRESS	0x21                       	| [$d09a: sta $21]
+	GET_ADDRESS	two_player_game_0021                       	| [$d09a: sta $21]
 	move.b	d0,(a0)                         	| [...]
 	GET_ADDRESS	0x20                       	| [$d09c: sta $20]
 	move.b	d0,(a0)                         	| [...]
@@ -2906,9 +2910,9 @@ l_d095:
 	jbsr	l_cbe3                            	| [$d0ab: jsr $cbe3]
 	move.b	#0xe8,d1                        	| [$d0ae: ldx #$e8]
 	move.b	#0xc2,d2                        	| [$d0b0: ldy #$c2]
-	jbsr	l_c9bc                            	| [$d0b2: jsr $c9bc]
+	jbsr	display_text_block_c9bc                            	| [$d0b2: jsr $c9bc]
 	move.b	#0x1f,d1                        	| [$d0b5: ldx #$1f]
-	jbsr	screen_mainloop_ca2c                            	| [$d0b7: jsr $ca2c]
+	jbsr	wait_a_while_ca2c                            	| [$d0b7: jsr $ca2c]
 	jra	l_d0fd                             	| [$d0ba: jmp $d0fd]
                                     	| [$d0bd: nop]
                                     	| [$d0bf: nop]
@@ -2923,7 +2927,7 @@ l_d0c9:
 	jbsr	l_d16e                            	| [$d0c9: jsr $d16e]
 	jbsr	l_d16e                            	| [$d0cc: jsr $d16e]
 	move.b	#0x01,d0                        	| [$d0cf: lda #$01]
-	GET_ADDRESS	0x21                       	| [$d0d1: sta $21]
+	GET_ADDRESS	two_player_game_0021                       	| [$d0d1: sta $21]
 	move.b	d0,(a0)                         	| [...]
 	clr.b	d0                               	| [$d0d3: lda #$00]
 	GET_ADDRESS	0x20                       	| [$d0d5: sta $20]
@@ -2940,12 +2944,12 @@ l_d0c9:
 	jbsr	l_cbe3                            	| [$d0e4: jsr $cbe3]
 	move.b	#0xd2,d1                        	| [$d0e7: ldx #$d2]
 	move.b	#0xc2,d2                        	| [$d0e9: ldy #$c2]
-	jbsr	l_c9bc                            	| [$d0eb: jsr $c9bc]
+	jbsr	display_text_block_c9bc                            	| [$d0eb: jsr $c9bc]
 	move.b	#0xe8,d1                        	| [$d0ee: ldx #$e8]
 	move.b	#0xc2,d2                        	| [$d0f0: ldy #$c2]
-	jbsr	l_c9bc                            	| [$d0f2: jsr $c9bc]
+	jbsr	display_text_block_c9bc                            	| [$d0f2: jsr $c9bc]
 	move.b	#0x1f,d1                        	| [$d0f5: ldx #$1f]
-	jbsr	screen_mainloop_ca2c                            	| [$d0f7: jsr $ca2c]
+	jbsr	wait_a_while_ca2c                            	| [$d0f7: jsr $ca2c]
                                     	| [$d0fa: nop]
                                     	| [$d0fc: nop]
 l_d0fd:
@@ -7091,10 +7095,8 @@ l_e9ff:
 	GET_ADDRESS	bonus_life_tenth_thousands_005b                       	| [$ea1f: adc $5b]
 	move.b	(a0),d4	| [...]
 	abcd	d4,d0                         	| [...]
-	PUSH_SR
 	GET_ADDRESS	0x5d                       	| [$ea21: sta $5d, x]
     move.b	d0,(a0,d1.w)                 	| [...]
-	POP_SR
                                     	| [$ea23: cld]
 	GET_ADDRESS	current_player_001f        	| [$ea24: ldx current_player_001f]
 	move.b	(a0),d1                         	| [...]
@@ -7398,7 +7400,7 @@ l_f021:
 	move.b	d0,(a0)                         	| [...]
 	GET_ADDRESS	0xe5                       	| [$f028: lda $e5]
 	move.b	(a0),d0                         	| [...]
-	move.b	#0x00,d4	| [$f02a: adc #$00]
+	moveq	#0x00,d4	| [$f02a: adc #$00]
 	addx.b	d4,d0                        	| [$f02a: adc #$00]
 	GET_ADDRESS	0xe5                       	| [$f02c: sta $e5]
 	move.b	d0,(a0)                         	| [...]
@@ -7518,7 +7520,7 @@ l_f0b6:
 	move.b	d0,(a0)                         	| [...]
 	GET_ADDRESS	0xd9                       	| [$f0c6: lda $d9]
 	move.b	(a0),d0                         	| [...]
-	move.b	#0x00,d4	| [$f0c8: adc #$00]
+	moveq	#0x00,d4	| [$f0c8: adc #$00]
 	addx.b	d4,d0                        	| [$f0c8: adc #$00]
 	GET_ADDRESS	0xd9                       	| [$f0ca: sta $d9]
 	move.b	d0,(a0)                         	| [...]
@@ -7837,7 +7839,7 @@ l_f318:
 	move.b	d0,(a0)                         	| [...]
 	GET_ADDRESS	0xd9                       	| [$f324: lda $d9] prev_crypted c9
 	move.b	(a0),d0                         	| [...]
-	move.b	#0x00,d4	| [$f326: adc #$00]
+	moveq	#0x00,d4	| [$f326: adc #$00]
 	addx.b	d4,d0                        	| [$f326: adc #$00]
 	GET_ADDRESS	0xd9                       	| [$f328: sta $d9]
 	move.b	d0,(a0)                         	| [...]
@@ -8128,7 +8130,7 @@ l_f4b3:
 	move.b	d0,(a0)                         	| [...]
 	GET_ADDRESS	0xd9                       	| [$f4ba: lda $d9]
 	move.b	(a0),d0                         	| [...]
-	move.b	#0x00,d4	| [$f4bc: adc #$00]
+	moveq	#0x00,d4	| [$f4bc: adc #$00]
 	addx.b	d4,d0                        	| [$f4bc: adc #$00]
 	GET_ADDRESS	0xd9                       	| [$f4be: sta $d9]
 	move.b	d0,(a0)                         	| [...]
