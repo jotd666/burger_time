@@ -752,10 +752,10 @@ _vblank:
 1:
 	* has to be copper: set sync
 
-	* we're going to ack copper & software interrupt now
+	* we're going to ack copper & software/level 5 interrupt now
 	* do it twice (040/pistorm bug)
-	move.w	#0x14,(intreq,a5)
-	move.w	#0x14,(intreq,a5)
+	move.w	#0x814,(intreq,a5)
+	move.w	#0x814,(intreq,a5)
 
 	tst.b	pause_flag
 	jne	23f
@@ -782,9 +782,12 @@ _vblank:
 	move.b	d0,mid_screen_interrupt_count
 	jra		3f
 2:
-
-
-	
+	btst	#11,d0
+	beq.b	20f
+	* after mid-screen interrupt, just clear bof sync flag and exit
+	clr.b	bof_sync_flag
+	jra		3f
+20:
 	subq.w	#1,delay_timer
 		
 	st.b	bof_sync_flag
@@ -1755,6 +1758,10 @@ mirrored_videoram:
 	and.w	#0x1F,d1
 	lsl.w	#5,d1
 	add.w	d1,d7
+	* update A0 as well to unmirrored ram 
+	move.l	a6,a0
+	add.w	d7,a0
+	add.w	#0x1000,a0
 	rts
 	
 * a0=screen address (preserved), d0=tile (preserved)
@@ -2745,11 +2752,11 @@ game_colors:
 	* mid-line wait & extra interrupt
 	.word	0x8001,0xFFFE
 intreq_block_game:
-	* now wait some lines until we're sure bitmap only contains
-	* non-black: we can set color 0 to light blue now
 	.word	 intreq,0x8014  | call copper interrupt in the middle of a frame, also flag so copper interrupt knows that we're going to call copper int
 
-	* purple 
+	* mid-line wait & extra interrupt, turn off flag
+	.word	0x9001,0xFFFE
+	.word	 intreq,0x8810  | call copper interrupt in the middle of a frame, also flag so copper interrupt knows that we're going to call copper int
 
 
 	* pal limit

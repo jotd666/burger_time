@@ -129,19 +129,22 @@
 
 
 	.macro GET_ADDRESS	offset
+	.ifgt	\offset-0x8000
 	lea	\offset,a0
+	.else
+	lea	\offset\().w,a0
+	.endif
 	jbsr	get_address
 	.endm
 
 	.macro GET_ADDRESS_X	offset
-	lea	\offset,a0
-	jbsr	get_address
+	GET_ADDRESS	\offset
 	lea	(a0,d1.w),a0
 	READ_LE_WORD	a0
 	jbsr	get_address
 	.endm
 
-	.macro GET_ADDRESS_Y	offset
+	.macro GET_INDIRECT_ADDRESS	offset
 	GET_ADDRESS	\offset
 	READ_LE_WORD	a0
 	jbsr	get_address
@@ -161,7 +164,11 @@
 
 	.macro GET_UNCHECKED_ADDRESS	offset
 	move.l	a6,a0
-	add.l	#\offset,a0	| can be > 0x7FFF
+	.ifgt	\offset-0x8000
+	add.l	#\offset,a0	| > 0x7FFF needs long add
+	.else
+	add.w	#\offset,a0
+	.endif
 	.endm
 
 	* doesn't check anything, but osd_w_videoram will
@@ -1562,7 +1569,7 @@ l_c834:
 	jbsr	l_c94e                            	| [$c836: jsr $c94e]
 	move.b	#0x02,d1                        	| [$c839: ldx #$02]
 	jbsr	l_c94e                            	| [$c83b: jsr $c94e]
-	jbsr	l_ca54                            	| [$c83e: jsr $ca54]
+	jbsr	display_player_lives_ca54                            	| [$c83e: jsr $ca54]
 	jbsr	l_ca94                            	| [$c841: jsr $ca94]
 	GET_ADDRESS	current_player_001f        	| [$c844: ldx current_player_001f]
 	move.b	(a0),d1                         	| [...]
@@ -1801,12 +1808,12 @@ l_c9c4:
 	clr.b	d2                               	| [$c9c4: ldy #$00]
 	GET_ADDRESS	0x08                       	| [$c9c6: sty $08]
 	move.b	d2,(a0)                         	| [...]
-	GET_ADDRESS_Y	0x03                     	| [$c9c8: lda ($03), y]
+	GET_INDIRECT_ADDRESS	0x03                     	| [$c9c8: lda ($03), y]
 	move.b	(a0,d2.w),d0                    	| [...]
 	GET_ADDRESS	0x05                       	| [$c9ca: sta $05] dummy_write_decrypt_trigger
 	move.b	d0,(a0)                         	| [...]
 	addq.b	#1,d2                           	| [$c9cc: iny] prev_crypted 64
-	GET_ADDRESS_Y	0x03                     	| [$c9cd: lda ($03), y]
+	GET_INDIRECT_ADDRESS	0x03                     	| [$c9cd: lda ($03), y]
 	move.b	(a0,d2.w),d0                    	| [...]
 	GET_ADDRESS	0x06                       	| [$c9cf: sta $06]
 	move.b	d0,(a0)                         	| [...]
@@ -1814,7 +1821,7 @@ l_c9c4:
                                     	| [$c9d3: nop]
 l_c9d4:
 	addq.b	#1,d2                           	| [$c9d4: iny]
-	GET_ADDRESS_Y	0x03                     	| [$c9d5: lda ($03), y]
+	GET_INDIRECT_ADDRESS	0x03                     	| [$c9d5: lda ($03), y]
 	move.b	(a0,d2.w),d0                    	| [...]
 	cmp.b	#0xff,d0                         	| [$c9d7: cmp #$ff]
 	beq	l_ca25                             	| [$c9d9: beq $ca25]
@@ -1913,7 +1920,7 @@ l_ca49:
 	bne	wait_for_sync_ca2d                             	| [$ca4f: bne $ca2d]
 	rts                                    	| [$ca51: rts]
                                     	| [$ca52: nop]
-l_ca54:
+display_player_lives_ca54:
                                     	| [$ca54: nop]
 	GET_ADDRESS	current_player_001f        	| [$ca55: ldx current_player_001f]
 	move.b	(a0),d1                         	| [...]
@@ -1939,12 +1946,14 @@ l_ca6c:
 	jbsr	osd_w_videoram		 	| [...]
 	subq.b	#1,d2                           	| [$ca6f: dey]
 	bne	l_ca6c                             	| [$ca70: bne $ca6c]
+	* display player lives (using column mode 185x)
 	GET_ADDRESS	player_lives_0029          	| [$ca72: ldy player_lives_0029, x]
 	move.b	(a0,d1.w),d2                    	| [...]
 	beq	l_ca7d                             	| [$ca74: beq $ca7d]
 l_ca76:
-	move.b	#0xc8,d0                        	| [$ca76: lda #$c8]
+	move.b	#0xc8,d0                        	| [$ca76: lda #$c8] life character
 l_ca78:
+	jbsr	osd_break
 	GET_SCREEN_ADDRESS_Y	0xf3                     	| [$ca78: sta ($f3), y]
 	jbsr	osd_w_videoram                    	| [...]
 	subq.b	#1,d2                           	| [$ca7a: dey]
@@ -1954,14 +1963,13 @@ l_ca7d:
 l_ca7e:
 	move.b	#0x09,d2                        	| [$ca7e: ldy #$09]
 	move.b	#0x53,d0                        	| [$ca80: lda #$53]
-	GET_ADDRESS	0xf3                       	| [$ca82: sta $f3]
-	move.b	d0,(a0)                         	| [...]
+	GET_SCREEN_ADDRESS_Y	0xf3                       	| [$ca82: sta $f3]
+	jbsr	osd_w_videoram                         	| [...]
 	jra	l_ca76                             	| [$ca84: jmp $ca76]
-	GET_ADDRESS	0xea                       	| [$ca87: inc $ea, x]
-    addq.b	#1,(a0,d1.w)                 	| [...]
+
 l_ca89:
-	GET_ADDRESS_Y	0xf3                     	| [$ca89: sta ($f3), y]
-	move.b	d0,(a0,d2.w)                    	| [...]
+	GET_SCREEN_ADDRESS_Y	0xf3                     	| [$ca89: sta ($f3), y]
+	jbsr	osd_w_videoram                    	| [...]
 	subq.b	#1,d2                           	| [$ca8b: dey]
 	bne	l_ca89                             	| [$ca8c: bne $ca89]
                                     	| [$ca8e: nop]
@@ -2100,24 +2108,24 @@ l_cb1e:
                                     	| [$cb3c: nop] dummy_write_decrypt_trigger
                                     	| [$cb3e: nop] prev_crypted 6e
 l_cb3f:
-	GET_ADDRESS_Y	0x03                     	| [$cb3f: lda ($03), y]
+	GET_INDIRECT_ADDRESS	0x03                     	| [$cb3f: lda ($03), y]
 	move.b	(a0,d2.w),d0                    	| [...]
 	and.b	#0xf0,d0                         	| [$cb41: and #$f0]
-	GET_ADDRESS_Y	0x05                     	| [$cb43: ora ($05), y]
+	GET_INDIRECT_ADDRESS	0x05                     	| [$cb43: ora ($05), y]
 	or.b	(a0,d2.w),d0                      	| [...]
-	GET_ADDRESS_Y	0x05                     	| [$cb45: sta ($05), y] dummy_write_decrypt_trigger
+	GET_INDIRECT_ADDRESS	0x05                     	| [$cb45: sta ($05), y] dummy_write_decrypt_trigger
 	move.b	d0,(a0,d2.w)                    	| [...]
 	GET_ADDRESS	0x05                       	| [$cb47: inc $05] prev_crypted ea
 	addq.b	#1,(a0)                         	| [...]
-	GET_ADDRESS_Y	0x03                     	| [$cb49: lda ($03), y]
+	GET_INDIRECT_ADDRESS	0x03                     	| [$cb49: lda ($03), y]
 	move.b	(a0,d2.w),d0                    	| [...]
 	asl.b	#4,d0                            	| [$cb4b: asl a]
 	                            	| [$cb4c: asl a]
 	                            	| [$cb4d: asl a]
 	                            	| [$cb4e: asl a]
-	GET_ADDRESS_Y	0x05                     	| [$cb4f: ora ($05), y]
+	GET_INDIRECT_ADDRESS	0x05                     	| [$cb4f: ora ($05), y]
 	or.b	(a0,d2.w),d0                      	| [...]
-	GET_ADDRESS_Y	0x05                     	| [$cb51: sta ($05), y]
+	GET_INDIRECT_ADDRESS	0x05                     	| [$cb51: sta ($05), y]
 	move.b	d0,(a0,d2.w)                    	| [...]
 	GET_ADDRESS	0x05                       	| [$cb53: inc $05] dummy_write_decrypt_trigger
 	addq.b	#1,(a0)                         	| [...]
@@ -2150,24 +2158,24 @@ l_cb5e:
                                     	| [$cb72: nop] dummy_write_decrypt_trigger
                                     	| [$cb74: nop] prev_crypted 6e
 l_cb75:
-	GET_ADDRESS_Y	0x03                     	| [$cb75: lda ($03), y]
+	GET_INDIRECT_ADDRESS	0x03                     	| [$cb75: lda ($03), y]
 	move.b	(a0,d2.w),d0                    	| [...]
 	and.b	#0xf0,d0                         	| [$cb77: and #$f0]
-	GET_ADDRESS_Y	0x05                     	| [$cb79: ora ($05), y]
+	GET_INDIRECT_ADDRESS	0x05                     	| [$cb79: ora ($05), y]
 	or.b	(a0,d2.w),d0                      	| [...]
-	GET_ADDRESS_Y	0x05                     	| [$cb7b: sta ($05), y] dummy_write_decrypt_trigger
+	GET_INDIRECT_ADDRESS	0x05                     	| [$cb7b: sta ($05), y] dummy_write_decrypt_trigger
 	move.b	d0,(a0,d2.w)                    	| [...]
 	GET_ADDRESS	0x05                       	| [$cb7d: dec $05] prev_crypted e2  ; dummy_write_decrypt_trigger
 	subq.b	#1,(a0)                         	| [...]
-	GET_ADDRESS_Y	0x03                     	| [$cb7f: lda ($03), y] prev_crypted 59
+	GET_INDIRECT_ADDRESS	0x03                     	| [$cb7f: lda ($03), y] prev_crypted 59
 	move.b	(a0,d2.w),d0                    	| [...]
 	asl.b	#4,d0                            	| [$cb81: asl a]
 	                            	| [$cb82: asl a]
 	                            	| [$cb83: asl a]
 	                            	| [$cb84: asl a]
-	GET_ADDRESS_Y	0x05                     	| [$cb85: ora ($05), y]
+	GET_INDIRECT_ADDRESS	0x05                     	| [$cb85: ora ($05), y]
 	or.b	(a0,d2.w),d0                      	| [...]
-	GET_ADDRESS_Y	0x05                     	| [$cb87: sta ($05), y]
+	GET_INDIRECT_ADDRESS	0x05                     	| [$cb87: sta ($05), y]
 	move.b	d0,(a0,d2.w)                    	| [...]
 	GET_ADDRESS	0x05                       	| [$cb89: dec $05]
 	subq.b	#1,(a0)                         	| [...]
@@ -2245,10 +2253,10 @@ l_cbe3:
                                     	| [$cbee: nop] prev_crypted c1
                                     	| [$cbf0: nop]
 l_cbf1:
-	GET_ADDRESS_Y	0x03                     	| [$cbf1: lda ($03), y]
+	GET_INDIRECT_ADDRESS	0x03                     	| [$cbf1: lda ($03), y]
 	move.b	(a0,d2.w),d0                    	| [...]
 	and.b	#0x0f,d0                         	| [$cbf3: and #$0f]
-	GET_ADDRESS_Y	0x03                     	| [$cbf5: sta ($03), y] dummy_write_decrypt_trigger
+	GET_INDIRECT_ADDRESS	0x03                     	| [$cbf5: sta ($03), y] dummy_write_decrypt_trigger
 	move.b	d0,(a0,d2.w)                    	| [...]
 	addq.b	#1,d2                           	| [$cbf7: iny] prev_crypted 64
 	bne	l_cbf1                             	| [$cbf8: bne $cbf1]
@@ -2302,7 +2310,7 @@ l_cc27:
                                     	| [$cc38: nop]
                                     	| [$cc3a: nop]
 l_cc3b:
-	GET_ADDRESS_Y	0x03                     	| [$cc3b: lda ($03), y]
+	GET_INDIRECT_ADDRESS	0x03                     	| [$cc3b: lda ($03), y]
 	move.b	(a0,d2.w),d0                    	| [...]
 	cmp.b	#0xff,d0                         	| [$cc3d: cmp #$ff]
 	beq	l_cc59                             	| [$cc3f: beq $cc59]
@@ -2345,18 +2353,18 @@ l_cc64:
 l_cc74:
 	GET_ADDRESS	0x0d                       	| [$cc74: ldy $0d]
 	move.b	(a0),d2                         	| [...]
-	GET_ADDRESS_Y	0x0b                     	| [$cc76: lda ($0b), y]
+	GET_INDIRECT_ADDRESS	0x0b                     	| [$cc76: lda ($0b), y]
 	move.b	(a0,d2.w),d0                    	| [...]
 	beq	l_cc96                             	| [$cc78: beq $cc96]
 	GET_ADDRESS	0x03                       	| [$cc7a: sta $03]
 	move.b	d0,(a0)                         	| [...]
 	addq.b	#1,d2                           	| [$cc7c: iny]
-	GET_ADDRESS_Y	0x0b                     	| [$cc7d: lda ($0b), y]
+	GET_INDIRECT_ADDRESS	0x0b                     	| [$cc7d: lda ($0b), y]
 	move.b	(a0,d2.w),d0                    	| [...]
 	GET_ADDRESS	0x04                       	| [$cc7f: sta $04]
 	move.b	d0,(a0)                         	| [...]
 	addq.b	#1,d2                           	| [$cc81: iny]
-	GET_ADDRESS_Y	0x0b                     	| [$cc82: lda ($0b), y]
+	GET_INDIRECT_ADDRESS	0x0b                     	| [$cc82: lda ($0b), y]
 	move.b	(a0,d2.w),d0                    	| [...]
 	GET_ADDRESS	0x05                       	| [$cc84: sta $05]
 	move.b	d0,(a0)                         	| [...]
@@ -3263,7 +3271,7 @@ l_d2ac:
 	move.b	d0,(a0)                         	| [...]
 	GET_ADDRESS	0x03                       	| [$d2c1: ldy $03]
 	move.b	(a0),d2                         	| [...]
-	GET_ADDRESS_Y	0x05                     	| [$d2c3: lda ($05), y]
+	GET_INDIRECT_ADDRESS	0x05                     	| [$d2c3: lda ($05), y]
 	move.b	(a0,d2.w),d0                    	| [...]
 	cmp.b	#0xff,d0                         	| [$d2c5: cmp #$ff]
 	beq	l_d314                             	| [$d2c7: beq $d314]
@@ -4905,11 +4913,11 @@ l_dceb:
 	move.b	d0,d1                           	| [$dd0d: tax]
 	GET_ADDRESS	0x75                       	| [$dd0e: ldy $75, x]
 	move.b	(a0,d1.w),d2                    	| [...]
-	GET_ADDRESS_Y	0x03                     	| [$dd10: lda ($03), y]
+	GET_INDIRECT_ADDRESS	0x03                     	| [$dd10: lda ($03), y]
 	move.b	(a0,d2.w),d0                    	| [...]
 	GET_ADDRESS	0x72                       	| [$dd12: sta $72, x] dummy_write_decrypt_trigger
     move.b	d0,(a0,d1.w)                 	| [...]
-	GET_ADDRESS_Y	0x05                     	| [$dd14: lda ($05), y] prev_crypted 59
+	GET_INDIRECT_ADDRESS	0x05                     	| [$dd14: lda ($05), y] prev_crypted 59
 	move.b	(a0,d2.w),d0                    	| [...]
 	GET_ADDRESS	0x73                       	| [$dd16: sta $73, x]
     move.b	d0,(a0,d1.w)                 	| [...]
@@ -4920,7 +4928,7 @@ l_dceb:
     addq.b	#1,(a0,d1.w)                 	| [...]
 	GET_ADDRESS	0x75                       	| [$dd1e: ldy $75, x] prev_crypted d8
 	move.b	(a0,d1.w),d2                    	| [...]
-	GET_ADDRESS_Y	0x03                     	| [$dd20: lda ($03), y]
+	GET_INDIRECT_ADDRESS	0x03                     	| [$dd20: lda ($03), y]
 	move.b	(a0,d2.w),d0                    	| [...]
 	bpl	l_dd2b                             	| [$dd22: bpl $dd2b]
 	clr.b	d0                               	| [$dd24: lda #$00]
@@ -5606,16 +5614,16 @@ l_e141:
 	move.b	d0,(a0)                         	| [...]
 	clr.b	d0                               	| [$e161: lda #$00]
 	move.b	d0,d2                           	| [$e163: tay]
-	GET_ADDRESS_Y	0x03                     	| [$e164: sta ($03), y] dummy_write_decrypt_trigger
+	GET_INDIRECT_ADDRESS	0x03                     	| [$e164: sta ($03), y] dummy_write_decrypt_trigger
 	move.b	d0,(a0,d2.w)                    	| [...]
 	addq.b	#1,d2                           	| [$e166: iny] prev_crypted 64
-	GET_ADDRESS_Y	0x03                     	| [$e167: sta ($03), y]
+	GET_INDIRECT_ADDRESS	0x03                     	| [$e167: sta ($03), y]
 	move.b	d0,(a0,d2.w)                    	| [...]
 	move.b	#0x20,d2                        	| [$e169: ldy #$20]
-	GET_ADDRESS_Y	0x03                     	| [$e16b: sta ($03), y] dummy_write_decrypt_trigger
+	GET_INDIRECT_ADDRESS	0x03                     	| [$e16b: sta ($03), y] dummy_write_decrypt_trigger
 	move.b	d0,(a0,d2.w)                    	| [...]
 	addq.b	#1,d2                           	| [$e16d: iny] prev_crypted 64
-	GET_ADDRESS_Y	0x03                     	| [$e16e: sta ($03), y]
+	GET_INDIRECT_ADDRESS	0x03                     	| [$e16e: sta ($03), y]
 	move.b	d0,(a0,d2.w)                    	| [...]
 	GET_ADDRESS	0x60                       	| [$e170: sta $60]
 	move.b	d0,(a0)                         	| [...]
@@ -6913,21 +6921,21 @@ l_e8f2:
 	GET_ADDRESS	0x05                       	| [$e936: sta $05]
 	move.b	d0,(a0)                         	| [...]
 	clr.b	d2                               	| [$e938: ldy #$00]
-	GET_ADDRESS_Y	0x03                     	| [$e93a: sta ($03), y] dummy_write_decrypt_trigger
+	GET_INDIRECT_ADDRESS	0x03                     	| [$e93a: sta ($03), y] dummy_write_decrypt_trigger
 	move.b	d0,(a0,d2.w)                    	| [...]
 	addq.b	#1,d2                           	| [$e93c: iny] prev_crypted 64
 	GET_ADDRESS	0x05                       	| [$e93d: inc $05] dummy_write_decrypt_trigger
 	addq.b	#1,(a0)                         	| [...]
 	                       	| [$e93f: lda $05] prev_crypted c9
 	move.b	(a0),d0                         	| [...]
-	GET_ADDRESS_Y	0x03                     	| [$e941: sta ($03), y]
+	GET_INDIRECT_ADDRESS	0x03                     	| [$e941: sta ($03), y]
 	move.b	d0,(a0,d2.w)                    	| [...]
 	clr.b	d0                               	| [$e943: lda #$00]
 	move.b	#0x20,d2                        	| [$e945: ldy #$20]
-	GET_ADDRESS_Y	0x03                     	| [$e947: sta ($03), y]
+	GET_INDIRECT_ADDRESS	0x03                     	| [$e947: sta ($03), y]
 	move.b	d0,(a0,d2.w)                    	| [...]
 	addq.b	#1,d2                           	| [$e949: iny]
-	GET_ADDRESS_Y	0x03                     	| [$e94a: sta ($03), y] dummy_write_decrypt_trigger
+	GET_INDIRECT_ADDRESS	0x03                     	| [$e94a: sta ($03), y] dummy_write_decrypt_trigger
 	move.b	d0,(a0,d2.w)                    	| [...]
 	move.b	#0x02,d0                        	| [$e94c: lda #$02] prev_crypted 4d
 	GET_ADDRESS	0xc4                       	| [$e94e: sta $c4]
@@ -7092,7 +7100,7 @@ l_e9ff:
 	move.b	(a0),d1                         	| [...]
 	GET_ADDRESS	player_lives_0029          	| [$ea26: inc player_lives_0029, x]
     addq.b	#1,(a0,d1.w)                 	| [...]
-	jbsr	l_ca54                            	| [$ea28: jsr $ca54]
+	jbsr	display_player_lives_ca54                            	| [$ea28: jsr $ca54]
 	move.b	#0x02,d0                        	| [$ea2b: lda #$02]
 	jbsr	l_ea5d                            	| [$ea2d: jsr $ea5d]
                                     	| [$ea30: nop]
@@ -7368,7 +7376,7 @@ l_f00a:
                                     	| [$f00c: nop]
                                     	| [$f00e: nop]
 l_f00f:
-	GET_ADDRESS_Y	0xe4                     	| [$f00f: lda ($e4), y]
+	GET_INDIRECT_ADDRESS	0xe4                     	| [$f00f: lda ($e4), y]
 	move.b	(a0,d2.w),d0                    	| [...]
 	GET_ADDRESS	0x00e7                     	| [$f011: sta $00e7, y]
     move.b	d0,(a0,d2.w)                 	| [...]
@@ -7462,7 +7470,7 @@ l_f08d:
                                     	| [$f08f: nop]
                                     	| [$f091: nop]
 l_f092:
-	GET_ADDRESS_Y	0xd8                     	| [$f092: lda ($d8), y]
+	GET_INDIRECT_ADDRESS	0xd8                     	| [$f092: lda ($d8), y]
 	move.b	(a0,d2.w),d0                    	| [...]
 	GET_ADDRESS	0x00ea                     	| [$f094: sta $00ea, y]
     move.b	d0,(a0,d2.w)                 	| [...]
@@ -7483,7 +7491,7 @@ l_f0a4:
 l_f0a9:
 	GET_ADDRESS	0x00cc                     	| [$f0a9: lda $00cc, y]
 	move.b	(a0,d2.w),d0                    	| [...]
-	GET_ADDRESS_Y	0xd8                     	| [$f0ac: sta ($d8), y]
+	GET_INDIRECT_ADDRESS	0xd8                     	| [$f0ac: sta ($d8), y]
 	move.b	d0,(a0,d2.w)                    	| [...]
 	subq.b	#1,d2                           	| [$f0ae: dey]
 	bpl	l_f0a9                             	| [$f0af: bpl $f0a9]
@@ -7740,9 +7748,9 @@ l_f1e4:
                                     	| [$f203: nop]
                                     	| [$f205: nop]
 l_f206:
-	GET_ADDRESS_Y	0xd8                     	| [$f206: lda ($d8), y]
+	GET_INDIRECT_ADDRESS	0xd8                     	| [$f206: lda ($d8), y]
 	move.b	(a0,d2.w),d0                    	| [...]
-	GET_ADDRESS_Y	0xda                     	| [$f208: sta ($da), y]
+	GET_INDIRECT_ADDRESS	0xda                     	| [$f208: sta ($da), y]
 	move.b	d0,(a0,d2.w)                    	| [...]
 	subq.b	#1,d2                           	| [$f20a: dey]
 	bpl	l_f206                             	| [$f20b: bpl $f206]
@@ -7809,7 +7817,7 @@ l_f306:
 l_f30b:
 	GET_ADDRESS	0x48                       	| [$f30b: lda $48, x]
 	move.b	(a0,d1.w),d0                    	| [...]
-	GET_ADDRESS_Y	0xd8                     	| [$f30d: sta ($d8), y] dummy_write_decrypt_trigger
+	GET_INDIRECT_ADDRESS	0xd8                     	| [$f30d: sta ($d8), y] dummy_write_decrypt_trigger
 	move.b	d0,(a0,d2.w)                    	| [...]
 	addq.b	#1,d1                           	| [$f30f: inx] prev_crypted 6c
 	cmp.b	#0x0f,d1                         	| [$f310: cpx #$0f]
@@ -8142,7 +8150,7 @@ l_f4b3:
 	jbsr	l_f571                            	| [$f4d9: jsr $f571]
 	clr.b	d0                               	| [$f4dc: lda #$00]
 	move.b	d0,d2                           	| [$f4de: tay]
-	GET_ADDRESS_Y	0xd8                     	| [$f4df: sta ($d8), y]
+	GET_INDIRECT_ADDRESS	0xd8                     	| [$f4df: sta ($d8), y]
 	move.b	d0,(a0,d2.w)                    	| [...]
 	GET_ADDRESS	0xe2                       	| [$f4e1: lda $e2]
 	move.b	(a0),d0                         	| [...]
@@ -8234,9 +8242,9 @@ l_f551:
                                     	| [$f553: nop] dummy_write_decrypt_trigger
                                     	| [$f555: nop] prev_crypted 6e
 l_f556:
-	GET_ADDRESS_Y	0xd8                     	| [$f556: lda ($d8), y]
+	GET_INDIRECT_ADDRESS	0xd8                     	| [$f556: lda ($d8), y]
 	move.b	(a0,d2.w),d0                    	| [...]
-	GET_ADDRESS_Y	0xda                     	| [$f558: sta ($da), y]
+	GET_INDIRECT_ADDRESS	0xda                     	| [$f558: sta ($da), y]
 	move.b	d0,(a0,d2.w)                    	| [...]
 	subq.b	#1,d2                           	| [$f55a: dey]
 	bpl	l_f556                             	| [$f55b: bpl $f556]
@@ -8433,7 +8441,7 @@ l_f633:
                                     	| [$f636: nop]
                                     	| [$f638: nop]
 l_f639:
-	GET_ADDRESS_Y	0xd8                     	| [$f639: sta ($d8), y]
+	GET_INDIRECT_ADDRESS	0xd8                     	| [$f639: sta ($d8), y]
 	move.b	d0,(a0,d2.w)                    	| [...]
 	rts                                    	| [$f63b: rts]
                                     	| [$f63c: nop]
