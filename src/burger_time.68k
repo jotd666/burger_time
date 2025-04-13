@@ -1208,6 +1208,7 @@ l_c4d2:
                                     	| [$c4e1: nop]
                                     	| [$c4e3: nop]
 l_c4e4:
+	* update player
 	move.b	#0x07,d1                        	| [$c4e4: ldx #$07]
 	jbsr	update_character_d269                            	| [$c4e6: jsr $d269]
 	jbsr	handle_make_parts_fall_d898                            	| [$c4e9: jsr $d898]
@@ -1338,6 +1339,7 @@ l_c5fa:
 	GET_ADDRESS	pepper_status_006e                       	| [$c5fa: lda $6e]
 	move.b	(a0),d0                         	| [...]
 	bpl	l_c621                             	| [$c5fc: bpl $c621]
+	* update player
 	move.b	#0x07,d1                        	| [$c5fe: ldx #$07]
 	jbsr	update_character_d269                            	| [$c600: jsr $d269]
 	GET_ADDRESS	player_y_181e                     	| [$c603: lda $181e]
@@ -3075,7 +3077,7 @@ l_d198:
 	* fire pressed
 	GET_ADDRESS	0xb9                       	| [$d1a1: lda $b9]
 	move.b	(a0),d0                         	| [...]
-	jne	l_d1e8                             	| [$d1a3: bne $d1e8]
+	jne	try_to_move_player_d1e8                             	| [$d1a3: bne $d1e8]
 	GET_ADDRESS	player_pepper_002b         	| [$d1a5: lda player_pepper_002b, x]
 	move.b	(a0,d1.w),d0                    	| [...]
 	beq	l_d1d6                             	| [$d1a7: beq $d1d6]
@@ -3117,7 +3119,7 @@ l_d1ad:
 l_d1d6:
 	move.b	#0x0e,d0                        	| [$d1d6: lda #$0e]
 	jbsr	l_ea5d                            	| [$d1d8: jsr $ea5d]
-	jra	l_d1e8                             	| [$d1db: jmp $d1e8]
+	jra	try_to_move_player_d1e8                             	| [$d1db: jmp $d1e8]
                                     	| [$d1de: nop]
                                     	| [$d1e0: nop]
 l_d1e1:
@@ -3126,28 +3128,31 @@ l_d1e1:
 	move.b	d0,(a0)                         	| [...]
                                     	| [$d1e5: nop] prev_crypted c1  ; dummy_write_decrypt_trigger
                                     	| [$d1e7: nop] prev_crypted 6e
-l_d1e8:
+try_to_move_player_d1e8:
 	GET_ADDRESS	0x4000                     	| [$d1e8: lda $4000, y]
 	move.b	(a0,d2.w),d0                    	| [...]
 	not.b	d0                               	| [$d1eb: eor #$ff]
 	and.b	#0x0f,d0                         	| [$d1ed: and #$0f]
 	move.b	d0,d2                           	| [$d1ef: tay]
+	* direction bits table
 	GET_ADDRESS	0xd257                     	| [$d1f0: lda $d257, y]
 	move.b	(a0,d2.w),d0                    	| [...]
 	move.b	d0,d2                           	| [$d1f3: tay]
-	GET_ADDRESS	0xbb                       	| [$d1f4: cmp $bb]
+	GET_ADDRESS	player_current_direction_00bb                       	| [$d1f4: cmp $bb]
 	cmp.b	(a0),d0                          	| [...]
 	beq	l_d201                             	| [$d1f6: beq $d201]
+	* direction change: do something
 	asl.b	#4,d0                            	| [$d1f8: asl a]
 	                            	| [$d1f9: asl a]
 	                            	| [$d1fa: asl a]
 	                            	| [$d1fb: asl a]
-	GET_ADDRESS	0xb0                       	| [$d1fc: sta $b0] dummy_write_decrypt_trigger
+	* set player move bits in move bits / set character animation index to 0
+	GET_ADDRESS	control_bits_and_frame_array_00a9+7           	| [$d1fc: sta $b0] dummy_write_decrypt_trigger
 	move.b	d0,(a0)                         	| [...]
                                     	| [$d1fe: nop] prev_crypted c1
                                     	| [$d200: nop]
 l_d201:
-	GET_ADDRESS	0xbb                       	| [$d201: sty $bb]
+	GET_ADDRESS	player_current_direction_00bb                       	| [$d201: sty $bb]
 	move.b	d2,(a0)                         	| [...]
 	move.b	d2,d0                           	| [$d203: tya]
 	beq	l_d20b                             	| [$d204: beq $d20b]
@@ -3156,7 +3161,7 @@ l_d201:
                                     	| [$d208: nop]
                                     	| [$d20a: nop]
 l_d20b:
-	GET_ADDRESS	0xbb                       	| [$d20b: lda $bb]
+	GET_ADDRESS	player_current_direction_00bb                       	| [$d20b: lda $bb]
 	move.b	(a0),d0                         	| [...]
 	beq	l_d219                             	| [$d20d: beq $d219]
 	move.b	#0x07,d1                        	| [$d20f: ldx #$07]
@@ -3165,6 +3170,7 @@ l_d20b:
                                     	| [$d216: nop]
                                     	| [$d218: nop]
 l_d219:
+	* update player
 	move.b	#0x07,d1                        	| [$d219: ldx #$07]
 	jbsr	update_character_d269                            	| [$d21b: jsr $d269]
 	GET_ADDRESS	0xb0                       	| [$d21e: lda $b0]
@@ -3174,7 +3180,7 @@ l_d219:
 	move.b	#0x06,d2                        	| [$d224: ldy #$06]
 	cmp.b	#0x60,d0                         	| [$d226: cmp #$60]
 	* bcs=>bcc
-	bcc	l_d22b                             	| [$d228: bcs $d22b]
+	jcc	l_d22b                             	| [$d228: bcs $d22b]
 	addq.b	#1,d2                           	| [$d22a: iny]
 l_d22b:
 	move.b	d2,d0                           	| [$d22b: tya]
@@ -3192,7 +3198,7 @@ l_d236:
 	move.b	#0x47,d0                        	| [$d23d: lda #$47]
 	GET_ADDRESS	player_code_181d                     	| [$d23f: sta $181d]
 	move.b	d0,(a0)                         	| [...]
-	GET_ADDRESS	0xc6                       	| [$d242: inc $c6]
+	GET_ADDRESS	player_died_00c6                       	| [$d242: inc $c6]
 	addq.b	#1,(a0)                         	| [...]
                                     	| [$d244: nop]
                                     	| [$d246: nop]
@@ -3267,7 +3273,7 @@ l_d2ac:
 	move.b	d1,d0                           	| [$d2ac: txa]
 	asl.b	#2,d0                            	| [$d2ad: asl a]
 	                            	| [$d2ae: asl a]
-	GET_ADDRESS	0x09                       	| [$d2af: sta $09]
+	GET_ADDRESS	enemy_index_times_4_0009                       	| [$d2af: sta $09]
 	move.b	d0,(a0)                         	| [...]
 	GET_ADDRESS	active_character_array_0068                       	| [$d2b1: lda $68, x]
 	move.b	(a0,d1.w),d0                    	| [...]
@@ -3287,9 +3293,10 @@ l_d2ac:
 	GET_INDIRECT_ADDRESS	0x05                     	| [$d2c3: lda ($05), y]
 	move.b	(a0,d2.w),d0                    	| [...]
 	cmp.b	#0xff,d0                         	| [$d2c5: cmp #$ff]
-	beq	l_d314                             	| [$d2c7: beq $d314]
-	GET_ADDRESS	0x09                       	| [$d2c9: ldy $09]
+	jeq	enemy_moving_on_ladder_d314                             	| [$d2c7: beq $d314]
+	GET_ADDRESS	enemy_index_times_4_0009                       	| [$d2c9: ldy $09]
 	move.b	(a0),d2                         	| [...]
+	* update Y coordinate of relevant character sprite
 	GET_ADDRESS	0x1801                     	| [$d2cb: sta $1801, y]
     move.b	d0,(a0,d2.w)                 	| [...]
 	GET_ADDRESS	control_bits_and_frame_array_00a9                       	| [$d2ce: lda $a9, x]
@@ -3315,7 +3322,7 @@ l_d2ac:
     move.b	d0,(a0,d1.w)                 	| [...]
 	GET_ADDRESS	0x08                       	| [$d2e9: stx $08]
 	move.b	d1,(a0)                         	| [...]
-	GET_ADDRESS	0x09                       	| [$d2eb: ldy $09]
+	GET_ADDRESS	enemy_index_times_4_0009                       	| [$d2eb: ldy $09]
 	move.b	(a0),d2                         	| [...]
 	lsr.b	#4,d0                            	| [$d2ed: lsr a]
 	                            	| [$d2ee: lsr a]
@@ -3328,8 +3335,8 @@ l_d2ac:
 	GET_ADDRESS	0x1802                     	| [$d2f6: adc $1802, y]
 	move.b	(a0,d2.w),d4	| [...]
 	add.b	d4,d0                    	| [...]
-	GET_ADDRESS	0x1802                     	| [$d2f9: sta $1802, y]
-    move.b	d0,(a0,d2.w)                 	| [...]
+										| [$d2f9: sta $1802, y]
+    	move.b	d0,(a0,d2.w)                 	| [...]
 	                           	| [$d2fc: clc]
 	GET_ADDRESS	0xd3b8                     	| [$d2fd: lda $d3b8, x]
 	move.b	(a0,d1.w),d0                    	| [...]
@@ -3338,22 +3345,23 @@ l_d2ac:
 	add.b	d4,d0                    	| [...]
 	cmp.b	#0x1d,d0                         	| [$d303: cmp #$1d]
 	* bcs=>bcc
-	bcc	l_d309                             	| [$d305: bcs $d309]
+	jcc	l_d309                             	| [$d305: bcs $d309]
 	move.b	#0x1d,d0                        	| [$d307: lda #$1d]
 l_d309:
-	GET_ADDRESS	0x1803                     	| [$d309: sta $1803, y] dummy_write_decrypt_trigger
-    move.b	d0,(a0,d2.w)                 	| [...]
+	                     	| [$d309: sta $1803, y] dummy_write_decrypt_trigger
+    	move.b	d0,(a0,d2.w)                 	| [...]
 	GET_ADDRESS	0x08                       	| [$d30c: ldx $08] prev_crypted ca
 	move.b	(a0),d1                         	| [...]
 	jra	l_d34a                             	| [$d30e: jmp $d34a]
                                     	| [$d311: nop]
                                     	| [$d313: nop]
-l_d314:
-	GET_ADDRESS	0x09                       	| [$d314: ldy $09]
+enemy_moving_on_ladder_d314:
+	GET_ADDRESS	enemy_index_times_4_0009                       	| [$d314: ldy $09]
 	move.b	(a0),d2                         	| [...]
 	GET_ADDRESS	control_bits_and_frame_array_00a9                       	| [$d316: lda $a9, x]
 	move.b	(a0,d1.w),d0                    	| [...]
-	bmi	l_d327                             	| [$d318: bmi $d327]
+	jmi	enemy_climbs_up_d327                  | [$d318: bmi $d327]
+	* enemy climbs down
 	GET_ADDRESS	0x1803                     	| [$d31a: lda $1803, y]
 	move.b	(a0,d2.w),d0                    	| [...]
 	GET_ADDRESS	0x0b                       	| [$d31d: sta $0b] dummy_write_decrypt_trigger
@@ -3363,12 +3371,12 @@ l_d314:
 	jra	l_d331                             	| [$d321: jmp $d331]
                                     	| [$d324: nop] dummy_write_decrypt_trigger
                                     	| [$d326: nop] prev_crypted 6e
-l_d327:
+enemy_climbs_up_d327:
 	GET_ADDRESS	0x1803                     	| [$d327: lda $1803, y]
 	move.b	(a0,d2.w),d0                    	| [...]
 	GET_ADDRESS	0x0b                       	| [$d32a: sta $0b] dummy_write_decrypt_trigger
 	move.b	d0,(a0)                         	| [...]
-	GET_ADDRESS	0x0b                       	| [$d32c: dec $0b] prev_crypted e2  ; dummy_write_decrypt_trigger
+										| [$d32c: dec $0b] prev_crypted e2  ; dummy_write_decrypt_trigger
 	subq.b	#1,(a0)                         	| [...]
                                     	| [$d32e: nop] prev_crypted c1
                                     	| [$d330: nop]
