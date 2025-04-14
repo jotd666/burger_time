@@ -216,6 +216,9 @@ current_player_001f = 0x001f
 two_player_game_0021 = 0x0021
 player_lives_0029 = 0x0029
 player_pepper_002b = 0x002b
+bonus_life_thousands_005a = 0x005a
+bonus_life_tenth_thousands_005b = 0x005B
+bonus_picked_up_0060 = 0x0060
 current_level_0063 = 0x0063
 * 0xff: inactive, else holds character base animation code
 * 0x00: cook
@@ -226,17 +229,18 @@ active_character_array_0068 = 0x0068
 pepper_status_006e = 0x006e   | 0xff: inactive
 game_speed_00a8 = 0x00a8
 control_bits_and_frame_array_00a9 = 0x00a9
+player_current_direction_00bb = 0x00BB
+bonus_display_countdown_00c4 = 0x00C4
+player_died_00c6 = 0x00C6   | 0xFF: ends update loop and start a new life
+coin_inserted_flag_00f9 = 0x00f9
 pepper_y_181a = 0x181a
 pepper_x_181b = 0x181b
 player_attributes_181c = 0x181c
 player_code_181d = 0x181d
 player_y_181e = 0x181E
 player_x_181f = 0x181F
-bonus_life_thousands_005a = 0x005a
-bonus_life_tenth_thousands_005b = 0x005B
-player_current_direction_00bb = 0x00BB
-coin_inserted_flag_00f9 = 0x00f9
-player_died_00c6 = 0x00C6   | 0xFF: ends update loop and start a new life
+
+
 direction_left = 2
 direction_right = 4
 direction_up = 6
@@ -580,7 +584,7 @@ l_c0ce:
 	jbsr	l_dd65                            	| [$c0ce: jsr $dd65]
 	jbsr	l_ea8d                            	| [$c0d1: jsr $ea8d]
 	jbsr	l_e6df                            	| [$c0d4: jsr $e6df]
-	jbsr	l_e141                            	| [$c0d7: jsr $e141]
+	jbsr	handle_bonus_pickup_e141                            	| [$c0d7: jsr $e141]
 	jbsr	l_e190                            	| [$c0da: jsr $e190]
 	jbsr	l_e835                            	| [$c0dd: jsr $e835]
 	jbsr	l_e760                            	| [$c0e0: jsr $e760]
@@ -1483,7 +1487,7 @@ l_c7aa:
 	bcs	l_c7b9                             	| [$c7ac: bcc $c7b9]
 	move.b	d2,d0                           	| [$c7ae: tya]
 	                           	| [$c7af: sec]
-	subq	#0x06,d0                           	| [$c7b0: sbc #$06]
+	subq.b	#0x06,d0                           	| [$c7b0: sbc #$06]
 	move.b	d0,d2                           	| [$c7b2: tay]
 	jra	l_c7aa                             	| [$c7b3: jmp $c7aa]
                                     	| [$c7b6: nop]
@@ -1565,7 +1569,7 @@ l_c80e:
 	clr.b	d0                               	| [$c819: lda #$00]
 	GET_ADDRESS	0xc5                       	| [$c81b: sta $c5]
 	move.b	d0,(a0)                         	| [...]
-	GET_ADDRESS	0xc4                       	| [$c81d: sta $c4]
+	GET_ADDRESS	bonus_display_countdown_00c4                       	| [$c81d: sta $c4]
 	move.b	d0,(a0)                         	| [...]
 	jbsr	l_da89                            	| [$c81f: jsr $da89]
 	jbsr	l_c8c6                            	| [$c822: jsr $c8c6]
@@ -2239,12 +2243,13 @@ l_cb94:
 *	bne	l_cbd4                             	| [$cbbf: bne $cbd4]
                                     	| [$cbc1: nop]
                                     	| [$cbc3: nop]
-l_cbc4:
+*l_cbc4:
+	BREAKPOINT	"fuckkk"
 	GET_ADDRESS	0xf3                       	| [$cbc4: ldx $f3]
 	move.b	(a0),d1                         	| [...]
 	GET_ADDRESS	0xcbd9                     	| [$cbc6: lda $cbd9, x]
 	move.b	(a0,d1.w),d0                    	| [...]
-l_cbc9:
+*l_cbc9:
 	or.b	#0x10,d0                          	| [$cbc9: ora #$10]
 	jbsr	write_to_4004               | [$cbcb: sta $4004] dummy_write_decrypt_trigger
 	movem.w	(sp)+,d0                       	| [$cbce: pla] prev_crypted 2c
@@ -2252,10 +2257,10 @@ l_cbc9:
 	rts                                    	| [$cbd0: rts]
                                     	| [$cbd1: nop]
                                     	| [$cbd3: nop]
-l_cbd4:
-	GET_ADDRESS	0xf3                       	| [$cbd4: lda $f3]
-	move.b	(a0),d0                         	| [...]
-	jra	l_cbc9                             	| [$cbd6: jmp $cbc9]
+*l_cbd4:
+*	GET_ADDRESS	0xf3                       	| [$cbd4: lda $f3]
+*	move.b	(a0),d0                         	| [...]
+*	jra	l_cbc9                             	| [$cbd6: jmp $cbc9]
 
 l_cbe3:
                                     	| [$cbe3: nop]
@@ -4010,6 +4015,9 @@ l_d7c5:
 	move.b	d0,(a0)                         	| [...]
 	GET_ADDRESS	current_player_001f        	| [$d7e1: ldx current_player_001f]
 	move.b	(a0),d1                         	| [...]
+
+	tst.b	infinite_pepper_flag
+	jne		10f
 	GET_ADDRESS	player_pepper_002b         	| [$d7e3: lda player_pepper_002b, x]
 	move.b	(a0,d1.w),d0                    	| [...]
 	SET_XC_FLAGS                           	| [$d7e5: sec]
@@ -4017,7 +4025,7 @@ l_d7c5:
 	SBCD_IMM	0x01                           	| [$d7e7: sbc #$01]
 	GET_ADDRESS	player_pepper_002b         	| [$d7e9: sta player_pepper_002b, x]
     move.b	d0,(a0,d1.w)                 	| [...]
-                                    	| [$d7eb: cld]
+10:                                    	| [$d7eb: cld]
 	GET_ADDRESS	game_really_playing_001b                       	| [$d7ec: lda $1b]
 	move.b	(a0),d0                         	| [...]
 	beq	l_d7f6                             	| [$d7ee: beq $d7f6]
@@ -5553,7 +5561,8 @@ l_e0e3:
 l_e0f8:
 	rts                                    	| [$e0f8: rts]
                                     	| [$e0f9: nop]
-l_e0fb:
+* init bonus display (ice-cream, coffee...)
+display_bonus_e0fb:
                                     	| [$e0fb: nop]
 	GET_ADDRESS	0x11                       	| [$e0fc: stx $11]
 	move.b	d1,(a0)                         	| [...]
@@ -5563,7 +5572,7 @@ l_e0fb:
 	move.b	(a0),d2                         	| [...]
 	GET_ADDRESS	0xe188                     	| [$e102: lda $e188, y]
 	move.b	(a0,d2.w),d0                    	| [...]
-	GET_ADDRESS	0xc4                       	| [$e105: sta $c4] dummy_write_decrypt_trigger
+	GET_ADDRESS	bonus_display_countdown_00c4                       	| [$e105: sta $c4]
 	move.b	d0,(a0)                         	| [...]
 	GET_ADDRESS	current_level_0063                       	| [$e107: ldy $63] prev_crypted c8
 	move.b	(a0),d2                         	| [...]
@@ -5582,17 +5591,17 @@ l_e0fb:
 	move.b	(a0,d2.w),d0                    	| [...]
 	move.b	d0,d1                           	| [$e119: tax]
 	clr.b	d2                               	| [$e11a: ldy #$00]
-	GET_SCREEN_ADDRESS_Y	0x03                     	| [$e11c: sta ($03), y] dummy_write_decrypt_trigger
+	GET_SCREEN_ADDRESS_Y	0x03                | [$e11c: sta ($03), y] dummy_write_decrypt_trigger
 	jbsr	osd_w_videoram                    	| [...]
 	addq.b	#1,d1                           	| [$e11e: inx] prev_crypted 6c
 	move.b	d1,d0                           	| [$e11f: txa]
 	addq.b	#1,d2                           	| [$e120: iny]
-	GET_SCREEN_ADDRESS_Y	0x03                     	| [$e121: sta ($03), y]
+	GET_SCREEN_ADDRESS_Y	0x03                | [$e121: sta ($03), y]
 	jbsr	osd_w_videoram                    	| [...]
 	move.b	#0x20,d2                        	| [$e123: ldy #$20]
 	addq.b	#1,d1                           	| [$e125: inx]
 	move.b	d1,d0                           	| [$e126: txa]
-	GET_SCREEN_ADDRESS_Y	0x03                     	| [$e127: sta ($03), y]
+	GET_SCREEN_ADDRESS_Y	0x03                | [$e127: sta ($03), y]
 	jbsr	osd_w_videoram                    	| [...]
 	addq.b	#1,d1                           	| [$e129: inx]
 	move.b	d1,d0                           	| [$e12a: txa]
@@ -5600,7 +5609,7 @@ l_e0fb:
 	GET_SCREEN_ADDRESS_Y	0x03                     	| [$e12c: sta ($03), y] dummy_write_decrypt_trigger
 	jbsr	osd_w_videoram                    	| [...]
 	clr.b	d0                               	| [$e12e: lda #$00] prev_crypted 4d
-	GET_ADDRESS	0x60                       	| [$e130: sta $60]
+	GET_ADDRESS	bonus_picked_up_0060            | [$e130: sta $60]
 	move.b	d0,(a0)                         	| [...]
 	GET_ADDRESS	0x12                       	| [$e132: ldy $12]
 	move.b	(a0),d2                         	| [...]
@@ -5612,19 +5621,20 @@ l_e0fb:
                                     	| [$e13d: nop] prev_crypted 6e
 	rts                                    	| [$e13e: rts]
                                     	| [$e13f: nop]
-l_e141:
+handle_bonus_pickup_e141:
                                     	| [$e141: nop]
-	GET_ADDRESS	0xc4                       	| [$e142: lda $c4]
+	GET_ADDRESS	bonus_display_countdown_00c4                       	| [$e142: lda $c4]
 	move.b	(a0),d0                         	| [...]
 	beq	l_e175                             	| [$e144: beq $e175]
-	jbsr	l_e8f2                            	| [$e146: jsr $e8f2]
+	jbsr	check_player_picking_bonus_e8f2                            	| [$e146: jsr $e8f2]
 	GET_ADDRESS	timer1_0013                	| [$e149: lda timer1_0013]
 	move.b	(a0),d0                         	| [...]
 	and.b	#0x3f,d0                         	| [$e14b: and #$3f]
 	bne	l_e175                             	| [$e14d: bne $e175]
-	GET_ADDRESS	0xc4                       	| [$e14f: dec $c4]
+	GET_ADDRESS	bonus_display_countdown_00c4                       	| [$e14f: dec $c4]
 	subq.b	#1,(a0)                         	| [...]
 	bne	l_e175                             	| [$e151: bne $e175]
+	* display bonus location depends on the level
 	GET_ADDRESS	current_level_0063                       	| [$e153: lda $63]
 	move.b	(a0),d0                         	| [...]
 	asl.b	#1,d0                            	| [$e155: asl a]
@@ -5639,18 +5649,19 @@ l_e141:
 	move.b	d0,(a0)                         	| [...]
 	clr.b	d0                               	| [$e161: lda #$00]
 	move.b	d0,d2                           	| [$e163: tay]
+	* clear bonuses like ice-cream, coffee...
 	GET_SCREEN_ADDRESS_Y	0x03                     	| [$e164: sta ($03), y] dummy_write_decrypt_trigger
-	move.b	d0,(a0)                    	| [...]
+	jbsr	osd_w_videoram                    	| [...]
 	addq.b	#1,d2                           	| [$e166: iny] prev_crypted 64
 	GET_SCREEN_ADDRESS_Y	0x03                     	| [$e167: sta ($03), y]
-	move.b	d0,(a0)                    	| [...]
+	jbsr	osd_w_videoram                    	| [...]
 	move.b	#0x20,d2                        	| [$e169: ldy #$20]
 	GET_SCREEN_ADDRESS_Y	0x03                     	| [$e16b: sta ($03), y] dummy_write_decrypt_trigger
-	move.b	d0,(a0)                    	| [...]
+	jbsr	osd_w_videoram                    	| [...]
 	addq.b	#1,d2                           	| [$e16d: iny] prev_crypted 64
 	GET_SCREEN_ADDRESS_Y	0x03                     	| [$e16e: sta ($03), y]
-	move.b	d0,(a0)                    	| [...]
-	GET_ADDRESS	0x60                       	| [$e170: sta $60]
+	jbsr	osd_w_videoram                    	| [...]
+	GET_ADDRESS	bonus_picked_up_0060                       	| [$e170: sta $60]
 	move.b	d0,(a0)                         	| [...]
                                     	| [$e172: nop] dummy_write_decrypt_trigger
                                     	| [$e174: nop] prev_crypted 6e
@@ -6707,10 +6718,14 @@ l_e787:
 	* bcc=>bcs
 	bcs	l_e77b                             	| [$e7a7: bcc $e77b]
 	sub.b	#0x0d,d0                           	| [$e7a9: sbc #$0d] C originally set
+	
+	tst.b	invincible_flag
+	jne	l_e77b                             	| [$e7ad: bcs $e77b]
+
 	GET_ADDRESS	0x04                       	| [$e7ab: cmp $04]
 	cmp.b	(a0),d0                          	| [...]
 	* bcs=>bcc
-	bcc	l_e77b                             	| [$e7ad: bcs $e77b]
+	jcc	l_e77b                             	| [$e7ad: bcs $e77b]
 	move.b	#0x10,d0                        	| [$e7af: lda #$10]
 	jbsr	l_ea5d                            	| [$e7b1: jsr $ea5d]
 	GET_ADDRESS	0x6f                       	| [$e7b4: lda $6f]
@@ -6740,28 +6755,28 @@ l_e7c8:
 	GET_ADDRESS	0xe815                     	| [$e7d3: cmp $e815, y]
 	cmp.b	(a0,d2.w),d0                     	| [...]
 	bne	l_e7db                             	| [$e7d6: bne $e7db]
-	jbsr	l_e0fb                            	| [$e7d8: jsr $e0fb]
+	jbsr	display_bonus_e0fb                            	| [$e7d8: jsr $e0fb]
 l_e7db:
 	GET_ADDRESS	0x05                       	| [$e7db: lda $05]
 	move.b	(a0),d0                         	| [...]
 	GET_ADDRESS	0xe81b                     	| [$e7dd: cmp $e81b, y]
 	cmp.b	(a0,d2.w),d0                     	| [...]
 	bne	l_e7e5                             	| [$e7e0: bne $e7e5]
-	jbsr	l_e0fb                            	| [$e7e2: jsr $e0fb]
+	jbsr	display_bonus_e0fb                            	| [$e7e2: jsr $e0fb]
 l_e7e5:
 	GET_ADDRESS	0x05                       	| [$e7e5: lda $05]
 	move.b	(a0),d0                         	| [...]
 	GET_ADDRESS	0xe821                     	| [$e7e7: cmp $e821, y]
 	cmp.b	(a0,d2.w),d0                     	| [...]
 	bne	l_e7ef                             	| [$e7ea: bne $e7ef]
-	jbsr	l_e0fb                            	| [$e7ec: jsr $e0fb]
+	jbsr	display_bonus_e0fb                            	| [$e7ec: jsr $e0fb]
 l_e7ef:
 	GET_ADDRESS	0x05                       	| [$e7ef: lda $05]
 	move.b	(a0),d0                         	| [...]
 	GET_ADDRESS	0xe827                     	| [$e7f1: cmp $e827, y]
 	cmp.b	(a0,d2.w),d0                     	| [...]
 	bne	l_e7f9                             	| [$e7f4: bne $e7f9]
-	jbsr	l_e0fb                            	| [$e7f6: jsr $e0fb]
+	jbsr	display_bonus_e0fb                            	| [$e7f6: jsr $e0fb]
 l_e7f9:
 	GET_ADDRESS	0x05                       	| [$e7f9: lda $05]
 	move.b	(a0),d0                         	| [...]
@@ -6868,9 +6883,12 @@ l_e892:
 	move.b	d1,d0                           	| [$e89a: txa]
 	bne	l_e8ab                             	| [$e89b: bne $e8ab]
 	GET_ADDRESS	current_player_001f        	| [$e89d: ldx current_player_001f]
+	tst.b	infinite_lives_flag
+	jne		10f
 	move.b	(a0),d1                         	| [...]
 	GET_ADDRESS	player_lives_0029          	| [$e89f: dec player_lives_0029, x]
     subq.b	#1,(a0,d1.w)                 	| [...]
+10:
 	st.b	d0                                	| [$e8a1: lda #$ff]
 	GET_ADDRESS	player_died_00c6                       	| [$e8a3: sta $c6]
 	move.b	d0,(a0)                         	| [...]
@@ -6887,11 +6905,14 @@ l_e8ab:
 l_e8b7:
 	rts                                    	| [$e8b7: rts]
 
-l_e8f2:
+check_player_picking_bonus_e8f2:
                                     	| [$e8f2: nop]
-	GET_ADDRESS	0x60                       	| [$e8f3: lda $60]
+	GET_ADDRESS	bonus_picked_up_0060                       	| [$e8f3: lda $60]
 	move.b	(a0),d0                         	| [...]
-	bne	l_e971                             	| [$e8f5: bne $e971]
+	jne	l_e971                             	| [$e8f5: bne $e971]
+
+	TMPWRITE
+
 	GET_ADDRESS	current_level_0063                       	| [$e8f7: ldx $63]
 	move.b	(a0),d1                         	| [...]
 	GET_ADDRESS	0xe972                     	| [$e8f9: lda $e972, x]
@@ -6909,12 +6930,12 @@ l_e8f2:
 	GET_ADDRESS	0x03                       	| [$e909: cmp $03]
 	cmp.b	(a0),d0                          	| [...]
 	* bcc=>bcs
-	bcs	l_e971                             	| [$e90b: bcc $e971]
+	jcs	l_e971                             	| [$e90b: bcc $e971]
 	sub.b	#0x10,d0                           	| [$e90d: sbc #$10] C originally set
 	GET_ADDRESS	0x03                       	| [$e90f: cmp $03]
 	cmp.b	(a0),d0                          	| [...]
 	* bcs=>bcc
-	bcc	l_e971                             	| [$e911: bcs $e971]
+	jcc	l_e971                             	| [$e911: bcs $e971]
 	GET_ADDRESS	player_x_181f                     	| [$e913: lda $181f]
 	move.b	(a0),d0                         	| [...]
 	                           	| [$e916: clc]
@@ -6922,12 +6943,12 @@ l_e8f2:
 	GET_ADDRESS	0x04                       	| [$e919: cmp $04]
 	cmp.b	(a0),d0                          	| [...]
 	* bcc=>bcs
-	bcs	l_e971                             	| [$e91b: bcc $e971]
+	jcs	l_e971                             	| [$e91b: bcc $e971]
 	sub.b	#0x10,d0                        | [$e91d: sbc #$10] C originally set                        	 
 	GET_ADDRESS	0x04                       	| [$e91f: cmp $04]
 	cmp.b	(a0),d0                          	| [...]
 	* bcs=>bcc
-	bcc	l_e971                             	| [$e921: bcs $e971]
+	jcc	l_e971                             	| [$e921: bcs $e971]
 	move.b	d1,d0                           	| [$e923: txa]
 	asl.b	#1,d0                            	| [$e924: asl a]
 	move.b	d0,d2                           	| [$e925: tay]
@@ -6946,26 +6967,28 @@ l_e8f2:
 	GET_ADDRESS	0x05                       	| [$e936: sta $05]
 	move.b	d0,(a0)                         	| [...]
 	clr.b	d2                               	| [$e938: ldy #$00]
+	* erase bonus & award score
 	GET_SCREEN_ADDRESS_Y	0x03                     	| [$e93a: sta ($03), y] dummy_write_decrypt_trigger
-	move.b	d0,(a0)                    	| [...]
+	jbsr	osd_w_videoram                    	| [...]
 	addq.b	#1,d2                           	| [$e93c: iny] prev_crypted 64
 	GET_ADDRESS	0x05                       	| [$e93d: inc $05] dummy_write_decrypt_trigger
 	addq.b	#1,(a0)                         	| [...]
 	                       	| [$e93f: lda $05] prev_crypted c9
 	move.b	(a0),d0                         	| [...]
 	GET_SCREEN_ADDRESS_Y	0x03                     	| [$e941: sta ($03), y]
-	move.b	d0,(a0)                    	| [...]
+	jbsr	osd_w_videoram                    	| [...]
 	clr.b	d0                               	| [$e943: lda #$00]
 	move.b	#0x20,d2                        	| [$e945: ldy #$20]
 	GET_SCREEN_ADDRESS_Y	0x03                     	| [$e947: sta ($03), y]
-	move.b	d0,(a0)                    	| [...]
+	jbsr	osd_w_videoram                    	| [...]
 	addq.b	#1,d2                           	| [$e949: iny]
 	GET_SCREEN_ADDRESS_Y	0x03                     	| [$e94a: sta ($03), y] dummy_write_decrypt_trigger
-	move.b	d0,(a0)                    	| [...]
+	jbsr	osd_w_videoram                    	| [...]
+	* display bonus pickup score
 	move.b	#0x02,d0                        	| [$e94c: lda #$02] prev_crypted 4d
-	GET_ADDRESS	0xc4                       	| [$e94e: sta $c4]
+	GET_ADDRESS	bonus_display_countdown_00c4                       	| [$e94e: sta $c4]
 	move.b	d0,(a0)                         	| [...]
-	GET_ADDRESS	0x60                       	| [$e950: inc $60]
+	GET_ADDRESS	bonus_picked_up_0060                       	| [$e950: inc $60]
 	addq.b	#1,(a0)                         	| [...]
 	GET_ADDRESS	0xe981                     	| [$e952: ldy $e981, x]
 	move.b	(a0,d1.w),d2                    	| [...]

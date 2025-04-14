@@ -1,7 +1,13 @@
-- cannot pick ice cream
+- add "cheat" lose all lives/killed
+- add cheat add to score
+- add cheat faster game??
 - no sound
-- game is way too slow 8s vs 5s for first screen: time again
-- add cheats level skip invincibility infinite lives
-- let demo roll: lockup at some screen, first background grid is wrong
+- game is way too slow 8s vs 5s for first screen
+  plus cycle exact makes game super slow... try to make it as fast as possible?
+- let demo roll: lockup at some screen
+- let demo roll: first background grid is wrong: 63 written with 0 on original @C7B9
+  seems 3 is written instead??? compare registers
+
+
 - converter: GET_ADDRESS_Y => GET_INDIRECT_ADDRESS + optimize on load address < 0x8000 to report
 - converter: do not optimize st.b d0 leave lda #0xFF,d0 (Z flag!)

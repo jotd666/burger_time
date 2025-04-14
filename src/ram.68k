@@ -7,6 +7,7 @@
 	.global		no_sync_flag
 	.global		vb_ticks_count
 	.global		break_at_startup_flag
+	.global		infinite_pepper_flag
 	.global		infinite_lives_flag
 	.global		invincible_flag
 	.global		music_off_flag
@@ -44,6 +45,8 @@ invincible_flag:
 break_at_startup_flag:
 	.skip	1
 infinite_lives_flag:
+	.skip	1
+infinite_pepper_flag:
 	.skip	1
 music_off_flag:
 	.skip	1

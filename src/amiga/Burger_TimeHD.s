@@ -5,7 +5,7 @@
 
 ;CHIP_ONLY
 
-EXPMEM = $100000
+EXPMEM = $80000
 CHIPSIZE = $80000
 
 _base	SLAVE_HEADER					; ws_security + ws_id
@@ -41,14 +41,14 @@ _expmem
 _config
 	dc.b	"C1:X:invincible:0;"
 	dc.b	"C1:X:infinite lives:1;"
+	dc.b	"C1:X:infinite pepper:2;"
 	dc.b	"C1:X:cheat keys:4;"
-	dc.b	"C3:X:skip introduction:0;"
 	dc.b	"C3:X:25 Hz update:1;"
 	IFD		CHIP_ONLY
 	dc.b	"C3:X:break at startup:31;"
 	ENDC
-	dc.b	"C4:L:start lives:3,4,5;"
-	dc.b	"C5:L:difficulty level:1,2,3,4,5,6,7,8;"
+*	dc.b	"C4:L:start lives:3,4,5;"
+*	dc.b	"C5:L:difficulty level:1,2,3,4,5,6,7,8;"
 	dc.b	0
 
 	IFD BARFLY
@@ -68,7 +68,7 @@ DECL_VERSION:MACRO
 	ENDM
 _data   dc.b    0
 _name	dc.b	'Burger Time',0
-_copy	dc.b	'202x JOTD',0
+_copy	dc.b	'2025 JOTD',0
 _info
     ;dc.b    "Music by no9",0
 	dc.b	0
