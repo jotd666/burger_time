@@ -723,8 +723,6 @@ _vblank:
 	btst	#5,d0
 	beq.b		1f
 
-	clr.b	bof_sync_flag
-	
 	move.l	_joypad_state(pc),d1
 	moveq	#1,d0
 	jsr	_read_joystick
@@ -760,8 +758,8 @@ _vblank:
 
 	* we're going to ack copper & software/level 5 interrupt now
 	* do it twice (040/pistorm bug)
-	move.w	#0x814,(intreq,a5)
-	move.w	#0x814,(intreq,a5)
+	move.w	#0x14,(intreq,a5)
+	move.w	#0x14,(intreq,a5)
 
 	tst.b	pause_flag
 	jne	23f
@@ -778,7 +776,7 @@ _vblank:
 	* to simulate ~60 Hz on 50 Hz display
 	move.b	mid_screen_interrupt_count,d0
 	addq.b	#1,d0
-	cmp.b	#2,d0
+	cmp.b	#5,d0
 	bne.b	1f
 	* TODO: clear the sync flag a few lines later
 	* to simulate an extra vblank
@@ -786,14 +784,9 @@ _vblank:
 	clr.b	d0
 1:
 	move.b	d0,mid_screen_interrupt_count
-	jra		3f
+
 2:
-	btst	#11,d0
-	beq.b	20f
-	* after mid-screen interrupt, just clear bof sync flag and exit
-	clr.b	bof_sync_flag
-	jra		3f
-20:
+
 	subq.w	#1,delay_timer
 		
 	st.b	bof_sync_flag
@@ -1930,10 +1923,10 @@ update_bg_tile:
 	jne		12f
 	lsr.w	#2,d2
 	BREAKPOINT	"background tile (in D2) not registered"	
+	.endif
 
 	jra		11f
 12:
-	.endif
 	move.l	d0,a2		| directly pointer on tile bitplanes
 
 	* just copy
@@ -1994,15 +1987,17 @@ update_fg_tile:
 	add.w	d2,d2
 	add.w	d2,d2	
 	move.l	(a0,d2.w),d0		| tile pointer
-	.ifndef	RELEASE
-	jne		12f
-	add.w	#0x1400,d7
-	lsr.w	#2,d2
-	BREAKPOINT	"game tile (in D2) not registered"	
-
-	jra		11f
+	
+	jeq		11f 	| can happen when tile code is read when screen is being erased	
+*	.ifndef	RELEASE
+*	jne		12f
+*	add.w	#0x1400,d7
+*	lsr.w	#2,d2
+*	BREAKPOINT	"game tile (in D2) not registered"	
+*	.endif
+*
+*	jra		11f
 12:
-	.endif
 	move.l	d0,a2		| directly pointer on tile bitplanes
 
 *	rol.b	#2,d1			        | modifiers on first bits
@@ -2774,9 +2769,6 @@ game_colors:
 intreq_block_game:
 	.word	 intreq,0x8014  | call copper interrupt in the middle of a frame, also flag so copper interrupt knows that we're going to call copper int
 
-	* mid-line wait & extra interrupt, turn off flag
-	.word	0x9001,0xFFFE
-	.word	 intreq,0x8810  | call copper interrupt in the middle of a frame, also flag so copper interrupt knows that we're going to call copper int
 
 
 	* pal limit

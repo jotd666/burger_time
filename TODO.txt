@@ -2,8 +2,7 @@
 - add cheat add to score
 - add cheat faster game??
 - no sound
-- game is way too slow 8s vs 5s for first screen
-  plus cycle exact makes game super slow... try to make it as fast as possible?
+- game too slow. If sync is relaxed then speed depends on CPU speed!
 - let demo roll: lockup at some screen
 - let demo roll: first background grid is wrong: 63 written with 0 on original @C7B9
   seems 3 is written instead??? compare registers

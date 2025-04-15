@@ -525,15 +525,10 @@ game_restart_c075:
                                     	| [$c078: nop]
 * game mainloop main loop main_loop   	| [$c07a: nop]
 wait_for_sync_c07b:                     	
-	addq.b	#1,sync_counter
-	cmp.b	#3,sync_counter
-	jne		1f
 0:
 	tst.b	bof_sync_flag     						| [$c07b: lda $4003]
 	jpl	0b                             	| [$c07e: bpl $c07b]
-	clr.b	sync_counter
-	
-1:
+	clr.b	bof_sync_flag	| ack
 	CLR_I_FLAG                             	| [$c080: cli]
     * time for insert coin?                    	| [$c081: nop]
                                     	| [$c082: nop]
@@ -1948,7 +1943,8 @@ wait_for_sync_ca2d:
                                     	| [$ca48: nop]
 l_ca49:
 	tst.b	bof_sync_flag                     	| [$ca49: lda $4003]
-	bmi	l_ca49                             	| [$ca4c: bmi $ca49]
+	bpl	l_ca49                             	| [$ca4c: bmi $ca49]
+	clr.b	bof_sync_flag
 	subq.b	#1,d1                           	| [$ca4e: dex]
 	bne	wait_for_sync_ca2d                             	| [$ca4f: bne $ca2d]
 	rts                                    	| [$ca51: rts]
