@@ -450,6 +450,8 @@ burger_time_reset:
                           	| [$c009: jmp $b003]
                                     	| [$c00c: nop]
                                     	| [$c00e: nop]
+sync_counter:
+	.word	0
 l_c00f:
 	.ifndef	RELEASE
 	tst.b	break_at_startup_flag
@@ -522,10 +524,16 @@ game_restart_c075:
 	jbsr	l_c767                            	| [$c075: jsr $c767]
                                     	| [$c078: nop]
 * game mainloop main loop main_loop   	| [$c07a: nop]
-wait_for_sync_c07b:
-	                     	
+wait_for_sync_c07b:                     	
+	addq.b	#1,sync_counter
+	cmp.b	#3,sync_counter
+	jne		1f
+0:
 	tst.b	bof_sync_flag     						| [$c07b: lda $4003]
-	bpl	wait_for_sync_c07b                             	| [$c07e: bpl $c07b]
+	jpl	0b                             	| [$c07e: bpl $c07b]
+	clr.b	sync_counter
+	
+1:
 	CLR_I_FLAG                             	| [$c080: cli]
     * time for insert coin?                    	| [$c081: nop]
                                     	| [$c082: nop]
@@ -565,9 +573,13 @@ l_c09e:
 	move.b	d0,(a0)                         	| [...]
                                     	| [$c0aa: nop]
                                     	| [$c0ac: nop]
+	*tst.b	sync_counter
+	*jne		0f
 wait_for_no_sync_c0ad:
-	tst.b	bof_sync_flag                     	| [$c0ad: lda $4003]
-	jmi	wait_for_no_sync_c0ad                   | [$c0b0: bmi $c0ad]
+	* is that useful to wait??
+	*tst.b	bof_sync_flag                     	| [$c0ad: lda $4003]
+	*jmi	wait_for_no_sync_c0ad                   | [$c0b0: bmi $c0ad]
+0:
 	jbsr	unknown_c8e6                            	| [$c0b2: jsr $c8e6]
 	jbsr	handle_pepper_launch_d17b                            	| [$c0b5: jsr $d17b]
 	jbsr	handle_pepper_update_d796                            	| [$c0b8: jsr $d796]
@@ -2244,7 +2256,6 @@ l_cb94:
                                     	| [$cbc1: nop]
                                     	| [$cbc3: nop]
 *l_cbc4:
-	BREAKPOINT	"fuckkk"
 	GET_ADDRESS	0xf3                       	| [$cbc4: ldx $f3]
 	move.b	(a0),d1                         	| [...]
 	GET_ADDRESS	0xcbd9                     	| [$cbc6: lda $cbd9, x]
