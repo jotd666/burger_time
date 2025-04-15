@@ -1,8 +1,5 @@
-- add "cheat" lose all lives/killed
-- add cheat add to score
-- add cheat faster game??
+- highscore screen issues with videoram write
 - no sound
-- game too slow. If sync is relaxed then speed depends on CPU speed!
 - let demo roll: lockup at some screen
 - let demo roll: first background grid is wrong: 63 written with 0 on original @C7B9
   seems 3 is written instead??? compare registers

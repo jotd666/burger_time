@@ -216,6 +216,7 @@ current_player_001f = 0x001f
 two_player_game_0021 = 0x0021
 player_lives_0029 = 0x0029
 player_pepper_002b = 0x002b
+player_score_002d = 0x002d
 bonus_life_thousands_005a = 0x005a
 bonus_life_tenth_thousands_005b = 0x005B
 bonus_picked_up_0060 = 0x0060
@@ -621,7 +622,7 @@ l_c10b:
 l_c119:
 	GET_ADDRESS	player_died_00c6                       	| [$c119: lda $c6]
 	move.b	(a0),d0                         	| [...]
-	bne	end_game_mainloop_c12a                             	| [$c11b: bne $c12a]
+	jne	end_game_mainloop_c12a                             	| [$c11b: bne $c12a]
 	GET_ADDRESS	0xc5                       	| [$c11d: lda $c5]
 	move.b	(a0),d0                         	| [...]
 	beq	l_c124                             	| [$c11f: beq $c124]
@@ -6112,7 +6113,7 @@ l_e436:
 	                     	| [$e440: sta $0202, y]
     move.b	d0,(a0,d2.w)                 	| [...]
 	clr.b	d0                               	| [$e443: lda #$00]
-	jbsr	l_e98c                            	| [$e445: jsr $e98c]
+	jbsr	add_to_score_e98c                            	| [$e445: jsr $e98c]
 	jbsr	l_e5fa                            	| [$e448: jsr $e5fa]
 	jbsr	l_e7c8                            	| [$e44b: jsr $e7c8]
                                     	| [$e44e: nop]
@@ -6143,7 +6144,7 @@ l_e46e:
 	                     	| [$e473: sta $0202, y]
     move.b	d0,(a0,d2.w)                 	| [...]
 	clr.b	d0                               	| [$e476: lda #$00]
-	jbsr	l_e98c                            	| [$e478: jsr $e98c]
+	jbsr	add_to_score_e98c                            	| [$e478: jsr $e98c]
 	jbsr	l_e5fa                            	| [$e47b: jsr $e5fa]
 	jra	l_e203                             	| [$e47e: jmp $e203]
                                     	| [$e481: nop]
@@ -6443,7 +6444,7 @@ l_e60d:
 	beq	l_e635                             	| [$e614: beq $e635]
 	GET_ADDRESS	0xe663                     	| [$e616: lda $e663, x]
 	move.b	(a0,d1.w),d0                    	| [...]
-	jbsr	l_e98c                            	| [$e619: jsr $e98c]
+	jbsr	add_to_score_e98c                            	| [$e619: jsr $e98c]
 	move.b	d2,d0                           	| [$e61c: tya]
 	movem.w	d0,-(sp)                       	| [$e61d: pha]
 	GET_ADDRESS	0xca                       	| [$e61e: ldx $ca]
@@ -6918,7 +6919,6 @@ check_player_picking_bonus_e8f2:
 	move.b	(a0),d0                         	| [...]
 	jne	l_e971                             	| [$e8f5: bne $e971]
 
-	TMPWRITE
 
 	GET_ADDRESS	current_level_0063                       	| [$e8f7: ldx $63]
 	move.b	(a0),d1                         	| [...]
@@ -7001,7 +7001,7 @@ check_player_picking_bonus_e8f2:
 	move.b	(a0,d1.w),d2                    	| [...]
 	GET_ADDRESS	0xe987                     	| [$e955: lda $e987, y]
 	move.b	(a0,d2.w),d0                    	| [...]
-	jbsr	l_e98c                            	| [$e958: jsr $e98c]
+	jbsr	add_to_score_e98c                            	| [$e958: jsr $e98c]
 	GET_ADDRESS	current_player_001f        	| [$e95b: ldx current_player_001f]
 	move.b	(a0),d1                         	| [...]
 	GET_ADDRESS	player_pepper_002b         	| [$e95d: lda player_pepper_002b, x]
@@ -7021,7 +7021,8 @@ check_player_picking_bonus_e8f2:
 l_e971:
 	rts                                    	| [$e971: rts]
 
-l_e98c:
+* adds to score, only if game is playing
+add_to_score_e98c:
                                     	| [$e98c: nop] prev_crypted 6e
 	GET_ADDRESS	0x04                       	| [$e98d: sta $04] dummy_write_decrypt_trigger
 	move.b	d0,(a0)                         	| [...]
@@ -7044,12 +7045,12 @@ l_e99d:
 	move.b	(a0),d1                         	| [...]
 	CLR_XC_FLAGS                           	| [$e9a4: clc]
 		| [$e9a5: sed]
-	GET_ADDRESS	0x002d                     	| [$e9a6: lda $002d, y]
+	GET_ADDRESS	player_score_002d                     	| [$e9a6: lda $002d, y]
 	move.b	(a0,d2.w),d0                    	| [...]
 	GET_ADDRESS	0xea38                     	| [$e9a9: adc $ea38, x]
 	move.b	(a0,d1.w),d4	| [...]
 	abcd	d4,d0                    	| [...]
-	GET_ADDRESS	0x002d                     	| [$e9ac: sta $002d, y] dummy_write_decrypt_trigger
+	GET_ADDRESS	player_score_002d                     	| [$e9ac: sta $002d, y] dummy_write_decrypt_trigger
     move.b	d0,(a0,d2.w)                 	| [...]
 	GET_ADDRESS	0x002e                     	| [$e9af: lda $002e, y] prev_crypted 5d
 	move.b	(a0,d2.w),d0                    	| [...]
@@ -7089,14 +7090,14 @@ l_e99d:
 	bne	l_e9ff                             	| [$e9dc: bne $e9ff]
 	GET_ADDRESS	0x33                       	| [$e9de: lda $33]
 	move.b	(a0),d0                         	| [...]
-	GET_ADDRESS	0x002d                     	| [$e9e0: cmp $002d, y]
+	GET_ADDRESS	player_score_002d                     	| [$e9e0: cmp $002d, y]
 	cmp.b	(a0,d2.w),d0                     	| [...]
 	* bcs=>bcc
 	bcc	l_e9ff                             	| [$e9e3: bcs $e9ff]
                                     	| [$e9e5: nop] dummy_write_decrypt_trigger
                                     	| [$e9e7: nop] prev_crypted 6e
 l_e9e8:
-	GET_ADDRESS	0x002d                     	| [$e9e8: lda $002d, y]
+	GET_ADDRESS	player_score_002d                     	| [$e9e8: lda $002d, y]
 	move.b	(a0,d2.w),d0                    	| [...]
 	GET_ADDRESS	0x33                       	| [$e9eb: sta $33] dummy_write_decrypt_trigger
 	move.b	d0,(a0)                         	| [...]
@@ -7230,7 +7231,7 @@ l_eaa8:
 	move.b	d0,d2                           	| [$eaca: tay]
 	GET_ADDRESS	0xeb65                     	| [$eacb: lda $eb65, y]
 	move.b	(a0,d2.w),d0                    	| [...]
-	jbsr	l_e98c                            	| [$eace: jsr $e98c]
+	jbsr	add_to_score_e98c                            	| [$eace: jsr $e98c]
 	GET_ADDRESS	0xeb62                     	| [$ead1: lda $eb62, y]
 	move.b	(a0,d2.w),d0                    	| [...]
 	GET_ADDRESS	0xeb4f                     	| [$ead4: ldy $eb4f, x]
@@ -7803,8 +7804,8 @@ l_f1e4:
 l_f206:
 	GET_INDIRECT_ADDRESS	0xd8                     	| [$f206: lda ($d8), y]
 	move.b	(a0,d2.w),d0                    	| [...]
-	GET_INDIRECT_ADDRESS	0xda                     	| [$f208: sta ($da), y]
-	move.b	d0,(a0,d2.w)                    	| [...]
+	GET_SCREEN_ADDRESS_Y	0xda                     	| [$f208: sta ($da), y]
+	jbsr	osd_w_videoram                    	| [...]
 	subq.b	#1,d2                           	| [$f20a: dey]
 	bpl	l_f206                             	| [$f20b: bpl $f206]
 	GET_ADDRESS	0xdd                       	| [$f20d: dec $dd]
@@ -7821,8 +7822,8 @@ l_f2d1:
                                     	| [$f2d1: nop]
 	GET_ADDRESS	0xde                       	| [$f2d2: lda $de]
 	move.b	(a0),d0                         	| [...]
-	SET_XC_FLAGS                           	| [$f2d4: sec]
-	SBC_IMM	0x01                           	| [$f2d5: sbc #$01]
+	                           	| [$f2d4: sec]
+	subq.b	#1,d0                           	| [$f2d5: sbc #$01]
 	GET_ADDRESS	0xde                       	| [$f2d7: sta $de]
 	move.b	d0,(a0)                         	| [...]
 	GET_ADDRESS	0xdf                       	| [$f2d9: lda $df]
@@ -7834,10 +7835,8 @@ l_f2d1:
 	subq.b	#1,(a0)                         	| [...]
 	bpl	l_f2ea                             	| [$f2e1: bpl $f2ea]
 	move.b	#0x04,d0                        	| [$f2e3: lda #$04]
-	PUSH_SR
 	GET_ADDRESS	0xe0                       	| [$f2e5: sta $e0]
 	move.b	d0,(a0)                         	| [...]
-	POP_SR
                                     	| [$f2e7: nop]
                                     	| [$f2e9: nop]
 l_f2ea:
@@ -7870,8 +7869,8 @@ l_f306:
 l_f30b:
 	GET_ADDRESS	0x48                       	| [$f30b: lda $48, x]
 	move.b	(a0,d1.w),d0                    	| [...]
-	GET_INDIRECT_ADDRESS	0xd8                     	| [$f30d: sta ($d8), y] dummy_write_decrypt_trigger
-	move.b	d0,(a0,d2.w)                    	| [...]
+	GET_SCREEN_ADDRESS_Y	0xd8                     	| [$f30d: sta ($d8), y] dummy_write_decrypt_trigger
+	jbsr	osd_w_videoram                    	| [...]
 	addq.b	#1,d1                           	| [$f30f: inx] prev_crypted 6c
 	cmp.b	#0x0f,d1                         	| [$f310: cpx #$0f]
 	bne	l_f318                             	| [$f312: bne $f318]

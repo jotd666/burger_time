@@ -901,18 +901,23 @@ is_game_playing:
 lose_all_lives:
 	move.l	a6,-(a7)
 	GET_RAM_START_IN_A6
-
+	st.b	(0x0029,a6)		| no more lives
+	st.b	(0x00C6,a6)		| died
 	move.l	(a7)+,a6
 	rts
 
-add_10000_points:
+add_1000_points:
 	move.l	a6,-(a7)
 	GET_RAM_START_IN_A6
 	movem.w	d0/d7,-(a7)
-	
-	MOVEQ	#1,d7
+	move.b	(0x2E,a6),d0
+	MOVE.b	#0x10,d7
 	abcd	d7,d0
-
+	move.b	d0,(0x2E,a6)
+	move.b	(0x2F,a6),d0
+	moveq	#0,d7
+	abcd	d7,d0
+	move.b	d0,(0x2F,a6)
 	movem.w	(a7)+,d0/d7
 	move.l	(a7)+,a6
 	rts
@@ -1745,7 +1750,9 @@ mirrored_videoram:
 	.ifndef	RELEASE
 	cmp.w	#0x2000,d7
 	jcs		0f
-	BREAKPOINT	"write videoram out of 0x1000-0x1FFF range (D7)"	
+	BREAKPOINT	"write videoram out of 0x1000-0x1FFF range (D7)"
+	move.l	#osd_w_videoram_out,(a7)
+	rts
 0:
 	.endif
 	* compute valid 0x1000-0x17FF un-mirror
@@ -1774,7 +1781,7 @@ osd_w_videoram:
 	jmi		2f
 	.endif
 	cmp.w	#0x1820,d7
-	jcs		0f
+	jcs		osd_w_videoram_out
 	jbsr	mirrored_videoram
 	jra		1f
 0:
@@ -1788,12 +1795,12 @@ osd_w_videoram:
 	* should not happen
 	add.w	#SCREEN_TILE_ADDRESS,d7
 	BREAKPOINT	"write videoram out of range (D7)"
-	bra.b	0f
+	bra.b	osd_w_videoram_out
 	.endif
 1:	
 *	move.b	(a0),d1
 *	cmp.b	d1,d0
-*	beq.b	0f		| already the proper value
+*	beq.b	osd_w_videoram_out		| already the proper value
 *3:
 	move.b	d0,(a0)	| update logical grid
 	
@@ -1831,7 +1838,7 @@ osd_w_videoram:
 	move.b	d7,(a0)
 	move.b	d7,(a1)
 
-0:
+osd_w_videoram_out:
 	movem.l	(a7)+,d0/d1/d7/a0/a1
 	rts	
 	
@@ -2407,9 +2414,9 @@ handle_keyboard:
 	cmp.b	#0x52,d0	| F3 key
 	bne.b	0f
 	st.b	cheat_used
-	* add 10000 points
+	* add 1000 points
 	move.w	#0x0FF,_custom+color
-	jbsr	add_10000_points
+	jbsr	add_1000_points
 	
 0:
 	cmp.b	#0x53,d0	| F4 key
