@@ -15,7 +15,7 @@
 .include "burger_time.inc"
 .include "sounds.inc"
 
-SCORE_FILE_SIZE = 3+30*3
+SCORE_FILE_SIZE = 0x23
 
 .macro	GET_RAM_START_IN_A6	
 	.ifdef	RELEASE
@@ -25,6 +25,7 @@ SCORE_FILE_SIZE = 3+30*3
 	.endif
 	.endm
 	
+* < A0: buffer
 osd_read_high_scores:
 	movem.l	d0-d7/a0-a6,-(a7)
 	move.l	_resload,d0
@@ -274,6 +275,6 @@ highscore_loaded:
 	.byte	0
 
 normal_hiscorename:
-	.asciz	"pooyan.high"
+	.asciz	"burger_time.high"
 
 

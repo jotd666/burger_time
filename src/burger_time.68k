@@ -229,7 +229,7 @@ current_level_0063 = 0x0063
 * 0xff: inactive, else holds character base animation code
 * 0x00: cook
 * 0x01: sausage
-* 0x02: gherkin?
+* 0x02: pickle
 * 0x03: egg
 active_character_array_0068 = 0x0068 
 pepper_status_006e = 0x006e   | 0xff: inactive
@@ -248,7 +248,9 @@ player_attributes_181c = 0x181c
 player_code_181d = 0x181d
 player_y_181e = 0x181E
 player_x_181f = 0x181F
-
+highscore_lsb_0033 = 0x33
+highscore_msb_0034 = 0x34
+highscore_hsb_0035 = 0x35
 
 direction_left = 2
 direction_right = 4
@@ -1023,28 +1025,32 @@ clear_0200_03ff_c363:
 	addq.b	#1,d1                           	| [$c369: inx]
 	bne	clear_0200_03ff_c363                             	| [$c36a: bne $c363]
 	
+	* set highscore to 28000
 	move.b	#0x02,d0                        	| [$c36c: lda #$02]
-	GET_ADDRESS	0x35                       	| [$c36e: sta $35]
+	GET_ADDRESS	highscore_hsb_0035                       	| [$c36e: sta $35]
 	move.b	d0,(a0)                         	| [...]
 	move.b	#0x80,d0                        	| [$c370: lda #$80]
-	GET_ADDRESS	0x34                       	| [$c372: sta $34] dummy_write_decrypt_trigger
+	GET_ADDRESS	highscore_msb_0034                       	| [$c372: sta $34] dummy_write_decrypt_trigger
 	move.b	d0,(a0)                         	| [...]
 	clr.b	d0                               	| [$c374: lda #$00] prev_crypted 4d
-	GET_ADDRESS	0x33                       	| [$c376: sta $33]
+	GET_ADDRESS	highscore_lsb_0033                       	| [$c376: sta $33]
 	move.b	d0,(a0)                         	| [...]
 
 	* fill a part of zero page with ROM values
 	move.b	#0x23,d1                        	| [$c378: ldx #$23]
                                     	| [$c37a: nop] dummy_write_decrypt_trigger
                                     	| [$c37c: nop] prev_crypted 6e
-l_c37d:
+set_default_highscores_c37d:
 	GET_ADDRESS	0xc3b3                     	| [$c37d: lda $c3b3, x]
 	move.b	(a0,d1.w),d0                    	| [...]
 	GET_ADDRESS	0x36                       	| [$c380: sta $36, x]
     move.b	d0,(a0,d1.w)                 	| [...]
 	subq.b	#1,d1                           	| [$c382: dex]
-	bpl	l_c37d                             	| [$c383: bpl $c37d]
-                                    	| [$c385: nop] dummy_write_decrypt_trigger
+	bpl	set_default_highscores_c37d                             	| [$c383: bpl $c37d]
+
+	GET_ADDRESS	highscore_lsb_0033                       	| [$c380: sta $36, x]
+	jbsr	osd_read_high_scores
+                                   	| [$c385: nop] dummy_write_decrypt_trigger
                                     	| [$c387: nop] prev_crypted 6e
 	clr.b	d2                               	| [$c388: ldy #$00]
                                     	| [$c38a: nop] dummy_write_decrypt_trigger
@@ -7105,21 +7111,21 @@ l_e99d:
 	move.b	(a0),d1                         	| [...]
 	GET_ADDRESS	0xea59                     	| [$e9c9: ldy $ea59, x]
 	move.b	(a0,d1.w),d2                    	| [...]
-	GET_ADDRESS	0x35                       	| [$e9cc: lda $35]
+	GET_ADDRESS	highscore_hsb_0035                       	| [$e9cc: lda $35]
 	move.b	(a0),d0                         	| [...]
 	GET_ADDRESS	0x002f                     	| [$e9ce: cmp $002f, y]
 	cmp.b	(a0,d2.w),d0                     	| [...]
 	* bcc=>bcs
 	bcs	l_e9e8                             	| [$e9d1: bcc $e9e8]
 	bne	l_e9ff                             	| [$e9d3: bne $e9ff]
-	GET_ADDRESS	0x34                       	| [$e9d5: lda $34]
+	GET_ADDRESS	highscore_msb_0034                       	| [$e9d5: lda $34]
 	move.b	(a0),d0                         	| [...]
 	GET_ADDRESS	0x002e                     	| [$e9d7: cmp $002e, y]
 	cmp.b	(a0,d2.w),d0                     	| [...]
 	* bcc=>bcs
 	bcs	l_e9e8                             	| [$e9da: bcc $e9e8]
 	bne	l_e9ff                             	| [$e9dc: bne $e9ff]
-	GET_ADDRESS	0x33                       	| [$e9de: lda $33]
+	GET_ADDRESS	highscore_lsb_0033                       	| [$e9de: lda $33]
 	move.b	(a0),d0                         	| [...]
 	GET_ADDRESS	player_score_002d                     	| [$e9e0: cmp $002d, y]
 	cmp.b	(a0,d2.w),d0                     	| [...]
@@ -7130,15 +7136,15 @@ l_e99d:
 l_e9e8:
 	GET_ADDRESS	player_score_002d                     	| [$e9e8: lda $002d, y]
 	move.b	(a0,d2.w),d0                    	| [...]
-	GET_ADDRESS	0x33                       	| [$e9eb: sta $33] dummy_write_decrypt_trigger
+	GET_ADDRESS	highscore_lsb_0033                       	| [$e9eb: sta $33] dummy_write_decrypt_trigger
 	move.b	d0,(a0)                         	| [...]
 	GET_ADDRESS	0x002e                     	| [$e9ed: lda $002e, y] prev_crypted 5d
 	move.b	(a0,d2.w),d0                    	| [...]
-	GET_ADDRESS	0x34                       	| [$e9f0: sta $34]
+	GET_ADDRESS	highscore_msb_0034                       	| [$e9f0: sta $34]
 	move.b	d0,(a0)                         	| [...]
 	GET_ADDRESS	0x002f                     	| [$e9f2: lda $002f, y]
 	move.b	(a0,d2.w),d0                    	| [...]
-	GET_ADDRESS	0x35                       	| [$e9f5: sta $35] dummy_write_decrypt_trigger
+	GET_ADDRESS	highscore_hsb_0035                       	| [$e9f5: sta $35] dummy_write_decrypt_trigger
 	move.b	d0,(a0)                         	| [...]
 	move.b	#0x02,d1                        	| [$e9f7: ldx #$02] prev_crypted 4a
 	jbsr	l_c94e                            	| [$e9f9: jsr $c94e]
@@ -7676,8 +7682,10 @@ highscore_loop_f11a:
 	bne	l_f134                             	| [$f126: bne $f134]
 	* reaches here when highscore is entered, character stopped
 	* waving his arms
-	jbsr	sync_and_check_insert_coin_f2b8                            	| [$f128: jsr $f2b8]
-	*jbsr	osd_save_highscores
+	jbsr	sync_and_check_insert_coin_f2b8 	                           	| [$f128: jsr $f2b8]
+
+	GET_ADDRESS	highscore_lsb_0033
+	jbsr	osd_write_high_scores
 	clr.b	d0                               	| [$f12b: lda #$00]
 	jbsr	osd_sound_command                     	| [$f12d: sta $4003]
 	rts                                    	| [$f130: rts]
