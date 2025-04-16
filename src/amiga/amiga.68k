@@ -1731,7 +1731,8 @@ osd_clear_background:
 	rts
 	
 	
-* write to 0x4003, probably sound
+* write to 0x4003 to issue a sound
+* track down those writes in MAME debugger: wpset 4003,1,W,,{printf "%d",A;g}
 osd_sound_command:
 	rts
 

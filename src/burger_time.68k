@@ -534,13 +534,18 @@ wait_for_sync_c07b:
 0:
 	tst.b	bof_sync_flag     						| [$c07b: lda $4003]
 	jpl	0b                             	| [$c07e: bpl $c07b]
-	clr.b	bof_sync_flag	| ack
-	CLR_I_FLAG                             	| [$c080: cli]
+	* ack now, this is a normal ram variable now, so we can do it.
+	* we can't rely on the sync between VBLANK / other interrupts to set/clear that
+	* in time. If the draw operations are slightly slowed down then the game misses
+	* a sync and crawls. When acknowledging in the code itself, the game runs at
+	* proper speed (even if we have to refresh at 25Hz on slow machines, it is still good)
+	clr.b	bof_sync_flag
+	                             	| [$c080: cli]
     * time for insert coin?                    	| [$c081: nop]
                                     	| [$c082: nop]
                                     	| [$c083: nop]
                                     	| [$c084: nop]
-	SET_I_FLAG                             	| [$c085: sei]
+	                             	| [$c085: sei]
 	jbsr	check_if_coin_inserted_d045                            	| [$c086: jsr $d045]
 	jbsr	game_start_management_d06e                            	| [$c089: jsr $d06e]
 	GET_ADDRESS	timer1_0013                	| [$c08c: inc timer1_0013]
@@ -577,7 +582,7 @@ l_c09e:
 	*tst.b	sync_counter
 	*jne		0f
 wait_for_no_sync_c0ad:
-	* is that useful to wait??
+	* is that useful to wait?? answer is NO
 	*tst.b	bof_sync_flag                     	| [$c0ad: lda $4003]
 	*jmi	wait_for_no_sync_c0ad                   | [$c0b0: bmi $c0ad]
 0:
@@ -7187,6 +7192,8 @@ l_ea5e:
 	move.b	d0,d1                           	| [$ea64: tax]
 	GET_ADDRESS	0xea71                     	| [$ea65: lda $ea71, x]
 	move.b	(a0,d1.w),d0                    	| [...]
+	* D0=4: annoying looped music :)
+	* skip that in MAME debugger using: bpset EA68,A==4,{PC=PC+3;g}
 	jbsr	osd_sound_command                     	| [$ea68: sta $4003]
                                     	| [$ea6b: nop]
                                     	| [$ea6d: nop]
