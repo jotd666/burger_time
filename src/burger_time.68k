@@ -1,13 +1,18 @@
-* Converted with 6502to68k by JOTD
 *
-* make sure you call "cpu_init" first so bits 8-15 of data registers
-* are zeroed out so we can use (ax,dy.w) addressing mode
-* without systematic masking
+* Burger Time 1982 Data East
 *
-* WARNING: you also have to add clr.w d1 and clr.w d2
-* at start of any interrupt you could hook
-* we don't want to mask those at each X,Y indexed instruction
-* for performance reasons
+* Reverse-engineered by JOTD 2025
+* 
+* Note that some function names & comments are directly copied from
+* the small leaked source part present at the end of the ROM
+*
+* Too bad the whole source hasn't leaked, but we managed :) Sometimes
+* my RE work gives better clarity than the original source!
+*
+* Converted with the help of 6502to68k by JOTD
+*
+
+
 
 	.include	"burger_time.inc"
 	
@@ -515,14 +520,14 @@ l_c038:
                                     	| [$c067: nop]
 l_c068:
 	jbsr	l_c70d                            	| [$c068: jsr $c70d]
-	jbsr	l_c748                            	| [$c06b: jsr $c748]
+	jbsr	gaminl_c748                            	| [$c06b: jsr $c748]
 	move.b	#0x01,d0                        	| [$c06e: lda #$01]
 	GET_ADDRESS	game_or_demo_playing_001c                       	| [$c070: sta $1c]
 	move.b	d0,(a0)                         	| [...]
                                     	| [$c072: nop]
                                     	| [$c074: nop]
 game_restart_c075:
-	jbsr	l_c767                            	| [$c075: jsr $c767]
+	jbsr	roundinl_c767                            	| [$c075: jsr $c767]
                                     	| [$c078: nop]
 * game mainloop main loop main_loop   	| [$c07a: nop]
 wait_for_sync_c07b:                     	
@@ -589,11 +594,11 @@ wait_for_no_sync_c0ad:
                                     	| [$c0cb: nop]
                                     	| [$c0cd: nop]
 l_c0ce:
-	jbsr	l_dd65                            	| [$c0ce: jsr $dd65]
+	jbsr	teki_display_dd65                            	| [$c0ce: jsr $dd65]
 	jbsr	l_ea8d                            	| [$c0d1: jsr $ea8d]
-	jbsr	l_e6df                            	| [$c0d4: jsr $e6df]
+	jbsr	pptkpt_e6df                            	| [$c0d4: jsr $e6df]
 	jbsr	handle_bonus_pickup_e141                            	| [$c0d7: jsr $e141]
-	jbsr	l_e190                            	| [$c0da: jsr $e190]
+	jbsr	lakmov_e190                            	| [$c0da: jsr $e190]
 	jbsr	l_e835                            	| [$c0dd: jsr $e835]
 	jbsr	l_e760                            	| [$c0e0: jsr $e760]
 	jbsr	l_e86c                            	| [$c0e3: jsr $e86c]
@@ -1156,8 +1161,8 @@ l_c480:
 	move.b	#0x01,d0                        	| [$c480: lda #$01]
 	GET_ADDRESS	game_or_demo_playing_001c                       	| [$c482: sta $1c]
 	move.b	d0,(a0)                         	| [...]
-	jbsr	l_c748                            	| [$c484: jsr $c748]
-	jbsr	l_c767                            	| [$c487: jsr $c767]
+	jbsr	gaminl_c748                            	| [$c484: jsr $c748]
+	jbsr	roundinl_c767                            	| [$c487: jsr $c767]
 	move.b	#0x01,d2                        	| [$c48a: ldy #$01]
 	GET_ADDRESS	active_character_array_0068                       	| [$c48c: sty $68]
 	move.b	d2,(a0)                         	| [...]
@@ -1205,7 +1210,7 @@ l_c480:
 	move.b	#0x1d,d0                        	| [$c4c7: lda #$1d]
 	GET_ADDRESS	player_x_181f                     	| [$c4c9: sta $181f]
 	move.b	d0,(a0)                         	| [...]
-	jbsr	l_dd65                            	| [$c4cc: jsr $dd65]
+	jbsr	teki_display_dd65                            	| [$c4cc: jsr $dd65]
                                     	| [$c4cf: nop]
                                     	| [$c4d1: nop]
 l_c4d2:
@@ -1225,7 +1230,7 @@ l_c4e4:
 	jbsr	update_character_d269                            	| [$c4e6: jsr $d269]
 	jbsr	handle_make_parts_fall_d898                            	| [$c4e9: jsr $d898]
 	jbsr	l_ea8d                            	| [$c4ec: jsr $ea8d]
-	jbsr	l_e190                            	| [$c4ef: jsr $e190]
+	jbsr	lakmov_e190                            	| [$c4ef: jsr $e190]
 	GET_ADDRESS	0x19                       	| [$c4f2: lda $19]
 	move.b	(a0),d0                         	| [...]
 	bne	l_c4fc                             	| [$c4f4: bne $c4fc]
@@ -1243,10 +1248,14 @@ l_c4fc:
 	move.b	d0,(a0)                         	| [...]
 	jra	l_c480                             	| [$c50c: jmp $c480] prev_crypted a4
 
+*----------------------------------------------*
+*	PEPPER & TEKI LAKKA ATTRACTION		*
+*----------------------------------------------*
+
 l_c561:
                                     	| [$c561: nop]
-	jbsr	l_c748                            	| [$c562: jsr $c748]
-	jbsr	l_c767                            	| [$c565: jsr $c767]
+	jbsr	gaminl_c748                            	| [$c562: jsr $c748]
+	jbsr	roundinl_c767                            	| [$c565: jsr $c767]
 	move.b	#0x01,d2                        	| [$c568: ldy #$01]
 	GET_ADDRESS	active_character_array_0068                       	| [$c56a: sty $68] dummy_write_decrypt_trigger
 	move.b	d2,(a0)                         	| [...]
@@ -1316,7 +1325,7 @@ l_c561:
 	move.b	d0,(a0)                         	| [...]
 	GET_ADDRESS	timer1_0014                	| [$c5c4: sta timer1_0014] prev_crypted c1  ; dummy_write_decrypt_trigger
 	move.b	d0,(a0)                         	| [...]
-	jbsr	l_dd65                            	| [$c5c6: jsr $dd65] prev_crypted 08
+	jbsr	teki_display_dd65            | [$c5c6: jsr $dd65] TEKI DISPLAY
                                     	| [$c5c9: nop]
                                     	| [$c5cb: nop]
 l_c5cc:
@@ -1337,6 +1346,7 @@ l_c5d8:
 	cmp.b	#0x04,d0                         	| [$c5e1: cmp #$04]
 	* bcc=>bcs
 	bcs	l_c621                             	| [$c5e3: bcc $c621]
+	* load pepper message (don't waste peppers)
 	move.b	#0x30,d1                        	| [$c5e5: ldx #$30]
 	move.b	#0xc6,d2                        	| [$c5e7: ldy #$c6]
 	jbsr	display_text_block_c9bc                            	| [$c5e9: jsr $c9bc]
@@ -1365,7 +1375,7 @@ l_c5fa:
                                     	| [$c612: nop]
                                     	| [$c614: nop]
 l_c615:
-	jbsr	l_d1ad                            	| [$c615: jsr $d1ad]
+	jbsr	activate_pepper_d1ad                            	| [$c615: jsr $d1ad]
 	GET_ADDRESS	player_y_181e                     	| [$c618: inc $181e]
 	addq.b	#1,(a0)                         	| [...]
 	GET_ADDRESS	player_y_181e                     	| [$c61b: inc $181e]
@@ -1375,8 +1385,8 @@ l_c615:
 l_c621:
 	jbsr	handle_pepper_update_d796                            	| [$c621: jsr $d796]
 	jbsr	handle_make_parts_fall_d898                            	| [$c624: jsr $d898]
-	jbsr	l_e6df                            	| [$c627: jsr $e6df]
-	jbsr	l_e190                            	| [$c62a: jsr $e190]
+	jbsr	pptkpt_e6df                            	| [$c627: jsr $e6df]
+	jbsr	lakmov_e190                            	| [$c62a: jsr $e190]
 	jra	l_c5cc                             	| [$c62d: jmp $c5cc]
 
 l_c70d:
@@ -1418,7 +1428,7 @@ l_c71f:
 	jbsr	l_ebc3                            	| [$c73a: jsr $ebc3]
 	rts                                    	| [$c73d: rts]
 
-l_c748:
+gaminl_c748:
                                     	| [$c748: nop]
 	move.b	#0x01,d0                        	| [$c749: lda #$01]
 	GET_ADDRESS	0x61                       	| [$c74b: sta $61] dummy_write_decrypt_trigger
@@ -1440,7 +1450,7 @@ l_c748:
 	subq.b	#1,(a0)                         	| [...]
 	rts                                    	| [$c764: rts] prev_crypted 28
                                     	| [$c765: nop] dummy_write_decrypt_trigger
-l_c767:
+roundinl_c767:
                                     	| [$c767: nop] prev_crypted 6e
 	jbsr	clear_screen_and_sprites_c8a3                            	| [$c768: jsr $c8a3]
 	GET_ADDRESS	0x20                       	| [$c76b: lda $20]
@@ -3097,7 +3107,7 @@ l_d198:
 	GET_ADDRESS	0xb9                       	| [$d1a9: sta $b9]
 	move.b	d0,(a0)                         	| [...]
                                     	| [$d1ab: nop] dummy_write_decrypt_trigger
-l_d1ad:
+activate_pepper_d1ad:
                                     	| [$d1ad: nop] prev_crypted 6e
 	clr.b	d0                               	| [$d1ae: lda #$00]
 	GET_ADDRESS	pepper_status_006e                       	| [$d1b0: sta $6e]
@@ -4980,7 +4990,7 @@ l_dceb:
 l_dd2b:
 	rts                                    	| [$dd2b: rts]
 
-l_dd65:
+teki_display_dd65:
                                     	| [$dd65: nop] prev_crypted 6e
 	GET_ADDRESS	0x6f                       	| [$dd66: lda $6f]
 	move.b	(a0),d0                         	| [...]
@@ -5676,7 +5686,7 @@ handle_bonus_pickup_e141:
 l_e175:
 	rts                                    	| [$e175: rts]
 
-l_e190:
+lakmov_e190:
                                     	| [$e190: nop]
 	clr.b	d0                               	| [$e191: lda #$00]
 	GET_ADDRESS	0x0200                     	| [$e193: sta $0200] dummy_write_decrypt_trigger
@@ -6582,7 +6592,7 @@ l_e6c7:
 	move.b	#0x0f,d0                        	| [$e6cd: lda #$0f]
 	jbsr	l_ea5d                            	| [$e6cf: jsr $ea5d]
 	jra	l_e689                             	| [$e6d2: jmp $e689]
-l_e6df:
+pptkpt_e6df:
                                     	| [$e6df: nop]
 	clr.b	d1                               	| [$e6e0: ldx #$00]
                                     	| [$e6e2: nop]
