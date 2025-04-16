@@ -1782,7 +1782,7 @@ sound_indirection_table:
     .byte    BONUS_APPEARS_SND   | 20
     .byte    ENEMY_CRUSHED_SND   | 21
     .byte    PEPPER_SPRAY_SND   | 22
-    .byte    -1   | 23
+    .byte    HIGHSCORE_END_SND   | 23
     .byte    ENEMY_SPRAYED_SND   | 24
     .byte    KILLED_SND   | 25
     .byte    BONUS_PICKED_UP_SND   | 26

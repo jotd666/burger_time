@@ -45,6 +45,7 @@ def convert():
 "WALK_ON_SLICE_SND"               :{"index":12,"channel":3,"sample_rate":hq_sample_rate,"priority":40},#
 "ENEMY_CRUSHED_SND"               :{"index":13,"channel":3,"sample_rate":hq_sample_rate,"priority":50},#
 "SCORE_ENTERED_SND"               :{"index":14,"channel":3,"sample_rate":lq_sample_rate,"priority":50},#
+"HIGHSCORE_END_SND"               :{"index":15,"channel":3,"sample_rate":lq_sample_rate,"priority":50},#
 
 #"BONUS_STAGE_TUNE_SND"                :{"index":0x28,"pattern":0x15,"volume":32,'loops':True},
 

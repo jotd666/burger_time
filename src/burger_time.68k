@@ -238,6 +238,9 @@ control_bits_and_frame_array_00a9 = 0x00a9
 player_current_direction_00bb = 0x00BB
 bonus_display_countdown_00c4 = 0x00C4
 player_died_00c6 = 0x00C6   | 0xFF: ends update loop and start a new life
+highscore_entry_timer_msb_00de = 0xDE
+highscore_entry_timer_lsb_00df = 0xDF
+highscore_entry_state_flags_00e2 = 0xE2
 coin_inserted_flag_00f9 = 0x00f9
 pepper_y_181a = 0x181a
 pepper_x_181b = 0x181b
@@ -7646,10 +7649,10 @@ l_f0e2:
 	move.b	d0,(a0)                         	| [...]
 	jbsr	l_f1b6                            	| [$f100: jsr $f1b6]
 	clr.b	d0                               	| [$f103: lda #$00]
-	GET_ADDRESS	0xde                       	| [$f105: sta $de] dummy_write_decrypt_trigger
+	GET_ADDRESS	highscore_entry_timer_msb_00de                       	| [$f105: sta $de] dummy_write_decrypt_trigger
 	move.b	d0,(a0)                         	| [...]
 	move.b	#0x07,d0                        	| [$f107: lda #$07] prev_crypted 4d
-	GET_ADDRESS	0xdf                       	| [$f109: sta $df]
+	GET_ADDRESS	highscore_entry_timer_lsb_00df                       	| [$f109: sta $df]
 	move.b	d0,(a0)                         	| [...]
 	move.b	#0x06,d0                        	| [$f10b: lda #$06]
 	GET_ADDRESS	0xe0                       	| [$f10d: sta $e0] dummy_write_decrypt_trigger
@@ -7657,7 +7660,7 @@ l_f0e2:
 	clr.b	d0                               	| [$f10f: lda #$00] prev_crypted 4d
 	GET_ADDRESS	0xe1                       	| [$f111: sta $e1]
 	move.b	d0,(a0)                         	| [...]
-	GET_ADDRESS	0xe2                       	| [$f113: sta $e2] dummy_write_decrypt_trigger
+	GET_ADDRESS	highscore_entry_state_flags_00e2                       	| [$f113: sta $e2] dummy_write_decrypt_trigger
 	move.b	d0,(a0)                         	| [...]
 	GET_ADDRESS	0xe3                       	| [$f115: sta $e3] prev_crypted c1  ; dummy_write_decrypt_trigger
 	move.b	d0,(a0)                         	| [...]
@@ -7666,26 +7669,29 @@ l_f0e2:
 highscore_loop_f11a:
 	jbsr	sync_and_check_insert_coin_f2b8                            	| [$f11a: jsr $f2b8]
 	jbsr	l_f2d1                            	| [$f11d: jsr $f2d1]
-	GET_ADDRESS	0xe2                       	| [$f120: lda $e2]
+	GET_ADDRESS	highscore_entry_state_flags_00e2                       	| [$f120: lda $e2]
 	move.b	(a0),d0                         	| [...]
 	and.b	#0x0f,d0                         	| [$f122: and #$0f]
 	cmp.b	#0x0f,d0                         	| [$f124: cmp #$0f]
 	bne	l_f134                             	| [$f126: bne $f134]
+	* reaches here when highscore is entered, character stopped
+	* waving his arms
 	jbsr	sync_and_check_insert_coin_f2b8                            	| [$f128: jsr $f2b8]
+	*jbsr	osd_save_highscores
 	clr.b	d0                               	| [$f12b: lda #$00]
 	jbsr	osd_sound_command                     	| [$f12d: sta $4003]
 	rts                                    	| [$f130: rts]
                                     	| [$f131: nop]
                                     	| [$f133: nop]
 l_f134:
-	GET_ADDRESS	0xe2                       	| [$f134: lda $e2]
+	GET_ADDRESS	highscore_entry_state_flags_00e2                       	| [$f134: lda $e2]
 	move.b	(a0),d0                         	| [...]
 	bpl	l_f14d                             	| [$f136: bpl $f14d]
 	GET_ADDRESS	0xe3                       	| [$f138: lda $e3]
 	move.b	(a0),d0                         	| [...]
 	bmi	l_f14d                             	| [$f13a: bmi $f14d]
 	st.b	d0                                	| [$f13c: lda #$ff]
-	GET_ADDRESS	0xde                       	| [$f13e: sta $de]
+	GET_ADDRESS	highscore_entry_timer_msb_00de                       	| [$f13e: sta $de]
 	move.b	d0,(a0)                         	| [...]
 	GET_ADDRESS	0xe3                       	| [$f140: lda $e3]
 	move.b	(a0),d0                         	| [...]
@@ -7693,44 +7699,45 @@ l_f134:
 	GET_ADDRESS	0xe3                       	| [$f144: sta $e3] dummy_write_decrypt_trigger
 	move.b	d0,(a0)                         	| [...]
 	clr.b	d0                               	| [$f146: lda #$00] prev_crypted 4d
-	GET_ADDRESS	0xdf                       	| [$f148: sta $df]
+	GET_ADDRESS	highscore_entry_timer_lsb_00df                       	| [$f148: sta $df]
 	move.b	d0,(a0)                         	| [...]
                                     	| [$f14a: nop] dummy_write_decrypt_trigger
                                     	| [$f14c: nop] prev_crypted 6e
 l_f14d:
-	GET_ADDRESS	0xde                       	| [$f14d: lda $de]
+	GET_ADDRESS	highscore_entry_timer_msb_00de                       	| [$f14d: lda $de]
 	move.b	(a0),d0                         	| [...]
-	GET_ADDRESS	0xdf                       	| [$f14f: ora $df]
+	GET_ADDRESS	highscore_entry_timer_lsb_00df                       	| [$f14f: ora $df]
 	or.b	(a0),d0                           	| [...]
 	bne	l_f165                             	| [$f151: bne $f165]
-	GET_ADDRESS	0xe2                       	| [$f153: lda $e2]
+	GET_ADDRESS	highscore_entry_state_flags_00e2                       	| [$f153: lda $e2]
 	move.b	(a0),d0                         	| [...]
-	bpl	l_f15e                             	| [$f155: bpl $f15e]
+	jpl	l_f15e                             	| [$f155: bpl $f15e]
+	* highscore entry has ended
 	or.b	#0x0f,d0                          	| [$f157: ora #$0f]
-	GET_ADDRESS	0xe2                       	| [$f159: sta $e2]
+	GET_ADDRESS	highscore_entry_state_flags_00e2                       	| [$f159: sta $e2]
 	move.b	d0,(a0)                         	| [...]
                                     	| [$f15b: nop] dummy_write_decrypt_trigger
                                     	| [$f15d: nop] prev_crypted 6e
 l_f15e:
 	or.b	#0x80,d0                          	| [$f15e: ora #$80]
-	GET_ADDRESS	0xe2                       	| [$f160: sta $e2]
+	GET_ADDRESS	highscore_entry_state_flags_00e2                       	| [$f160: sta $e2]
 	move.b	d0,(a0)                         	| [...]
                                     	| [$f162: nop] dummy_write_decrypt_trigger
                                     	| [$f164: nop] prev_crypted 6e
 l_f165:
-	jbsr	l_f32f                            	| [$f165: jsr $f32f]
+	jbsr	character_flaps_arms_f32f                            	| [$f165: jsr $f32f]
 	jbsr	l_f37c                            	| [$f168: jsr $f37c]
 	jbsr	l_f3e9                            	| [$f16b: jsr $f3e9]
 	jbsr	l_f42f                            	| [$f16e: jsr $f42f]
 	jbsr	l_f59c                            	| [$f171: jsr $f59c]
-	GET_ADDRESS	0xe2                       	| [$f174: lda $e2]
+	GET_ADDRESS	highscore_entry_state_flags_00e2                       	| [$f174: lda $e2]
 	move.b	(a0),d0                         	| [...]
 	and.b	#0x20,d0                         	| [$f176: and #$20]
 	beq	l_f197                             	| [$f178: beq $f197]
 	jbsr	l_f1dc                            	| [$f17a: jsr $f1dc]
 	jbsr	l_f1b6                            	| [$f17d: jsr $f1b6]
 	jbsr	l_f2f8                            	| [$f180: jsr $f2f8]
-	GET_ADDRESS	0xe2                       	| [$f183: lda $e2]
+	GET_ADDRESS	highscore_entry_state_flags_00e2                       	| [$f183: lda $e2]
 	move.b	(a0),d0                         	| [...]
 	eor.b	#0x20,d0                         	| [$f185: eor #$20]
 	move.b	d0,d1                           	| [$f187: tax]
@@ -7742,7 +7749,7 @@ l_f165:
                                     	| [$f18f: nop]
                                     	| [$f191: nop]
 l_f192:
-	GET_ADDRESS	0xe2                       	| [$f192: stx $e2] dummy_write_decrypt_trigger
+	GET_ADDRESS	highscore_entry_state_flags_00e2                       	| [$f192: stx $e2] dummy_write_decrypt_trigger
 	move.b	d1,(a0)                         	| [...]
                                     	| [$f194: nop] prev_crypted c1  ; dummy_write_decrypt_trigger
                                     	| [$f196: nop] prev_crypted 6e
@@ -7753,7 +7760,7 @@ l_f197:
 	and.b	#0xbf,d0                         	| [$f19c: and #$bf]
 	GET_ADDRESS	0xe3                       	| [$f19e: sta $e3]
 	move.b	d0,(a0)                         	| [...]
-	GET_ADDRESS	0xe2                       	| [$f1a0: lda $e2]
+	GET_ADDRESS	highscore_entry_state_flags_00e2                       	| [$f1a0: lda $e2]
 	move.b	(a0),d0                         	| [...]
 	and.b	#0x0f,d0                         	| [$f1a2: and #$0f]
 	cmp.b	#0x03,d0                         	| [$f1a4: cmp #$03]
@@ -7851,16 +7858,16 @@ sync_and_check_insert_coin_f2b8:
 	jbra	wait_for_sync
 l_f2d1:
                                     	| [$f2d1: nop]
-	GET_ADDRESS	0xde                       	| [$f2d2: lda $de]
+	GET_ADDRESS	highscore_entry_timer_msb_00de                       	| [$f2d2: lda $de]
 	move.b	(a0),d0                         	| [...]
-	                           	| [$f2d4: sec]
-	subq.b	#1,d0                           	| [$f2d5: sbc #$01]
-	GET_ADDRESS	0xde                       	| [$f2d7: sta $de]
+	SET_XC_FLAGS                           	| [$f2d4: sec]
+	SBC_IMM	0x1                           	| [$f2d5: sbc #$01]
+	GET_ADDRESS	highscore_entry_timer_msb_00de                       	| [$f2d7: sta $de]
 	move.b	d0,(a0)                         	| [...]
-	GET_ADDRESS	0xdf                       	| [$f2d9: lda $df]
+	GET_ADDRESS	highscore_entry_timer_lsb_00df                       	| [$f2d9: lda $df]
 	move.b	(a0),d0                         	| [...]
 	SBC_IMM	0x00                           	| [$f2db: sbc #$00]
-	GET_ADDRESS	0xdf                       	| [$f2dd: sta $df]
+	GET_ADDRESS	highscore_entry_timer_lsb_00df                       	| [$f2dd: sta $df]
 	move.b	d0,(a0)                         	| [...]
 	GET_ADDRESS	0xe0                       	| [$f2df: dec $e0]
 	subq.b	#1,(a0)                         	| [...]
@@ -7926,12 +7933,12 @@ l_f318:
 	move.b	d0,(a0)                         	| [...]
 	jra	l_f306                             	| [$f32a: jmp $f306]
                                     	| [$f32d: nop] dummy_write_decrypt_trigger
-l_f32f:
+character_flaps_arms_f32f:
                                     	| [$f32f: nop] prev_crypted 6e
 	GET_ADDRESS	0xe0                       	| [$f330: lda $e0]
 	move.b	(a0),d0                         	| [...]
 	bne	l_f379                             	| [$f332: bne $f379]
-	GET_ADDRESS	0xe2                       	| [$f334: lda $e2]
+	GET_ADDRESS	highscore_entry_state_flags_00e2                       	| [$f334: lda $e2]
 	move.b	(a0),d0                         	| [...]
 	and.b	#0x10,d0                         	| [$f336: and #$10]
 	lsr.b	#4,d0                            	| [$f338: lsr a]
@@ -7942,7 +7949,7 @@ l_f32f:
 	add.b	#0x43,d0                        	| [$f33d: adc #$43]
 	GET_ADDRESS	0x1801                     	| [$f33f: sta $1801]
 	move.b	d0,(a0)                         	| [...]
-	GET_ADDRESS	0xe2                       	| [$f342: lda $e2]
+	GET_ADDRESS	highscore_entry_state_flags_00e2                       	| [$f342: lda $e2]
 	move.b	(a0),d0                         	| [...]
 	bpl	l_f370                             	| [$f344: bpl $f370]
 	GET_ADDRESS	0xdc                       	| [$f346: dec $dc]
@@ -7955,7 +7962,7 @@ l_f32f:
 l_f351:
 	GET_ADDRESS	0xf3                       	| [$f351: inc $f3]
 	addq.b	#1,(a0)                         	| [...]
-	GET_ADDRESS	0xf3                       	| [$f353: lda $f3]
+										| [$f353: lda $f3]
 	move.b	(a0),d0                         	| [...]
 	cmp.b	#0x01,d0                         	| [$f355: cmp #$01]
 	bne	l_f361                             	| [$f357: bne $f361]
@@ -7976,10 +7983,10 @@ l_f36a:
                                     	| [$f36d: nop] prev_crypted c1  ; dummy_write_decrypt_trigger
                                     	| [$f36f: nop] prev_crypted 6e
 l_f370:
-	GET_ADDRESS	0xe2                       	| [$f370: lda $e2]
+	GET_ADDRESS	highscore_entry_state_flags_00e2                       	| [$f370: lda $e2]
 	move.b	(a0),d0                         	| [...]
 	eor.b	#0x10,d0                         	| [$f372: eor #$10]
-	GET_ADDRESS	0xe2                       	| [$f374: sta $e2] dummy_write_decrypt_trigger
+	GET_ADDRESS	highscore_entry_state_flags_00e2                       	| [$f374: sta $e2] dummy_write_decrypt_trigger
 	move.b	d0,(a0)                         	| [...]
                                     	| [$f376: nop] prev_crypted c1
                                     	| [$f378: nop]
@@ -8002,7 +8009,7 @@ l_f38e:
 	GET_ADDRESS	0xe0                       	| [$f38e: lda $e0]
 	move.b	(a0),d0                         	| [...]
 	bne	l_f3d4                             	| [$f390: bne $f3d4]
-	GET_ADDRESS	0xe2                       	| [$f392: lda $e2]
+	GET_ADDRESS	highscore_entry_state_flags_00e2                       	| [$f392: lda $e2]
 	move.b	(a0),d0                         	| [...]
 	and.b	#0xe0,d0                         	| [$f394: and #$e0]
 	bne	l_f3d4                             	| [$f396: bne $f3d4]
@@ -8056,7 +8063,7 @@ l_f3d4:
 
 l_f3e9:
                                     	| [$f3e9: nop]
-	GET_ADDRESS	0xe2                       	| [$f3ea: lda $e2]
+	GET_ADDRESS	highscore_entry_state_flags_00e2                       	| [$f3ea: lda $e2]
 	move.b	(a0),d0                         	| [...]
 	and.b	#0xe0,d0                         	| [$f3ec: and #$e0]
 	bne	l_f422                             	| [$f3ee: bne $f422]
@@ -8105,7 +8112,7 @@ l_f42f:
 	GET_ADDRESS	0xe1                       	| [$f430: lda $e1]
 	move.b	(a0),d0                         	| [...]
 	bne	l_f483                             	| [$f432: bne $f483]
-	GET_ADDRESS	0xe2                       	| [$f434: lda $e2]
+	GET_ADDRESS	highscore_entry_state_flags_00e2                       	| [$f434: lda $e2]
 	move.b	(a0),d0                         	| [...]
 	and.b	#0xe0,d0                         	| [$f436: and #$e0]
 	bne	l_f483                             	| [$f438: bne $f483]
@@ -8125,7 +8132,7 @@ l_f448:
 	not.b	d0                               	| [$f44b: eor #$ff]
 	and.b	#0x10,d0                         	| [$f44d: and #$10]
 	beq	l_f483                             	| [$f44f: beq $f483]
-	GET_ADDRESS	0xe2                       	| [$f451: lda $e2]
+	GET_ADDRESS	highscore_entry_state_flags_00e2                       	| [$f451: lda $e2]
 	move.b	(a0),d0                         	| [...]
 	and.b	#0x03,d0                         	| [$f453: and #$03]
 	cmp.b	#0x03,d0                         	| [$f455: cmp #$03]
@@ -8236,10 +8243,10 @@ l_f4b3:
 	* write letter in highscore table
 	GET_SCREEN_ADDRESS_Y	0xd8                     	| [$f4df: sta ($d8), y]
 	jbsr	osd_w_videoram                    	| [...]
-	GET_ADDRESS	0xe2                       	| [$f4e1: lda $e2]
+	GET_ADDRESS	highscore_entry_state_flags_00e2                       	| [$f4e1: lda $e2]
 	move.b	(a0),d0                         	| [...]
 	or.b	#0x40,d0                          	| [$f4e3: ora #$40]
-	GET_ADDRESS	0xe2                       	| [$f4e5: sta $e2]
+	GET_ADDRESS	highscore_entry_state_flags_00e2                       	| [$f4e5: sta $e2]
 	move.b	d0,(a0)                         	| [...]
                                     	| [$f4e7: nop]
                                     	| [$f4e9: nop]
@@ -8268,20 +8275,20 @@ l_f4fa:
                                     	| [$f509: nop]
                                     	| [$f50b: nop]
 l_f50c:
-	GET_ADDRESS	0xe2                       	| [$f50c: lda $e2]
+	GET_ADDRESS	highscore_entry_state_flags_00e2                       	| [$f50c: lda $e2]
 	move.b	(a0),d0                         	| [...]
 	or.b	#0x80,d0                          	| [$f50e: ora #$80]
-	GET_ADDRESS	0xe2                       	| [$f510: sta $e2]
+	GET_ADDRESS	highscore_entry_state_flags_00e2                       	| [$f510: sta $e2]
 	move.b	d0,(a0)                         	| [...]
 	rts                                    	| [$f512: rts]
                                     	| [$f513: nop] dummy_write_decrypt_trigger
                                     	| [$f515: nop] prev_crypted 6e
 l_f516:
-	GET_ADDRESS	0xe2                       	| [$f516: lda $e2]
+	GET_ADDRESS	highscore_entry_state_flags_00e2                       	| [$f516: lda $e2]
 	move.b	(a0),d0                         	| [...]
 	and.b	#0x0f,d0                         	| [$f518: and #$0f]
 	beq	l_f532                             	| [$f51a: beq $f532]
-	GET_ADDRESS	0xe2                       	| [$f51c: dec $e2] dummy_write_decrypt_trigger
+	GET_ADDRESS	highscore_entry_state_flags_00e2                       	| [$f51c: dec $e2] dummy_write_decrypt_trigger
 	subq.b	#1,(a0)                         	| [...]
 	move.b	#0xf5,d0                        	| [$f51e: lda #$f5] prev_crypted 4d
 	GET_ADDRESS	0xee                       	| [$f520: sta $ee]
@@ -8409,7 +8416,7 @@ l_f571:
                                     	| [$f59a: nop] dummy_write_decrypt_trigger
 l_f59c:
                                     	| [$f59c: nop] prev_crypted 6e
-	GET_ADDRESS	0xe2                       	| [$f59d: lda $e2]
+	GET_ADDRESS	highscore_entry_state_flags_00e2                       	| [$f59d: lda $e2]
 	move.b	(a0),d0                         	| [...]
 	and.b	#0xe0,d0                         	| [$f59f: and #$e0]
 	cmp.b	#0x40,d0                         	| [$f5a1: cmp #$40]
@@ -8421,7 +8428,7 @@ l_f5a9:
 	move.b	#0x9b,d0                        	| [$f5a9: lda #$9b]
 	GET_ADDRESS	0xd8                       	| [$f5ab: sta $d8] dummy_write_decrypt_trigger
 	move.b	d0,(a0)                         	| [...]
-	GET_ADDRESS	0xe2                       	| [$f5ad: lda $e2] prev_crypted c9
+	GET_ADDRESS	highscore_entry_state_flags_00e2                       	| [$f5ad: lda $e2] prev_crypted c9
 	move.b	(a0),d0                         	| [...]
 	and.b	#0x0f,d0                         	| [$f5af: and #$0f]
 	beq	l_f5c4                             	| [$f5b1: beq $f5c4]
@@ -8488,11 +8495,11 @@ l_f5f6:
 
 l_f608:
 l_f609:
-	GET_ADDRESS	0xe2                       	| [$f609: lda $e2]
+	GET_ADDRESS	highscore_entry_state_flags_00e2                       	| [$f609: lda $e2]
 	move.b	(a0),d0                         	| [...]
 	or.b	#0x20,d0                          	| [$f60b: ora #$20]
 	and.b	#0xbf,d0                         	| [$f60d: and #$bf]
-	GET_ADDRESS	0xe2                       	| [$f60f: sta $e2]
+	GET_ADDRESS	highscore_entry_state_flags_00e2                       	| [$f60f: sta $e2]
 	move.b	d0,(a0)                         	| [...]
 	GET_ADDRESS	0xf084                     	| [$f611: lda $f084, x]
 	move.b	(a0,d1.w),d0                    	| [...]
@@ -8503,7 +8510,7 @@ l_f609:
 	clr.b	d0                               	| [$f619: lda #$00]
 	GET_ADDRESS	0xd9                       	| [$f61b: sta $d9]
 	move.b	d0,(a0)                         	| [...]
-	GET_ADDRESS	0xe2                       	| [$f61d: lda $e2]
+	GET_ADDRESS	highscore_entry_state_flags_00e2                       	| [$f61d: lda $e2]
 	move.b	(a0),d0                         	| [...]
 	and.b	#0x0f,d0                         	| [$f61f: and #$0f]
 	move.b	d0,d2                           	| [$f621: tay]
@@ -8533,7 +8540,7 @@ l_f639:
                                     	| [$f63c: nop]
 l_f63e:
                                     	| [$f63e: nop]
-	GET_ADDRESS	0xe2                       	| [$f63f: lda $e2]
+	GET_ADDRESS	highscore_entry_state_flags_00e2                       	| [$f63f: lda $e2]
 	move.b	(a0),d0                         	| [...]
 	bpl	l_f65b                             	| [$f641: bpl $f65b]
 	move.b	#0xd0,d0                        	| [$f643: lda #$d0]
