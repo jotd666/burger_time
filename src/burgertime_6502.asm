@@ -5278,10 +5278,25 @@ F20D: C6 DD    dec $dd
 F20F: 10 D3    bpl $f1e4
 F211: 60       rts 
 
-
+; check sync in highscore entry loop
+F2B8: EA       nop
+F2B9: AD 03 40 lda $4003
+F2BC: 10 FB    bpl $f2b9
+F2BE: 85 F5    sta $f5
+F2C0: EA       nop
+F2C1: AD 03 40 lda $4003
+F2C4: 30 FB    bmi $f2c1
+F2C6: 58       cli
+F2C6: 58       cli
+F2C7: EA       nop
+F2C8: EA       nop
+F2C9: EA       nop
+F2CA: 78       sei
 F2CB: 20 45 D0 jsr check_if_coin_inserted_d045
 F2CE: 60       rts 
+
 F2CF: 85 F5    sta dummy_write_00f5
+
 F2D1: EA       nop 
 F2D2: A5 DE    lda $de
 F2D4: 38       sec 

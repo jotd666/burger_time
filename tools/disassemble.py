@@ -69,7 +69,7 @@ previous_mnemonic = ""
 write_mnemonics = {"sta","stx","sty","dec","inc","pha","php","ror","asl","lsr"}
 
 fake_instructions = {0xCB1D,0xCD3D,0xCD43,0xCD34,0xCD35,0xCD36,0xD162,0xD169,0xD16A,0xD16B,0xD16C,0xD16D,0xD16B}
-forced_decrypt = {0xC303,0xCB1E,0xC94E,0xC9BC}  # this one has just been jumped to
+forced_decrypt = {0xC303,0xCB1E,0xC94E,0xC9BC,0xF2B8}  # this one has just been jumped to
 
 with open("disasm.asm","w") as f:
     while True:

@@ -1,5 +1,8 @@
 - highscore screen issues with videoram write
-- no sound
+- bonus appear sound: not playing
+- pepper spray sound: is played repeatedly: prevent to play it more than
+  once in a row!
+- highscore entered: player stays there with arms flapping...
 - let demo roll: lockup at some screen
 - let demo roll: first background grid is wrong: 63 written with 0 on original @C7B9
   seems 3 is written instead??? compare registers

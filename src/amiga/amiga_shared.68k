@@ -2,9 +2,9 @@
 		.global osd_write_high_scores
 		.global	load_highscores
 		.global	save_highscores
-		.global update_elevator_sound
 		.global osd_sound_start
 		.global osd_music_stop
+		.global	force_sound_stop
 		.global music_tick
 		
 

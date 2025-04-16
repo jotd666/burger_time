@@ -1131,7 +1131,7 @@ update_one_bob:
 	moveq	#0,d2
 	move.b	(TARGET_SPRITE_CODE,a0),d2
 	BREAKPOINT	"unregistered sprite clut (D2=code)"
-	rts
+	jra		2f
 100:
 	move.l	d4,a0
 	btst	#1,d3
@@ -1733,9 +1733,97 @@ osd_clear_background:
 	
 * write to 0x4003 to issue a sound
 * track down those writes in MAME debugger: wpset 4003,1,W,,{printf "%d",A;g}
+* < D0: sound code
 osd_sound_command:
+	move.w	d0,-(a7)
+	and.w	#0x3F,d0	| just in case
+	jne		0f
+	jbsr	force_sound_stop
+	jra		1f
+0:
+	lea		sound_indirection_table(pc),a1
+	move.b	(a1,d0.w),d0
+	jmi		1f
+	jbsr	osd_sound_start
+1:
+	.ifndef	RELEASE
+	cmp.b	#-1,d0
+	jne		1f
+	move.w	d2,-(a7)
+	move.w	(2,a7),d2
+	BREAKPOINT	"unmapped sound (in D2)"
+	move.w	(a7)+,d2
+1:
+	.endif
+	move.w	(a7)+,d0
 	rts
 
+sound_indirection_table:
+    .byte    -1   | 0
+    .byte    -2   | 1  start music
+    .byte    -1   | 2
+    .byte    -1   | 3
+    .byte    -2   | 4  loop annoying music
+    .byte    -1   | 5
+    .byte    -1   | 6
+    .byte    -1   | 7
+    .byte    -1   | 8
+    .byte    -1   | 9
+    .byte    -1   | 10
+    .byte    -1   | 11
+    .byte    -1   | 12
+    .byte    -1   | 13
+    .byte    -1   | 14
+    .byte    -1   | 15
+    .byte    -1   | 16
+    .byte    WALK_ON_SLICE_SND   | 17
+    .byte    SLICE_FALLS_SND   | 18
+    .byte    SLICE_LANDS_SND   | 19
+    .byte    BONUS_APPEARS_SND   | 20
+    .byte    ENEMY_CRUSHED_SND   | 21
+    .byte    PEPPER_SPRAY_SND   | 22
+    .byte    -1   | 23
+    .byte    ENEMY_SPRAYED_SND   | 24
+    .byte    KILLED_SND   | 25
+    .byte    BONUS_PICKED_UP_SND   | 26
+    .byte    CREDIT_SND   | 27
+    .byte    -1   | 28
+    .byte    ENEMY_FALLS_SND   | 29
+    .byte    SCORE_ENTERED_SND   | 30
+    .byte    -1   | 31
+    .byte    -2   | 32 climbing, order is given but sound is silent!
+    .byte    -2   | 33 walking, order is given but sound is silent!
+    .byte    -1   | 34
+    .byte    -1   | 35
+    .byte    -1   | 36
+    .byte    -1   | 37
+    .byte    -1   | 38
+    .byte    -1   | 39
+    .byte    -1   | 40
+    .byte    -1   | 41
+    .byte    -1   | 42
+    .byte    -1   | 43
+    .byte    -1   | 44
+    .byte    -1   | 45
+    .byte    -1   | 46
+    .byte    -1   | 47
+    .byte    -1   | 48
+    .byte    -1   | 49
+    .byte    -1   | 50
+    .byte    -1   | 51
+    .byte    -1   | 52
+    .byte    -1   | 53
+    .byte    -1   | 54
+    .byte    -1   | 55
+    .byte    -1   | 56
+    .byte    -1   | 57
+    .byte    -1   | 58
+    .byte    -1   | 59
+    .byte    -1   | 60
+    .byte    -1   | 61
+    .byte    -1   | 62
+    .byte    -1   | 63
+	
 * python code to switch between 0x1000-0x17FF <=> 0x1800-0x2000
 *def wrap_address(a):
 *    # 0x1182 => 0x184C
@@ -1782,7 +1870,7 @@ osd_w_videoram:
 	jmi		2f
 	.endif
 	cmp.w	#0x1820,d7
-	jcs		osd_w_videoram_out
+	jcs		0f
 	jbsr	mirrored_videoram
 	jra		1f
 0:
@@ -2008,19 +2096,7 @@ update_fg_tile:
 12:
 	move.l	d0,a2		| directly pointer on tile bitplanes
 
-*	rol.b	#2,d1			        | modifiers on first bits
-*	and.w	#3,d1
-*	jeq		standard_tile
-*	
-*
-*	add.w	d1,d1
-*	add.w	d1,d1
-*	lea		mirror_jump_table(pc),a4
-*	move.l	(a4,d1.w),a4
-*0:
-*	BTST	#6,(_custom+dmaconr)
-*	BNE.S	0b
-*	jmp		(a4)
+
 	
 	
 standard_tile:
@@ -2045,66 +2121,6 @@ standard_tile:
 5:
 	CLEAR_TILE_PLANE
 	jra		41b
-
-flipped_tile:	
-4:
-	move.l	(a2)+,d0		| next plane
-	jeq		5f
-	move.l	d0,a0
-	.set	offset,8*NB_BYTES_PER_ROW
-	.rept	8
-	.set	offset,offset-NB_BYTES_PER_ROW
-	move.b	(a0)+,d0
-	COPY_TILE_PLANE_ROW
-	.endr
-41:
-	TILE_NEXT_PLANE
-	dbf		d4,4b
-0:
-	rts
-5:
-	CLEAR_TILE_PLANE
-	jra		41b
-	
-mirror_tile:
-	lea		mirror_bits(pc),a4
-	moveq	#0,d1
-4:
-	move.l	(a2)+,d0		| next plane
-	jeq		5f
-	move.l	d0,a0
-	.set	offset,0
-	.rept	8
-	move.b	(a0)+,d1
-	move.b	(a4,d1.w),d0	| mirror
-	COPY_TILE_PLANE_ROW
-
-	.set	offset,offset+NB_BYTES_PER_ROW
-	.endr
-41:
-	TILE_NEXT_PLANE
-	dbf		d4,4b
-0:
-	rts
-5:
-	CLEAR_TILE_PLANE
-	jra		41b
-	
-mirror_flipped_tile:
-	lea		mirror_bits(pc),a4
-	moveq	#0,d1
-4:
-	move.l	(a2)+,d0		| next plane
-	jeq		5f
-	move.l	d0,a0
-	.set	offset,8*NB_BYTES_PER_ROW
-	.rept	8
-	.set	offset,offset-NB_BYTES_PER_ROW
-	move.b	(a0)+,d1
-	move.b	(a4,d1.w),d0	| mirror
-	COPY_TILE_PLANE_ROW
-
-	.endr
 41:
 	TILE_NEXT_PLANE
 	dbf		d4,4b
@@ -2123,16 +2139,6 @@ mirror_flipped_tile:
 	dbf		d4,111b
 2:
 	rts
-	
-mirror_jump_table:
-	.long	standard_tile
-
-	.long	flipped_tile
-	.long	mirror_tile
-	.long	mirror_flipped_tile
-	
-mirror_bits:
-	.include "mirror_bits.68k"
 	
 * < d0.w: x
 * < d1.w: y

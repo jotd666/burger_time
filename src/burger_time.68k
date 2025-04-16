@@ -438,6 +438,19 @@ address_over_2000_loaded_message:
 	.global	burger_time_coin_inserted
 	.global	burger_time_reset
 
+wait_for_sync:
+0:
+	tst.b	bof_sync_flag     						| [$c07b: lda $4003]
+	jpl	0b                             	| [$c07e: bpl $c07b]
+	* ack now, this is a normal ram variable now, so we can do it.
+	* we can't rely on the sync between VBLANK / other interrupts to set/clear that
+	* in time. If the draw operations are slightly slowed down then the game misses
+	* a sync and crawls. When acknowledging in the code itself, the game runs at
+	* proper speed (even if we have to refresh at 25Hz on slow machines, it is still good)
+	clr.b	bof_sync_flag
+	rts
+	
+
 	* we must call that on a "insert coin" event
 * < A5: ROM
 * < A6: RAM
@@ -456,8 +469,7 @@ burger_time_reset:
                           	| [$c009: jmp $b003]
                                     	| [$c00c: nop]
                                     	| [$c00e: nop]
-sync_counter:
-	.word	0
+
 l_c00f:
 	.ifndef	RELEASE
 	tst.b	break_at_startup_flag
@@ -532,14 +544,8 @@ game_restart_c075:
 * game mainloop main loop main_loop   	| [$c07a: nop]
 wait_for_sync_c07b:                     	
 0:
-	tst.b	bof_sync_flag     						| [$c07b: lda $4003]
-	jpl	0b                             	| [$c07e: bpl $c07b]
-	* ack now, this is a normal ram variable now, so we can do it.
-	* we can't rely on the sync between VBLANK / other interrupts to set/clear that
-	* in time. If the draw operations are slightly slowed down then the game misses
-	* a sync and crawls. When acknowledging in the code itself, the game runs at
-	* proper speed (even if we have to refresh at 25Hz on slow machines, it is still good)
-	clr.b	bof_sync_flag
+	 jbsr	wait_for_sync   						| [$c07b: lda $4003]
+	             	| [$c07e: bpl $c07b]
 	                             	| [$c080: cli]
     * time for insert coin?                    	| [$c081: nop]
                                     	| [$c082: nop]
@@ -579,13 +585,12 @@ l_c09e:
 	move.b	d0,(a0)                         	| [...]
                                     	| [$c0aa: nop]
                                     	| [$c0ac: nop]
-	*tst.b	sync_counter
-	*jne		0f
+
 wait_for_no_sync_c0ad:
 	* is that useful to wait?? answer is NO
 	*tst.b	bof_sync_flag                     	| [$c0ad: lda $4003]
 	*jmi	wait_for_no_sync_c0ad                   | [$c0b0: bmi $c0ad]
-0:
+
 	jbsr	unknown_c8e6                            	| [$c0b2: jsr $c8e6]
 	jbsr	handle_pepper_launch_d17b                            	| [$c0b5: jsr $d17b]
 	jbsr	handle_pepper_update_d796                            	| [$c0b8: jsr $d796]
@@ -784,12 +789,12 @@ game_over_c1f1:
 	clr.b	d0                               	| [$c201: lda #$00]
 	GET_ADDRESS	0xcb                       	| [$c203: sta $cb]
 	move.b	d0,(a0)                         	| [...]
-	GET_ADDRESS	0x2d                       	| [$c205: lda $2d]
+	GET_ADDRESS	player_score_002d                       	| [$c205: lda $2d]
 	move.b	(a0),d0                         	| [...]
 	GET_ADDRESS	0xcc                       	| [$c207: sta $cc]
 	move.b	d0,(a0)                         	| [...]
 	
-	GET_ADDRESS	0x2e                       	| [$c209: lda $2e]
+	GET_ADDRESS	player_score_002d+1                 	| [$c209: lda $2e]
 	move.b	(a0),d0                         	| [...]
 	GET_ADDRESS	0xcd                       	| [$c20b: sta $cd]
 	move.b	d0,(a0)                         	| [...]
@@ -1795,17 +1800,26 @@ l_c95a:
                                     	| [$c967: nop]
                                     	| [$c969: nop]
 l_c96a:
-	GET_ADDRESS	0x2d                       	| [$c96a: lda $2d, x]
+	GET_ADDRESS	player_score_002d                       	| [$c96a: lda $2d, x]
 	move.b	(a0,d1.w),d0                    	| [...]
 	and.b	#0x0f,d0                         	| [$c96c: and #$0f]
 	GET_ADDRESS	0x05                       	| [$c96e: sta $05]
 	move.b	d0,(a0)                         	| [...]
 	addq.b	#1,(a0)                       	| [$c970: inc $05]
 	move.b	(a0),d0                      	| [$c972: lda $05]
+	GET_ADDRESS	0x04
+	cmp.b	#0xF6,(a0)
+	jne		0f
+	* when entering hiscore, 0x3.W contains F685 which trips our memory
+	* layout mapper/check cos it's not a screen address
+	* Skip that, this is a game bug. Game tries to write to ROM
+	* (but without that it wouldn't be able to decrypt the next opcode)
+	rts
+0:
 	GET_SCREEN_ADDRESS_Y	0x03                     	| [$c974: sta ($03), y] dummy_write_decrypt_trigger
 	jbsr	osd_w_videoram                    	| [...]
 	subq.b	#1,d2                           	| [$c976: dey] prev_crypted 44
-	GET_ADDRESS	0x2d                       	| [$c977: lda $2d, x]
+	GET_ADDRESS	player_score_002d                       	| [$c977: lda $2d, x]
 	move.b	(a0,d1.w),d0                    	| [...]
 	lsr.b	#4,d0                            	| [$c979: lsr a]
 	                            	| [$c97a: lsr a]
@@ -1937,8 +1951,7 @@ l_ca25:
 wait_a_while_ca2c:
                                     	| [$ca2c: nop]
 wait_for_sync_ca2d:
-	tst.b	bof_sync_flag                     	| [$ca2d: lda $4003]
-	bpl	wait_for_sync_ca2d                             	| [$ca30: bpl $ca2d]
+	jbsr	wait_for_sync                            	| [$ca30: bpl $ca2d]
 	* maybe leave time for credit insert interrupt?
 	CLR_I_FLAG                             	| [$ca32: cli]
                                     	| [$ca33: nop]
@@ -1958,9 +1971,9 @@ wait_for_sync_ca2d:
                                     	| [$ca46: nop]
                                     	| [$ca48: nop]
 l_ca49:
-	tst.b	bof_sync_flag                     	| [$ca49: lda $4003]
-	bpl	l_ca49                             	| [$ca4c: bmi $ca49]
-	clr.b	bof_sync_flag
+	jbsr	wait_for_sync                     	| [$ca49: lda $4003]
+												| [$ca4c: bmi $ca49]
+							
 	subq.b	#1,d1                           	| [$ca4e: dex]
 	bne	wait_for_sync_ca2d                             	| [$ca4f: bne $ca2d]
 	rts                                    	| [$ca51: rts]
@@ -2997,7 +3010,7 @@ l_d0fd:
                                     	| [$d101: nop]
                                     	| [$d103: nop]
 l_d104:
-	GET_ADDRESS	0x2d                       	| [$d104: sta $2d, x] dummy_write_decrypt_trigger
+	GET_ADDRESS	player_score_002d                       	| [$d104: sta $2d, x] dummy_write_decrypt_trigger
     move.b	d0,(a0,d1.w)                 	| [...]
 	subq.b	#1,d1                           	| [$d106: dex] prev_crypted 66
 	bpl	l_d104                             	| [$d107: bpl $d104]
@@ -7650,15 +7663,15 @@ l_f0e2:
 	move.b	d0,(a0)                         	| [...]
                                     	| [$f117: nop] prev_crypted c1
                                     	| [$f119: nop]
-l_f11a:
-	jbsr	l_f2b8                            	| [$f11a: jsr $f2b8]
+highscore_loop_f11a:
+	jbsr	sync_and_check_insert_coin_f2b8                            	| [$f11a: jsr $f2b8]
 	jbsr	l_f2d1                            	| [$f11d: jsr $f2d1]
 	GET_ADDRESS	0xe2                       	| [$f120: lda $e2]
 	move.b	(a0),d0                         	| [...]
 	and.b	#0x0f,d0                         	| [$f122: and #$0f]
 	cmp.b	#0x0f,d0                         	| [$f124: cmp #$0f]
 	bne	l_f134                             	| [$f126: bne $f134]
-	jbsr	l_f2b8                            	| [$f128: jsr $f2b8]
+	jbsr	sync_and_check_insert_coin_f2b8                            	| [$f128: jsr $f2b8]
 	clr.b	d0                               	| [$f12b: lda #$00]
 	jbsr	osd_sound_command                     	| [$f12d: sta $4003]
 	rts                                    	| [$f130: rts]
@@ -7754,7 +7767,7 @@ l_f197:
                                     	| [$f1ae: nop] prev_crypted c1
                                     	| [$f1b0: nop]
 l_f1b1:
-	jra	l_f11a                             	| [$f1b1: jmp $f11a]
+	jra	highscore_loop_f11a                             	| [$f1b1: jmp $f11a]
                                     	| [$f1b4: nop] dummy_write_decrypt_trigger
 l_f1b6:
                                     	| [$f1b6: nop] prev_crypted 6e
@@ -7834,7 +7847,8 @@ l_f206:
 	jbsr	check_if_coin_inserted_d045                            	| [$f2cb: jsr $d045]
 	rts                                    	| [$f2ce: rts]
                                     	| [$f2cf: nop]
-l_f2b8:
+sync_and_check_insert_coin_f2b8:
+	jbra	wait_for_sync
 l_f2d1:
                                     	| [$f2d1: nop]
 	GET_ADDRESS	0xde                       	| [$f2d2: lda $de]
@@ -8219,8 +8233,9 @@ l_f4b3:
 	jbsr	l_f571                            	| [$f4d9: jsr $f571]
 	clr.b	d0                               	| [$f4dc: lda #$00]
 	move.b	d0,d2                           	| [$f4de: tay]
-	GET_INDIRECT_ADDRESS	0xd8                     	| [$f4df: sta ($d8), y]
-	move.b	d0,(a0,d2.w)                    	| [...]
+	* write letter in highscore table
+	GET_SCREEN_ADDRESS_Y	0xd8                     	| [$f4df: sta ($d8), y]
+	jbsr	osd_w_videoram                    	| [...]
 	GET_ADDRESS	0xe2                       	| [$f4e1: lda $e2]
 	move.b	(a0),d0                         	| [...]
 	or.b	#0x40,d0                          	| [$f4e3: ora #$40]
@@ -8310,13 +8325,15 @@ l_f551:
 	move.b	#0x07,d2                        	| [$f551: ldy #$07]
                                     	| [$f553: nop] dummy_write_decrypt_trigger
                                     	| [$f555: nop] prev_crypted 6e
+* this loop is bogus. It copies non-mapped memory to non-mapped memory
+* around 0xAxxx
 l_f556:
-	GET_INDIRECT_ADDRESS	0xd8                     	| [$f556: lda ($d8), y]
-	move.b	(a0,d2.w),d0                    	| [...]
-	GET_INDIRECT_ADDRESS	0xda                     	| [$f558: sta ($da), y]
-	move.b	d0,(a0,d2.w)                    	| [...]
-	subq.b	#1,d2                           	| [$f55a: dey]
-	bpl	l_f556                             	| [$f55b: bpl $f556]
+*	GET_INDIRECT_ADDRESS	0xd8                     	| [$f556: lda ($d8), y]
+*	move.b	(a0,d2.w),d0                    	| [...]
+*	GET_INDIRECT_ADDRESS	0xda                     	| [$f558: sta ($da), y]
+*	move.b	d0,(a0,d2.w)                    	| [...]
+*	subq.b	#1,d2                           	| [$f55a: dey]
+*	bpl	l_f556                             	| [$f55b: bpl $f556]
 	GET_ADDRESS	0xd9                       	| [$f55d: lda $d9]
 	move.b	(a0),d0                         	| [...]
 	                           	| [$f55f: clc]
