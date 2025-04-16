@@ -28,15 +28,17 @@ SCORE_FILE_SIZE = 0x23
 * < A0: buffer
 osd_read_high_scores:
 	movem.l	d0-d7/a0-a6,-(a7)
+	move.l	a0,a1
 	move.l	_resload,d0
 	beq.b	0f
 	move.l	d0,a2
 	bsr		get_hiscore_name
+	move.l	a1,-(a7)
  	jsr		resload_GetFileSize(a2)		
+	move.l	(a7)+,a1
 	tst.l	d0
 	beq.b	1f
 	bsr		get_hiscore_name
-	lea		high_score_buffer(pc),a1
 	jsr		resload_LoadFile(a2)	
 	bra.b	2f
 0:
@@ -44,8 +46,8 @@ osd_read_high_scores:
 	beq.b	1f
 2:
 	* from DOS: just copy buffer
-	GET_RAM_START_IN_A6
-
+	NOP
+1:
 	movem.l	(a7)+,d0-d7/a0-a6
 	rts
 	
@@ -55,7 +57,7 @@ osd_write_high_scores:
 	tst.b	cheat_used		| don't save score if cheat on
 	bne.b	1f
 	.endif
-	GET_RAM_START_IN_A6
+	move.l	a0,a1
 	* first just copy buffer as contiguous 
 
 
@@ -68,7 +70,6 @@ osd_write_high_scores:
 	beq.b	0f
 	move.l	d0,a2
 	move.l	#SCORE_FILE_SIZE,d0
-	lea		high_score_buffer(pc),a1
 	bsr		get_hiscore_name
 	jsr		resload_SaveFile(a2)
 0:
@@ -149,25 +150,9 @@ force_sound_stop:
 	movem.l	(a7)+,d0-d1/a0/a6
 	rts
 	
-* tunes sounds are: sound index followed by 0x15,0x16,0x17 (that we ignore!)
 osd_sound_start:
 	movem.l	d0/d1/a0/a6,-(a7)
 	lea		_custom,a6
-	and.w	#0xFF,d0
-	jne		0f
-	* null sound: stop
-	jbsr	osd_music_stop
-	jra		10f
-0:
-	* original sound stop commands have bit 7 set. But if we follow them, they'll kill the
-	btst	#7,d0
-	jeq		1f
-	clr.b	looped_sound_enabled
-	moveq	#2,d0		| the loop channel?
-	jbsr	_mt_stopfx
-	jra		10f
-1:
-	
 
 
 	lsl.w	#3,d0

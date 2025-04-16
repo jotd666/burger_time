@@ -874,7 +874,7 @@ display_game_ready_c252:
                                     	| [$c25c: nop]
 l_c25d:
 	move.b	#0x03,d0                        	| [$c25d: lda #$03]
-	jbsr	l_ea5d                            	| [$c25f: jsr $ea5d]
+	jbsr	play_sound_if_game_playing_ea5e                            	| [$c25f: jsr $ea5d]
                                     	| [$c262: nop]
                                     	| [$c264: nop]
 l_c265:
@@ -1455,7 +1455,7 @@ gaminl_c748:
 	GET_ADDRESS	0x62                       	| [$c74d: sta $62] prev_crypted c1  ; dummy_write_decrypt_trigger
 	move.b	d0,(a0)                         	| [...]
 	move.b	#0x04,d0                        	| [$c74f: lda #$04] prev_crypted 4d
-	jbsr	l_ea5d                            	| [$c751: jsr $ea5d]
+	jbsr	play_sound_if_game_playing_ea5e                            	| [$c751: jsr $ea5d]
 	clr.b	d0                               	| [$c754: lda #$00]
 	GET_ADDRESS	0x65                       	| [$c756: sta $65]
 	move.b	d0,(a0)                         	| [...]
@@ -1476,7 +1476,7 @@ roundinl_c767:
 	move.b	(a0),d0                         	| [...]
 	bne	l_c79b                             	| [$c76d: bne $c79b]
 	move.b	#0x04,d0                        	| [$c76f: lda #$04]
-	jbsr	l_ea5d                            	| [$c771: jsr $ea5d]
+	jbsr	play_sound_if_game_playing_ea5e                            	| [$c771: jsr $ea5d]
 	jbsr	osd_read_dsw2                    	| [$c774: lda $4004]
 	and.b	#0x10,d0                         	| [$c777: and #$10]
 	bne	l_c78d                             	| [$c779: bne $c78d]
@@ -3162,13 +3162,13 @@ activate_pepper_d1ad:
 	GET_ADDRESS	pepper_x_181b                     	| [$d1ca: sta $181b] dummy_write_decrypt_trigger
 	move.b	d0,(a0)                         	| [...]
 	move.b	#0x0d,d0                        	| [$d1cd: lda #$0d] prev_crypted 4d
-	jbsr	l_ea5d                            	| [$d1cf: jsr $ea5d]
+	jbsr	play_sound_if_game_playing_ea5e                            	| [$d1cf: jsr $ea5d]
 	rts                                    	| [$d1d2: rts]
                                     	| [$d1d3: nop] dummy_write_decrypt_trigger
                                     	| [$d1d5: nop] prev_crypted 6e
 l_d1d6:
 	move.b	#0x0e,d0                        	| [$d1d6: lda #$0e]
-	jbsr	l_ea5d                            	| [$d1d8: jsr $ea5d]
+	jbsr	play_sound_if_game_playing_ea5e                            	| [$d1d8: jsr $ea5d]
 	jra	try_to_move_player_d1e8                             	| [$d1db: jmp $d1e8]
                                     	| [$d1de: nop]
                                     	| [$d1e0: nop]
@@ -3234,7 +3234,7 @@ l_d219:
 	addq.b	#1,d2                           	| [$d22a: iny]
 l_d22b:
 	move.b	d2,d0                           	| [$d22b: tya]
-	jbsr	l_ea5d                            	| [$d22c: jsr $ea5d]
+	jbsr	play_sound_if_game_playing_ea5e                            	| [$d22c: jsr $ea5d]
                                     	| [$d22f: nop]
                                     	| [$d231: nop]
 l_d232:
@@ -4243,7 +4243,7 @@ l_d8f2:
                                     	| [$d8f2: nop]
                                     	| [$d8f4: nop]
 	move.b	#0x08,d0                        	| [$d8f5: lda #$08]
-	jbsr	l_ea5d                            	| [$d8f7: jsr $ea5d]
+	jbsr	play_sound_if_game_playing_ea5e                            	| [$d8f7: jsr $ea5d]
 	jbsr	walking_on_burger_part_da6a                            	| [$d8fa: jsr $da6a]
 	GET_ADDRESS	0xba                       	| [$d8fd: lda $ba]
 	move.b	(a0),d0                         	| [...]
@@ -4335,7 +4335,7 @@ l_d964:
                                     	| [$d973: nop]
 l_d974:
 	move.b	#0x09,d0                        	| [$d974: lda #$09]
-	jbsr	l_ea5d                            	| [$d976: jsr $ea5d]
+	jbsr	play_sound_if_game_playing_ea5e                            	| [$d976: jsr $ea5d]
 	move.b	d2,d0                           	| [$d979: tya]
 	                           	| [$d97a: clc]
 	GET_ADDRESS	0x03                       	| [$d97b: adc $03]
@@ -4504,7 +4504,7 @@ l_da36:
 	GET_ADDRESS	0x0205                     	| [$da47: inc $0205, x]
     addq.b	#1,(a0,d1.w)                 	| [...]
 	move.b	#0x12,d0                        	| [$da4a: lda #$12]
-	jbsr	l_ea5d                            	| [$da4c: jsr $ea5d]
+	jbsr	play_sound_if_game_playing_ea5e                            	| [$da4c: jsr $ea5d]
 	jra	l_da26                             	| [$da4f: jmp $da26]
                                     	| [$da52: nop]
                                     	| [$da54: nop]
@@ -5661,7 +5661,7 @@ display_bonus_e0fb:
 	GET_ADDRESS	0x11                       	| [$e134: ldx $11]
 	move.b	(a0),d1                         	| [...]
 	move.b	#0x0b,d0                        	| [$e136: lda #$0b]
-	jbsr	l_ea5d                            	| [$e138: jsr $ea5d]
+	jbsr	play_sound_if_game_playing_ea5e     | [$e138: jsr $ea5d]
                                     	| [$e13b: nop] dummy_write_decrypt_trigger
                                     	| [$e13d: nop] prev_crypted 6e
 	rts                                    	| [$e13e: rts]
@@ -6340,7 +6340,7 @@ l_e516:
                                     	| [$e55d: nop] prev_crypted 6e
 l_e55e:
 	move.b	#0x0a,d0                        	| [$e55e: lda #$0a]
-	jbsr	l_ea5d                            	| [$e560: jsr $ea5d]
+	jbsr	play_sound_if_game_playing_ea5e                            	| [$e560: jsr $ea5d]
 	move.b	#-1,d0                                	| [$e563: lda #$ff]
 	rts                                    	| [$e565: rts]
                                     	| [$e566: nop]
@@ -6405,7 +6405,7 @@ l_e5aa:
 	                     	| [$e5b1: sta $0202, y] dummy_write_decrypt_trigger
     move.b	d0,(a0,d2.w)                 	| [...]
 	move.b	#0x0a,d0                        	| [$e5b4: lda #$0a] prev_crypted 4d
-	jbsr	l_ea5d                            	| [$e5b6: jsr $ea5d]
+	jbsr	play_sound_if_game_playing_ea5e                            	| [$e5b6: jsr $ea5d]
 	move.b	#-1,d0                                	| [$e5b9: lda #$ff]
 	rts                                    	| [$e5bb: rts]
                                     	| [$e5bc: nop] dummy_write_decrypt_trigger
@@ -6617,7 +6617,7 @@ l_e6c7:
 	GET_ADDRESS	0x99                       	| [$e6cb: sta $99, x]
     move.b	d0,(a0,d1.w)                 	| [...]
 	move.b	#0x0f,d0                        	| [$e6cd: lda #$0f]
-	jbsr	l_ea5d                            	| [$e6cf: jsr $ea5d]
+	jbsr	play_sound_if_game_playing_ea5e                            	| [$e6cf: jsr $ea5d]
 	jra	l_e689                             	| [$e6d2: jmp $e689]
 pptkpt_e6df:
                                     	| [$e6df: nop]
@@ -6772,7 +6772,7 @@ l_e787:
 	* bcs=>bcc
 	jcc	l_e77b                             	| [$e7ad: bcs $e77b]
 	move.b	#0x10,d0                        	| [$e7af: lda #$10]
-	jbsr	l_ea5d                            	| [$e7b1: jsr $ea5d]
+	jbsr	play_sound_if_game_playing_ea5e                            	| [$e7b1: jsr $ea5d]
 	GET_ADDRESS	0x6f                       	| [$e7b4: lda $6f]
 	move.b	(a0),d0                         	| [...]
 	or.b	#0xf0,d0                          	| [$e7b6: ora #$f0]
@@ -6782,7 +6782,7 @@ l_e787:
 	GET_ADDRESS	0xa0                       	| [$e7bc: sta $a0] dummy_write_decrypt_trigger
 	move.b	d0,(a0)                         	| [...]
 	clr.b	d0                               	| [$e7be: lda #$00] prev_crypted 4d
-	jbsr	l_ea5d                            	| [$e7c0: jsr $ea5d]
+	jbsr	play_sound_if_game_playing_ea5e                            	| [$e7c0: jsr $ea5d]
 	jra	l_e77b                             	| [$e7c3: jmp $e77b]
                                     	| [$e7c6: nop]
 l_e7c8:
@@ -6839,7 +6839,7 @@ l_e7f9:
 	GET_ADDRESS	0xa0                       	| [$e80a: sta $a0]
 	move.b	d0,(a0)                         	| [...]
 	move.b	#0x05,d0                        	| [$e80c: lda #$05]
-	jbsr	l_ea5d                            	| [$e80e: jsr $ea5d]
+	jbsr	play_sound_if_game_playing_ea5e                            	| [$e80e: jsr $ea5d]
                                     	| [$e811: nop]
                                     	| [$e813: nop]
 l_e814:
@@ -6944,7 +6944,7 @@ l_e8ab:
 	cmp.b	#0x18,d1                         	| [$e8ab: cpx #$18]
 	bne	l_e8b7                             	| [$e8ad: bne $e8b7]
 	move.b	#0x10,d0                        	| [$e8af: lda #$10]
-	jbsr	l_ea5d                            	| [$e8b1: jsr $ea5d]
+	jbsr	play_sound_if_game_playing_ea5e                            	| [$e8b1: jsr $ea5d]
                                     	| [$e8b4: nop]
                                     	| [$e8b6: nop]
 l_e8b7:
@@ -7052,7 +7052,7 @@ check_player_picking_bonus_e8f2:
                                     	| [$e965: cld] prev_crypted 74
 	jbsr	l_ca94                            	| [$e966: jsr $ca94]
 	move.b	#0x11,d0                        	| [$e969: lda #$11]
-	jbsr	l_ea5d                            	| [$e96b: jsr $ea5d]
+	jbsr	play_sound_if_game_playing_ea5e                            	| [$e96b: jsr $ea5d]
                                     	| [$e96e: nop]
                                     	| [$e970: nop]
 l_e971:
@@ -7193,7 +7193,7 @@ l_e9ff:
     addq.b	#1,(a0,d1.w)                 	| [...]
 	jbsr	display_player_lives_ca54                            	| [$ea28: jsr $ca54]
 	move.b	#0x02,d0                        	| [$ea2b: lda #$02]
-	jbsr	l_ea5d                            	| [$ea2d: jsr $ea5d]
+	jbsr	play_sound_if_game_playing_ea5e                            	| [$ea2d: jsr $ea5d]
                                     	| [$ea30: nop]
                                     	| [$ea32: nop]
 l_ea33:
@@ -7203,9 +7203,9 @@ l_ea33:
 	move.b	d0,d1                           	| [$ea36: tax]
 	rts                                    	| [$ea37: rts]
 
-l_ea5d:
+
                                     	| [$ea5d: nop]
-l_ea5e:
+play_sound_if_game_playing_ea5e:
 	GET_ADDRESS	0xc7                       	| [$ea5e: stx $c7]
 	move.b	d1,(a0)                         	| [...]
 	GET_ADDRESS	game_really_playing_001b                       	| [$ea60: ldx $1b]
@@ -7426,7 +7426,7 @@ l_eb7f:
 	GET_ADDRESS	0x99                       	| [$ebb7: sta $99, x]
     move.b	d0,(a0,d1.w)                 	| [...]
 	move.b	#0x0c,d0                        	| [$ebb9: lda #$0c]
-	jbsr	l_ea5e                            	| [$ebbb: jsr $ea5e]
+	jbsr	play_sound_if_game_playing_ea5e                            	| [$ebbb: jsr $ea5e]
 	jra	l_eb78                             	| [$ebbe: jmp $eb78]
                                     	| [$ebc1: nop]
 l_ebc3:
