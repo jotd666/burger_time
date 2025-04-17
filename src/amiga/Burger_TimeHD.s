@@ -131,6 +131,8 @@ _resload:
 	dc.l	0
 progstart
     dc.l    0
-exe
-	dc.b	"burger_time",0
+	; 020 exe just uses CCR instead of SR. Not a problem in
+	; supervisor mode
+exe:
+	dc.b	"burger_time_000",0
 	

@@ -11,7 +11,9 @@
 
 * sound engine and also highscore management, common to all versions
 	
+.include "custom.i"
 .include "dos_lvos.i"
+.include "whdload_funcs.i"
 .include "burger_time.inc"
 .include "sounds.inc"
 

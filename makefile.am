@@ -1,5 +1,6 @@
 PROGNAME = burger_time
-MAIN = ..\$(PROGNAME)
+MAIN_000 = ..\$(PROGNAME)_000
+MAIN_020 = ..\$(PROGNAME)_020
 
 
 ifdef RELEASE_BUILD
@@ -10,14 +11,14 @@ endif
 GCC_BIN = C:\amiga-gcc\bin
 ASM_BASE = $(GCC_BIN)/m68k-amigaos-as -c --defsym __amiga__=1
 ASM = $(ASM_BASE) -m68000 $(OPT_RELEASE) 
-ASM_020 = $(ASM_BASE) -m68020 
-MAIN_OBJ = amiga.o
+ASM_020 = $(ASM_BASE) -m68020 --defsym MC68020=1
+START_OBJ = amiga.o
 WHDLOADER = ..\$(PROGNAME).slave
 WHDLOADER_CHIP = ..\$(PROGNAME)_chip.slave
 ASSETS = ..\assets\amiga
 AMIGASRC = amiga
 SOURCE = $(AMIGASRC)/$(PROGNAME)HD.s
-
+AMIGA_SHELL = $(PROGNAME)
 
 
 # those 2 are defined for my PC, should include whdload.i
@@ -27,10 +28,10 @@ WHDBASE = $(HDBASE)\PROJETS\HDInstall\DONE\WHDLoad
 WHDASM = vasmm68k_mot -DDATETIME -I$(HDBASE)/amiga39_JFF_OS/include -I$(WHDBASE)\Include -I$(WHDBASE) -devpac -nosym -Fhunkexe
 
 
-# leave MAIN_OBJ first
-OBJS = $(MAIN_OBJ) amiga_shared.o sounds.o $(PROGNAME).o ram.o graphics.o rom.o vbr.o ReadJoyPad.o ptplayer.o 
+# leave START_OBJ first
+OBJS = $(START_OBJ) amiga_shared.o sounds.o ram.o graphics.o rom.o vbr.o ReadJoyPad.o ptplayer.o 
 
-all : $(PROGNAME).o $(MAIN) $(WHDLOADER) $(WHDLOADER_CHIP) $(AMIGASRC)/graphics.68k $(AMIGASRC)/sounds.68k 
+all : $(PROGNAME)_000.o $(PROGNAME)_020.o $(PROGNAME).o $(MAIN_020) $(MAIN_000) $(AMIGA_SHELL) $(WHDLOADER) $(WHDLOADER_CHIP) $(AMIGASRC)/graphics.68k $(AMIGASRC)/sounds.68k 
 
 
 clean:
@@ -39,20 +40,33 @@ clean:
 $(AMIGASRC)/graphics.68k: $(ASSETS)/convert_graphics.py
 	cmd /c $(ASSETS)\convert_graphics.py
 
+shell.o: $(AMIGASRC)/shell.68k
+	$(ASM) -Iamiga $(AMIGASRC)/shell.68k -o shell.o
+
+
 #$(AMIGASRC)/sounds.68k: $(ASSETS)/convert_sounds.py $(ASSETS)/../sounds/$(PROGNAME)_conv.mod
 $(AMIGASRC)/sounds.68k: $(ASSETS)/convert_sounds.py 
 	cmd /c $(ASSETS)\convert_sounds.py
 	del sound_entries.o
 	
-$(MAIN): $(OBJS)
-	$(GCC_BIN)/m68k-amigaos-ld -o $(MAIN) $(OBJS)
+$(MAIN_000): $(OBJS)
+	$(GCC_BIN)/m68k-amigaos-ld -o $(MAIN_000) $(OBJS) $(PROGNAME)_000.o
+
+$(MAIN_020): $(OBJS)
+	$(GCC_BIN)/m68k-amigaos-ld -o $(MAIN_020) $(OBJS) $(PROGNAME)_020.o
+
+$(AMIGA_SHELL): shell.o
+	$(GCC_BIN)/m68k-amigaos-ld -o $(AMIGA_SHELL) shell.o
 
 ram.o: ram.68k
 	$(ASM) ram.68k -o ram.o
 rom.o: rom.68k
 	$(ASM) rom.68k -o rom.o
-$(PROGNAME).o: $(PROGNAME).68k $(PROGNAME).inc sounds.inc
-	$(ASM) $(PROGNAME).68k -o $(PROGNAME).o
+$(PROGNAME)_000.o: $(PROGNAME).68k $(PROGNAME).inc sounds.inc
+	$(ASM) $(PROGNAME).68k -o $(PROGNAME)_000.o
+$(PROGNAME)_020.o: $(PROGNAME).68k $(PROGNAME).inc sounds.inc
+	$(ASM_020) $(PROGNAME).68k -o $(PROGNAME)_020.o
+	
 amiga.o: $(AMIGASRC)/amiga.68k $(PROGNAME).inc $(AMIGASRC)/ReadJoyPad.i $(AMIGASRC)/palette.68k
 	$(ASM) -Iamiga $(AMIGASRC)/amiga.68k -o amiga.o
 amiga_shared.o: $(AMIGASRC)/amiga_shared.68k $(AMIGASRC)/sound_entries.68k $(PROGNAME).inc $(AMIGASRC)/ReadJoyPad.i
