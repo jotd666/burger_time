@@ -94,6 +94,53 @@
 ;	PORT_DIPUNUSED_DIPLOC( 0x40, 0x40, "SW2:7" )  // should be OFF according to the manual
 ;	PORT_DIPUNUSED_DIPLOC( 0x80, 0x80, "SW2:8" )  // should be OFF according to the manual
 
+enemy_index_times_4_0009 = 0x0009
+timer1_0013 = 0x0013
+timer1_0014 = 0x0014
+timer1_0015 = 0x0015
+game_really_playing_001b = 0x001b
+game_or_demo_playing_001c = 0x001c
+nb_credits_001d = 0x001d
+current_player_001f = 0x001f
+two_player_game_0021 = 0x0021
+player_lives_0029 = 0x0029
+player_pepper_002b = 0x002b
+player_score_002d = 0x002d
+bonus_life_thousands_005a = 0x005a
+bonus_life_tenth_thousands_005b = 0x005B
+bonus_picked_up_0060 = 0x0060
+current_level_0063 = 0x0063
+* 0xff: inactive, else holds character base animation code
+* 0x00: cook
+* 0x01: sausage
+* 0x02: pickle
+* 0x03: egg
+active_character_array_0068 = 0x0068 
+pepper_status_006e = 0x006e   | 0xff: inactive
+game_speed_00a8 = 0x00a8
+control_bits_and_frame_array_00a9 = 0x00a9
+player_current_direction_00bb = 0x00BB
+bonus_display_countdown_00c4 = 0x00C4
+player_died_00c6 = 0x00C6   | 0xFF: ends update loop and start a new life
+highscore_entry_timer_msb_00de = 0xDE
+highscore_entry_timer_lsb_00df = 0xDF
+highscore_entry_state_flags_00e2 = 0xE2
+coin_inserted_flag_00f9 = 0x00f9
+pepper_y_181a = 0x181a
+pepper_x_181b = 0x181b
+player_attributes_181c = 0x181c
+player_code_181d = 0x181d
+player_y_181e = 0x181E
+player_x_181f = 0x181F
+highscore_lsb_0033 = 0x33
+highscore_msb_0034 = 0x34
+highscore_hsb_0035 = 0x35
+
+direction_left = 2
+direction_right = 4
+direction_up = 6
+direction_down = 8
+
 C000: 4C 3C CF jmp credit_inserted_interrupt_cf3c
 C003: 4C 0F C0 jmp $c00f
 C006: 85 F5    sta dummy_write_00f5
@@ -328,11 +375,11 @@ C1FC: A9 00    lda #$00  ; prev_crypted 4d
 C1FE: 8D 02 40 sta $4002
 C201: A9 00    lda #$00
 C203: 85 CB    sta $cb
-C205: A5 2D    lda $2d
+C205: A5 2D    lda player_score_002d
 C207: 85 CC    sta $cc
-C209: A5 2E    lda $2e
+C209: A5 2E    lda player_score_002d+1
 C20B: 85 CD    sta $cd
-C20D: A5 2F    lda player_pepper_002b
+C20D: A5 2F    lda player_score_002d+2
 C20F: 85 CE    sta $ce
 C211: 20 F3 EF jsr $eff3
 C214: 20 A3 C8 jsr clear_screen_and_sprites_c8a3

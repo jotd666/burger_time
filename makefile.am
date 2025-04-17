@@ -49,10 +49,10 @@ $(AMIGASRC)/sounds.68k: $(ASSETS)/convert_sounds.py
 	cmd /c $(ASSETS)\convert_sounds.py
 	del sound_entries.o
 	
-$(MAIN_000): $(OBJS)
+$(MAIN_000): $(OBJS) $(PROGNAME)_000.o
 	$(GCC_BIN)/m68k-amigaos-ld -o $(MAIN_000) $(OBJS) $(PROGNAME)_000.o
 
-$(MAIN_020): $(OBJS)
+$(MAIN_020): $(OBJS) $(PROGNAME)_020.o
 	$(GCC_BIN)/m68k-amigaos-ld -o $(MAIN_020) $(OBJS) $(PROGNAME)_020.o
 
 $(AMIGA_SHELL): shell.o

@@ -1744,6 +1744,13 @@ osd_sound_command:
 	lea		sound_indirection_table(pc),a1
 	move.b	(a1,d0.w),d0
 	jmi		1f
+	* avoid enemy spray sound repeat (plays continuously)
+	cmp.b	#ENEMY_SPRAYED_SND,d0
+	jne		2f
+	cmp.b	previous_sound,d0
+	jeq		1f
+2:
+	move.b	d0,previous_sound
 	jbsr	osd_sound_start
 1:
 	.ifndef	RELEASE
@@ -1758,6 +1765,9 @@ osd_sound_command:
 	move.w	(a7)+,d0
 	rts
 
+previous_sound:
+	.word	-1
+	
 sound_indirection_table:
     .byte    -1   | 0
     .byte    -2   | 1  start music
