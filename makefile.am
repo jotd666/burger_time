@@ -35,7 +35,7 @@ all : $(PROGNAME)_000.o $(PROGNAME)_020.o $(PROGNAME).o $(MAIN_020) $(MAIN_000) 
 
 
 clean:
-	del $(OBJS) "$(MAIN)"
+	del $(OBJS) "$(MAIN_000)" "$(MAIN_020)"
 	
 $(AMIGASRC)/graphics.68k: $(ASSETS)/convert_graphics.py
 	cmd /c $(ASSETS)\convert_graphics.py

@@ -57,15 +57,18 @@ osd_write_high_scores:
 	movem.l	d0-d7/a0-a6,-(a7)
 	.ifdef	RELEASE
 	tst.b	cheat_used		| don't save score if cheat on
-	bne.b	1f
+	bne.b	0f
 	.endif
-	move.l	a0,a1
+
+	move.l	a1,a0
 	* first just copy buffer as contiguous 
-
-
-
-
+	lea		high_score_buffer,a0
+	move.w	#SCORE_FILE_SIZE-1,d0
+0:
+	move.b	(a0)+,(a1)+
+	dbf		d0,0b
 	st.b	highscore_needs_saving
+	jra		0f
 1:
 	
 	move.l	_resload,d0
