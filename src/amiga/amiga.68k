@@ -724,14 +724,16 @@ _vblank:
 	beq.b		1f
 
 	move.l	_joypad_state(pc),d1
+	move.l	d1,d2
 	moveq	#1,d0
 	jsr	_read_joystick
 	move.l	d0,_joypad_state
 	jbsr	update_controls
 	
+	move.l	_joypad_state,d0
 	btst	#JPB_BTN_BLU,d0
 	beq.b	0f
-	btst	#JPB_BTN_BLU,d1
+	btst	#JPB_BTN_BLU,d2
 	bne.b	0f
 	bsr		toggle_pause
 0:
@@ -2253,6 +2255,7 @@ seed:
 	dc.l	0x12345678
 
 
+* < D1: previous state
 update_controls:
 	moveq	#-1,d0
 
@@ -2307,6 +2310,16 @@ update_controls:
 	bclr	#BIT_FIRE,d0
 0:
 	move.b	d0,player_1_controls
+
+	bsr		is_game_playing
+	jne	0f
+	* game not playing, we can insert coin/start with joypad
+	btst	#JPB_BTN_RED,d1		| "5" key like in MAME
+	jeq		0f
+	btst	#JPB_BTN_RED,d2
+	jne		0f
+	jbsr	insert_coin
+0:
 
 	rts
 	

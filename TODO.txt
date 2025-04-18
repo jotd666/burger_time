@@ -1,5 +1,6 @@
 - floppy version
 - start music
-- insert coin if game not playing
+- game too fast sync not OK while in game
+- insert coin => throws pepper (check in MAME)
 
 
