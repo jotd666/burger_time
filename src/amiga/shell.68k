@@ -11,6 +11,10 @@
 .include "graphics_lvos.i"
 .include	"whdload_funcs.i"
 
+AttnFlags = 0x128
+AFB_68010 = 0
+AFB_68020 = 1
+
 .macro 	blitz_bypass
 	move.w	d0,-(a7)
 	clr.w	d0
@@ -43,10 +47,12 @@ _user:
     jsr _LVOOpenLibrary(a6)
     move.l  d0,_dosbase
 
+ 	lea		exe_020(pc),a0
+    move.l  0x4.W,a6
+	move.w	AttnFlags(a6),d0
+	btst	#AFB_68020,d0
+	bne.b	run_it
 
-	lea		exe_020(pc),a0
-	bra.b	run_it
-0:
 	lea		exe_000(pc),a0
 run_it:
 	move.l	a0,d1
