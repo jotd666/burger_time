@@ -729,11 +729,9 @@ _vblank:
 	move.l	d0,_joypad_state
 	jbsr	update_controls
 	
-	* CD32 "play" is disabled but it's free to read
-	* 3rd button on a Sega 3-button so 3rd button is pause
-	btst	#JPB_BTN_PLAY,d0
+	btst	#JPB_BTN_BLU,d0
 	beq.b	0f
-	btst	#JPB_BTN_PLAY,d1
+	btst	#JPB_BTN_BLU,d1
 	bne.b	0f
 	bsr		toggle_pause
 0:
