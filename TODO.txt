@@ -1,4 +1,5 @@
 - floppy version
 - start music
+- insert coin if game not playing
 
 

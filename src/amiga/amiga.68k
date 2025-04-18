@@ -888,14 +888,13 @@ osd_update_sprites:
 	
 
 	
-* 2 conditions I can think of:
 
 * Z: set if not playing
 is_game_playing:
 	move.l	a6,-(a7)
 	GET_RAM_START_IN_A6
-
-	move.l	(a7)+,a6
+	tst.b	(0x1B,a6)
+	movem.l	(a7)+,a6
 	rts
 	
 lose_all_lives:
