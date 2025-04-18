@@ -16,6 +16,20 @@
 
 	.include	"burger_time.inc"
 	
+	.ifdef	MC68020
+	.macro PUSH_SR
+	move.w	ccr,-(sp)
+	.endm
+	.else
+	.macro PUSH_SR
+	move.w	sr,-(sp)
+	.endm
+	.endif
+
+	.macro POP_SR
+	move.w	(sp)+,ccr
+	.endm
+	
 	.macro	SBC_X	address
 	INVERT_XC_FLAGS
 	GET_ADDRESS	\address
@@ -116,21 +130,6 @@
 	.macro CLR_I_FLAG
 	* nothing to do
 	.endm
-	.ifdef	MC68020
-	.macro PUSH_SR
-	move.w	ccr,-(sp)
-	.endm
-	.macro POP_SR
-	move.w	(sp)+,ccr
-	.endm
-	.else
-	.macro PUSH_SR
-	move.w	sr,-(sp)
-	.endm
-	.macro POP_SR
-	move.w	(sp)+,sr
-	.endm
-	.endif
 
 
 	.macro GET_ADDRESS	offset
@@ -356,7 +355,7 @@ address_over_2000_loaded_message:
 * so those bytes don't affect the tiles but the sprites...
 *	map(0x1000, 0x13ff).ram().share("videoram");   | tiles LSB
 *	map(0x1400, 0x17ff).ram().share("colorram");   | tiles MSB
-*	map(0x1800, game_in_play_001bff).rw(FUNC(btime_state::btime_mirrorvideoram_r), FUNC(btime_state::btime_mirrorvideoram_w)); | sprites
+*	map(0x1800, 0x1bff).rw(FUNC(btime_state::btime_mirrorvideoram_r), FUNC(btime_state::btime_mirrorvideoram_w)); | sprites
 *	map(0x1c00, 0x1fff).rw(FUNC(btime_state::btime_mirrorcolorram_r), FUNC(btime_state::btime_mirrorcolorram_w));
 *	map(0x4000, 0x4000).portr("P1").nopw();
 *	map(0x4001, 0x4001).portr("P2");
@@ -509,20 +508,20 @@ l_c00f:
                                     	| [$c035: nop]
                                     	| [$c037: nop]
 l_c038:
-	move.b	#0xfe,d0                        	| [$c038: lda #$fe]
-	GET_ADDRESS	0x5005                     	| [$c03a: sta $5005]
-	move.b	d0,(a0)                         	| [...]
+	*move.b	#0xfe,d0                        	| [$c038: lda #$fe]
+	*GET_ADDRESS	0x5005                     	| [$c03a: sta $5005]
+	*move.b	d0,(a0)                         	| [...]
 	* unflipped screen
 	moveq	#0,d0                       	| [$c03d: lda #$00]
 	                     	| [$c03f: sta $4002]
 	                      	| [...]
 	GET_ADDRESS	game_really_playing_001b                       	| [$c042: sta $1b]
-	move.b	d0,(a0)                         	| [...]
+	clr.b	(a0)                         	| [...]
 	GET_ADDRESS	0x20                       	| [$c044: sta $20]
-	move.b	d0,(a0)                         	| [...]
-	clr.b	d0                               	| [$c046: lda #$00]
+	clr.b	(a0)                         	| [...]
+	                               	| [$c046: lda #$00]
 	GET_ADDRESS	game_or_demo_playing_001c                       	| [$c048: sta $1c]
-	move.b	d0,(a0)                         	| [...]
+	clr.b	(a0)                         	| [...]
 	jbsr	l_c416                            	| [$c04a: jsr $c416]
 	st.b	d1                                	| [$c04d: ldx #$ff]
 	jbsr	wait_a_while_ca2c                            	| [$c04f: jsr $ca2c]
@@ -828,22 +827,16 @@ game_over_c1f1:
                                     	| [$c22a: nop]
 l_c22b:
 	move.b	#0x01,d0                        	| [$c22b: lda #$01]
-	PUSH_SR
 	GET_ADDRESS	0xcb                       	| [$c22d: sta $cb]
 	move.b	d0,(a0)                         	| [...]
-	POP_SR
 	GET_ADDRESS	0x30                       	| [$c22f: lda $30]
 	move.b	(a0),d0                         	| [...]
-	PUSH_SR
 	GET_ADDRESS	0xcc                       	| [$c231: sta $cc]
 	move.b	d0,(a0)                         	| [...]
-	POP_SR
 	GET_ADDRESS	0x31                       	| [$c233: lda $31]
 	move.b	(a0),d0                         	| [...]
-	PUSH_SR
 	GET_ADDRESS	0xcd                       	| [$c235: sta $cd]
 	move.b	d0,(a0)                         	| [...]
-	POP_SR
 	GET_ADDRESS	0x32                       	| [$c237: lda $32]
 	move.b	(a0),d0                         	| [...]
 	GET_ADDRESS	0xce                       	| [$c239: sta $ce]
@@ -2875,11 +2868,9 @@ l_d015:
                                     	| [$d017: cld]
 	GET_ADDRESS	0x1e                       	| [$d018: dec $1e]
 	subq.b	#1,(a0)                         	| [...]
-	* WTF?? race condition? game is now "in play" so credit doesn't
-	* register => skipped!!
-	*GET_ADDRESS	game_really_playing_001b                       	| [$d01a: lda $1b]
-	*move.b	(a0),d0                         	| [...]
-	*bne	l_d02f                             	| [$d01c: bne $d02f]
+	GET_ADDRESS	game_really_playing_001b                       	| [$d01a: lda $1b]
+	move.b	(a0),d0                         	| [...]
+	bne	l_d02f                             	| [$d01c: bne $d02f]
 	moveq 	#0,d0
 	GET_ADDRESS	0x4000                     	| [$d01e: sta $4000]
 	move.b	d0,(a0)                         	| [...]

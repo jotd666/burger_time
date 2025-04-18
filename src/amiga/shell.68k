@@ -258,8 +258,8 @@ graphicsname:
 	.asciz	"graphics.library"
 	
 exe_000:
-	.asciz	"burger_time_68000"
+	.asciz	"burger_time_000"
 exe_020:
-	.asciz	"burger_time_68020"
+	.asciz	"burger_time_020"
 
 	

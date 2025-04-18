@@ -18,7 +18,7 @@ WHDLOADER_CHIP = ..\$(PROGNAME)_chip.slave
 ASSETS = ..\assets\amiga
 AMIGASRC = amiga
 SOURCE = $(AMIGASRC)/$(PROGNAME)HD.s
-AMIGA_SHELL = $(PROGNAME)
+AMIGA_SHELL = ..\$(PROGNAME)
 
 
 # those 2 are defined for my PC, should include whdload.i
@@ -31,7 +31,7 @@ WHDASM = vasmm68k_mot -DDATETIME -I$(HDBASE)/amiga39_JFF_OS/include -I$(WHDBASE)
 # leave START_OBJ first
 OBJS = $(START_OBJ) amiga_shared.o sounds.o ram.o graphics.o rom.o vbr.o ReadJoyPad.o ptplayer.o 
 
-all : $(PROGNAME)_000.o $(PROGNAME)_020.o $(MAIN_020) $(MAIN_000) $(AMIGA_SHELL) $(WHDLOADER) $(WHDLOADER_CHIP) $(AMIGASRC)/graphics.68k $(AMIGASRC)/sounds.68k 
+all : $(PROGNAME)_000.o $(PROGNAME)_020.o $(AMIGA_SHELL) $(MAIN_020) $(MAIN_000) $(AMIGA_SHELL) $(WHDLOADER) $(WHDLOADER_CHIP) $(AMIGASRC)/graphics.68k $(AMIGASRC)/sounds.68k 
 
 
 clean:

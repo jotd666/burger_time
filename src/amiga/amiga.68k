@@ -2299,7 +2299,7 @@ update_controls:
 0:
 	btst	#JPB_BTN_LEFT,d1
 	beq.b	0f
-	bclr	#0,d0
+	bclr	#BIT_LEFT,d0
 0:
 	btst	#JPB_BTN_RIGHT,d1
 	beq.b	0f
@@ -2336,23 +2336,19 @@ osd_read_dsw0:
 	bclr	#BIT_START_2P,d0
 0:	
 
-*	bsr		is_game_playing
-*	jne	1f
-*	move.l	_joypad_state,d1
-*	* game not playing, we can insert coin/start with joypad
-*	btst	#JPB_BTN_RED,d1		| "5" key like in MAME
-*	beq.b	0f
-*	bclr	#BIT_INSERT_COIN_1,d0
-*0:
-*	btst	#JPB_BTN_UP,d1		| "1" key like in MAME
-*	beq.b	0f
-*	bclr	#BIT_START_1P,d0
-*0:
-*	btst	#JPB_BTN_DOWN,d1		| "2" key like in MAME
-*	beq.b	0f
-*	bclr	#BIT_START_2P,d0
-*0:	
-*1:	
+	bsr		is_game_playing
+	jne	1f
+	move.l	_joypad_state,d1
+	* game not playing, we can start with joypad
+	btst	#JPB_BTN_UP,d1		| "1" key like in MAME
+	beq.b	0f
+	bclr	#BIT_START_1P,d0
+0:
+	btst	#JPB_BTN_DOWN,d1		| "2" key like in MAME
+	beq.b	0f
+	bclr	#BIT_START_2P,d0
+0:	
+1:	
 	movem.l	(a7)+,a0/d1
 	or.b	dsw0_value_high_bit,d0
 	rts
@@ -2365,7 +2361,15 @@ osd_read_dsw2:
 
 	rts
 
-	
+insert_coin:
+	movem.l	d0-a6,-(a7)
+	GET_RAM_START_IN_A6
+	lea		rom,a5
+	move.b	#0x40,dsw0_value_high_bit	| COIN 1
+	jbsr	burger_time_coin_inserted
+	move.b	#0,dsw0_value_high_bit
+	movem.l (a7)+,d0-a6
+	rts	
 
 
 	
@@ -2400,13 +2404,9 @@ handle_keyboard:
 
 	cmp.b	#5,d0
 	jne	0f
-	movem.l	d0-a6,-(a7)
-	GET_RAM_START_IN_A6
-	lea		rom,a5
-	move.b	#0x40,dsw0_value_high_bit	| COIN 1
-	jbsr	burger_time_coin_inserted
-	move.b	#0,dsw0_value_high_bit
-	movem.l (a7)+,d0-a6
+	jbsr	insert_coin
+	
+
 0:
 	btst	#4,cheat_flags+3
 	jeq		10f
