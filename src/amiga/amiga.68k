@@ -1770,7 +1770,7 @@ previous_sound:
 sound_indirection_table:
     .byte    -1   | 0
     .byte    -2   | 1  start music
-    .byte    -1   | 2
+    .byte    LEVEL_COMPLETED_SND   | 2
     .byte    -1   | 3
     .byte    -2   | 4  loop annoying music
     .byte    -1   | 5
