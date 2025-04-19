@@ -1940,12 +1940,12 @@ osd_w_videoram_out:
 	movem.l	(a7)+,d0/d1/d7/a0/a1
 	rts	
 	
-	.macro	COPY_TILE_PLANE_ROW
+	.macro	COPY_TILE8_PLANE_ROW
 	move.b	d0,(offset,a1)  | buffer
 	move.b	d0,(offset,a3)  | backbuffer
 	.endm
 	
-	.macro	CLEAR_TILE_PLANE
+	.macro	CLEAR_TILE8_PLANE
 	.set	offset,0
 	.rept	8
 	clr.b	(offset,a1)
@@ -1954,7 +1954,7 @@ osd_w_videoram_out:
 	.endr	
 	.endm
 	
-	.macro	TILE_NEXT_PLANE
+	.macro	TILE8_NEXT_PLANE
 	add.w	d5,a1
 	add.w	d5,a3
 	.endm
@@ -2028,9 +2028,9 @@ update_bg_tile:
 	jne		12f
 	lsr.w	#2,d2
 	BREAKPOINT	"background tile (in D2) not registered"	
+	jra		0f
 	.endif
 
-	jra		11f
 12:
 	move.l	d0,a2		| directly pointer on tile bitplanes
 
@@ -2047,7 +2047,7 @@ update_bg_tile:
 	.set	offset,offset+NB_BYTES_PER_ROW
 	.endr
 41:
-	TILE_NEXT_PLANE
+	add.w	d5,a1
 	dbf		d4,4b
 0:
 	rts
@@ -2119,33 +2119,29 @@ standard_tile:
 	.set	offset,0
 	.rept	8
 	move.b	(a0)+,d0
-	COPY_TILE_PLANE_ROW
+	COPY_TILE8_PLANE_ROW
 	.set	offset,offset+NB_BYTES_PER_ROW
 	.endr
 41:
-	TILE_NEXT_PLANE
+	TILE8_NEXT_PLANE
 	dbf		d4,4b
 0:
 	rts
 5:
-	CLEAR_TILE_PLANE
+	CLEAR_TILE8_PLANE
 	jra		41b
 41:
-	TILE_NEXT_PLANE
+	TILE8_NEXT_PLANE
 	dbf		d4,4b
 0:
 	rts
-5:
-	CLEAR_TILE_PLANE
-	jra		41b
 
 	* clear tile
-
+	nop
 11:
-111:
-	CLEAR_TILE_PLANE
-	TILE_NEXT_PLANE
-	dbf		d4,111b
+	CLEAR_TILE8_PLANE
+	TILE8_NEXT_PLANE
+	dbf		d4,11b
 2:
 	rts
 	

@@ -1,6 +1,5 @@
 - floppy version
 - start music
-- game too fast sync not OK while in game
 - insert coin => throws pepper (check in MAME)
 
 
