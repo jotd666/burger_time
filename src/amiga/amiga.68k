@@ -1,7 +1,7 @@
 *
 *	Amiga-specific portions of Burger Time
 *
-* (c) JOTD 2024
+* (c) JOTD 2025
 *
 
 
@@ -50,12 +50,12 @@ TARGET_SPRITE_CODE = 1
 	.ifdef	RELEASE
 OPT_ENABLE_PROFILING = 0         | DO NOT CHANGE THIS
 OPT_ENABLE_LOGGING = 0           | DO NOT CHANGE THIS
-ONE_TICK = 1
+
 	.else
 OPT_ENABLE_LOGGING = 0
 OPT_ENABLE_PROFILING = 0
 * set to higher values than 1 to speed game up
-ONE_TICK = 1
+
 
 
 	.endif
@@ -2233,22 +2233,6 @@ set_bitplanes:
 osd_debug_hook:
 	rts
 	
-osd_get_random:
-* > D0: pseudo random value (8 bits, all other bits zeroed)
-	movem.l	a0,-(a7)
-	lea	seed(pc),a0
-	move.l	(a0),d0
-	* thanks meynaf
-	mulu #0xa57b,d0
-	addi.l #0xbb40e62d,d0
-	rol.l #6,d0	
-	move.l	d0,(a0) 
-	movem.l	(a7)+,a0
-	add.b	_custom+vposr,d0
-	and.l	#0xFF,d0
-	rts
-seed:
-	dc.l	0x12345678
 
 
 * < D1: previous state
@@ -2645,24 +2629,8 @@ playfield_displayed_screen_ptr:
 
 	.include	"sound_entries.68k"
 
-current_column_scroll_values:
-	.long	column_scroll_values_1
-previous_column_scroll_values:
-	.long	column_scroll_values_2
-	
-* first current scroll value then previous one
-column_scroll_values_1:
-	.skip	16
-column_scroll_values_2:
-	.skip	16
-	
-update_tile_function:
-	.long	0
 _keyexit:
 	.byte	0x45	| ESC by default unless whdload overwrites it
-
-main_scroll_value:
-	.byte	0
 
 	
 cheat_used:

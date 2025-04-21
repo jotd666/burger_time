@@ -67,9 +67,8 @@ osd_write_high_scores:
 	move.l	_resload,d0
 	bne.b	1f
 	* DOS
-	move.l	a1,a0
 	* first just copy buffer as contiguous 
-	lea		high_score_buffer,a0
+	lea		high_score_buffer,a1
 	move.w	#SCORE_FILE_SIZE-1,d0
 0:
 	move.b	(a0)+,(a1)+
@@ -78,6 +77,7 @@ osd_write_high_scores:
 	jra		0f
 1:
 	* whdload
+	move.l	a0,a1
 	move.l	d0,a2
 	move.l	#SCORE_FILE_SIZE,d0
 	bsr		get_hiscore_name

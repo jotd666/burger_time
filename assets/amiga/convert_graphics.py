@@ -10,6 +10,10 @@ sprite_names = dict()
 NB_TILES = 256
 NB_SPRITES = 64
 
+TT_BOB = 1
+TT_TILE = 0
+TT_SPRITE = 2
+
 dump_it = True
 dump_dir = os.path.join(this_dir,"dumps")
 
@@ -190,7 +194,6 @@ background_palette += (nb_colors-len(background_palette)) * [(0x10,0x20,0x30)]
 # pad just in case we don't have 8 colors (but we have)
 full_palette += (nb_colors-len(full_palette)) * [(0x10,0x20,0x30)]
 
-sprite_table = [None]*NB_SPRITES
 
 
 
@@ -200,7 +203,8 @@ plane_orientations = [("standard",lambda x:x),
 ("flip_mirror",lambda x:ImageOps.flip(ImageOps.mirror(x)))
 ]
 
-def read_tileset(img_set,palette,plane_orientation_flags,cache,is_bob):
+
+def read_tileset(img_set,palette,plane_orientation_flags,cache,tile_type):
     next_cache_id = 1
     tile_table = []
 
@@ -215,15 +219,20 @@ def read_tileset(img_set,palette,plane_orientation_flags,cache,is_bob):
                     actual_nb_planes = nb_planes
                     wtile = plane_func(tile)
 
-                    if is_bob:
+                    if tile_type == TT_BOB:
                         y_start,wtile = bitplanelib.autocrop_y(wtile)
                         height = wtile.size[1]
                         actual_nb_planes += 1
                         bitplane_data = bitplanelib.palette_image2raw(wtile,None,palette,generate_mask=True,blit_pad=True)
-                    else:
-                        height = 8
+                    elif tile_type == TT_TILE:
+                        height = 8    # doesn't matter
                         y_start = 0
                         bitplane_data = bitplanelib.palette_image2raw(wtile,None,palette)
+                    elif tile_type == TT_SPRITE:
+                        height = 16
+                        y_start = 0
+                        actual_nb_planes = 4
+                        bitplane_data = bitplanelib.palette_image2attached_sprites(wtile,None,palette)
 
                     plane_size = len(bitplane_data) // actual_nb_planes
                     bitplane_plane_ids = []
@@ -249,13 +258,17 @@ def read_tileset(img_set,palette,plane_orientation_flags,cache,is_bob):
     return tile_table
 
 tile_plane_cache = {}
-tile_table = read_tileset(tile_set,full_palette,[True,False,False,False],cache=tile_plane_cache, is_bob=False)
+tile_table = read_tileset(tile_set,full_palette,[True,False,False,False],cache=tile_plane_cache, tile_type=TT_TILE)
 
 bob_plane_cache = {}
-sprite_table = read_tileset(sprite_set,full_palette,[True,False,True,False],cache=bob_plane_cache, is_bob=True)
+bob_table = read_tileset(sprite_set,full_palette,[True,False,True,False],cache=bob_plane_cache, tile_type=TT_BOB)
+
+sprite_plane_cache = {}
+# force 16 colors for attached HW sprites
+sprite_table = read_tileset(sprite_set,full_palette+full_palette,[True,True,True,True],cache=sprite_plane_cache, tile_type=TT_SPRITE)
 
 background_plane_cache = {}
-background_table = read_tileset(background_set,background_palette,[True,False,False,False],cache=background_plane_cache, is_bob=False)
+background_table = read_tileset(background_set,background_palette,[True,False,False,False],cache=background_plane_cache, tile_type=TT_TILE)
 
 with open(os.path.join(src_dir,"palette.68k"),"w") as f:
     f.write("playfield_palette:\n")
@@ -328,7 +341,7 @@ with open(os.path.join(src_dir,"graphics.68k"),"w") as f:
         dump_asm_bytes(k,f)
 
     f.write("bob_table:\n")
-    for i,tile_entry in enumerate(sprite_table):
+    for i,tile_entry in enumerate(bob_table):
         f.write("\t.long\t")
         if tile_entry:
             prefix = sprite_names.get(i,"bob")
@@ -340,7 +353,7 @@ with open(os.path.join(src_dir,"graphics.68k"),"w") as f:
 
 
 ##
-    for i,tile_entry in enumerate(sprite_table):
+    for i,tile_entry in enumerate(bob_table):
         if tile_entry:
             prefix = sprite_names.get(i,"bob")
 
