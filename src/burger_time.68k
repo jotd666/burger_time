@@ -131,7 +131,50 @@
 	* nothing to do
 	.endm
 
-
+	.ifdef RELEASE
+	* much faster implementation when parameter is
+	* a constant
+	.macro GET_ADDRESS	offset
+	.ifeq	\offset-0x4000
+	lea		player_1_controls,a0	
+	.else
+		.ifeq	\offset-0x4001
+		lea		player_2_controls,a0
+		.else
+			.ifeq	\offset-0x5005
+			* useless control byte
+			lea		fake_5005_byte,a0
+			.else
+				.ifge	\offset-0xC000
+				* ROM
+				lea		(a5,\offset-0xC000),a0
+				.else
+					.ifle	\offset-0x800
+						* RAM
+						lea		(a6,\offset),a0
+					.else
+						.ifge	\offset-0x1800
+						   .ifgt \offset-0x1820
+								* unsupported address range, either
+								* video or bogus. GET_ADDRESS should not
+								* be used to load those addresses
+								.error	"unsupported static address range"
+							.else
+								* sprite RAM 1800-1820
+								lea		(a6,\offset),a0
+							.endif
+						.else
+							.error	"unsupported static address range 0x800-0x17FF"
+						.endif
+					.endif
+				.endif
+			.endif
+		.endif
+	.endif
+	.endm
+	
+	.else
+	* the original implementation uses get_address
 	.macro GET_ADDRESS	offset
 	.ifgt	\offset-0x8000
 	lea	\offset,a0
@@ -140,7 +183,8 @@
 	.endif
 	jbsr	get_address
 	.endm
-
+	.endif
+	
 * direct,X zero page mode isn't used in the game!
 *	.macro GET_ADDRESS_X	offset
 *	GET_ADDRESS	\offset
@@ -333,7 +377,6 @@ get_address:
 	illegal
 	
 10:
-	* between 0x1800 and 0x1820: sprite ram, just write, we'll scan for it
 	POP_SR
 	rts
 
