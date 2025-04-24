@@ -214,8 +214,7 @@ osd_sound_start:
 	bsr		force_sound_stop
     lea _custom,a6
  	movem.l	d0/a0,-(a7)
-	*lea	pooyan_tunes,a0
-	illegal
+	lea	burgertime_tunes,a0
 	
 	move.b	d1,music_track_start_number
 	move.w	d1,d0

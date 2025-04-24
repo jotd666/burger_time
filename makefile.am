@@ -44,8 +44,7 @@ shell.o: $(AMIGASRC)/shell.68k
 	$(ASM) -Iamiga $(AMIGASRC)/shell.68k -o shell.o
 
 
-#$(AMIGASRC)/sounds.68k: $(ASSETS)/convert_sounds.py $(ASSETS)/../sounds/$(PROGNAME)_conv.mod
-$(AMIGASRC)/sounds.68k: $(ASSETS)/convert_sounds.py 
+$(AMIGASRC)/sounds.68k: $(ASSETS)/convert_sounds.py $(ASSETS)/../sounds/burgertime_conv.mod
 	cmd /c $(ASSETS)\convert_sounds.py
 	del sound_entries.o
 	

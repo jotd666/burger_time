@@ -2,7 +2,7 @@ import subprocess,os,struct,glob,tempfile
 import shutil
 
 
-gamename = "pooyan"
+gamename = "burgertime"
 sox = "sox"
 
 def convert():
@@ -36,12 +36,12 @@ def convert():
 "ENEMY_FALLS_SND"               :{"index":3,"channel":3,"sample_rate":hq_sample_rate,"priority":40},
 "ENEMY_SPRAYED_SND"               :{"index":4,"channel":3,"sample_rate":hq_sample_rate,"priority":40},
 "KILLED_SND"               :{"index":5,"channel":3,"sample_rate":lq_sample_rate,"priority":40},
-"LEVEL_COMPLETED_SND"               :{"index":6,"channel":3,"sample_rate":lq_sample_rate,"priority":40},
-#"MAIN_TUNE_SND"               :{"index":7,"channel":3,"sample_rate":hq_sample_rate,"priority":40},
+"LEVEL_COMPLETED_SND"               :{"index":6,"pattern":1,"volume":32,'ticks':240,'loops':False},
+"MAIN_TUNE_SND"               :{"index":0x7,"pattern":0x3,"volume":32,'loops':True},
 "PEPPER_SPRAY_SND"               :{"index":8,"channel":2,"sample_rate":hq_sample_rate,"priority":40},
 "SLICE_FALLS_SND"               :{"index":9,"channel":3,"sample_rate":hq_sample_rate,"priority":40},
 "SLICE_LANDS_SND"               :{"index":10,"channel":3,"sample_rate":hq_sample_rate,"priority":40},
-"START_MUSIC_SND"               :{"index":11,"channel":3,"sample_rate":lq_sample_rate,"priority":40},
+"START_MUSIC_SND"               :{"index":11,"pattern":0,"volume":32,'ticks':120,'loops':False},
 "WALK_ON_SLICE_SND"               :{"index":12,"channel":3,"sample_rate":hq_sample_rate,"priority":40},#
 "ENEMY_CRUSHED_SND"               :{"index":13,"channel":3,"sample_rate":hq_sample_rate,"priority":50},#
 "SCORE_ENTERED_SND"               :{"index":14,"channel":3,"sample_rate":lq_sample_rate,"priority":50},#
@@ -185,11 +185,11 @@ def convert():
 
 
         # make sure next section will be aligned
-#        with open(os.path.join(sound_dir,f"{gamename}_conv.mod"),"rb") as f:
-#            contents = f.read()
+        with open(os.path.join(sound_dir,f"{gamename}_conv.mod"),"rb") as f:
+            contents = f.read()
 
         fw.write("{}:".format(music_module_label))
-#        write_asm(contents,fw)
+        write_asm(contents,fw)
         fw.write("\t.align\t8\n")
 
 
