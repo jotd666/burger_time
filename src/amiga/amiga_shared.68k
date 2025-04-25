@@ -6,7 +6,7 @@
 		.global osd_music_stop
 		.global	force_sound_stop
 		.global music_tick
-		
+		.global	music_track_start_number
 
 
 * sound engine and also highscore management, common to all versions
@@ -146,7 +146,7 @@ osd_music_stop:
 	
 	tst.b	music_playing
 	jne		force_sound_stop
-rts
+	rts
 
 force_sound_stop:
 	movem.l	d0-d1/a0/a6,-(a7)
@@ -215,7 +215,7 @@ osd_sound_start:
     lea _custom,a6
  	movem.l	d0/a0,-(a7)
 	lea	burgertime_tunes,a0
-	
+
 	move.b	d1,music_track_start_number
 	move.w	d1,d0
     sub.l   a1,a1		| samples are in the module

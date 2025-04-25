@@ -321,7 +321,7 @@ _user:
 	move.l	a0,playfield_drawed_screen_ptr
 	move.l	a0,playfield_displayed_screen_ptr
 
-
+	st		music_track_start_number
 
 	.ifne	OPT_ENABLE_DOUBLE_BUFFERING
 	lea		bobs_screen_buffer_2,a0
@@ -382,8 +382,13 @@ _user:
 
 	
 	move.l	misc_options,d1
-	btst	#1,d1
+	btst	#0,d1
 	sne		frameskip
+	btst	#1,d1
+	jeq		0f
+	st		no_main_tune
+	move.b	#-2,sound_indirection_table+4	| cancel main tune when it plays
+0:
 	.ifndef	RELEASE
 	btst	#31,d1
 	sne		break_at_startup_flag
@@ -746,7 +751,15 @@ _vblank:
 
 	move.w	d1,music_tick
 	bne.b	13f
+	move.b	music_track_start_number,d1
 	jbsr		osd_music_stop
+	tst.b	d1
+	jne		13f
+	* music start just ended, play the loop music
+	tst.b	no_main_tune
+	jne		13f
+	move.w	#MAIN_TUNE_SND,d0
+	jbsr	osd_sound_start
 13:
 	
 	* ack vbl twice (040/pistorm bug)
@@ -1769,10 +1782,10 @@ previous_sound:
 	
 sound_indirection_table:
     .byte    -1   | 0
-    .byte    -2   | 1  start music
+    .byte    START_MUSIC_SND   | 1  start music
     .byte    LEVEL_COMPLETED_SND   | 2
     .byte    -1   | 3
-    .byte    -2   | 4  loop annoying music
+    .byte    MAIN_TUNE_SND   | 4  loop annoying music
     .byte    -1   | 5
     .byte    -1   | 6
     .byte    -1   | 7
@@ -2587,6 +2600,8 @@ interrupt_mode:
 pause_flag:
 	.word	0
 frameskip:
+	.word	0
+no_main_tune:
 	.word	0
 tiles_row_flags:
 	.skip	0x20

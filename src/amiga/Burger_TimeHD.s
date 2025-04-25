@@ -43,7 +43,8 @@ _config
 	dc.b	"C1:X:infinite lives:1;"
 	dc.b	"C1:X:infinite pepper:2;"
 	dc.b	"C1:X:cheat keys:4;"
-	dc.b	"C3:X:25 Hz update:1;"
+	dc.b	"C3:X:25 Hz update:0;"
+	dc.b	"C3:X:no in-game tune:1;"
 	IFD		CHIP_ONLY
 	dc.b	"C3:X:break at startup:31;"
 	ENDC
@@ -56,7 +57,7 @@ _config
 	ENDC
 
 DECL_VERSION:MACRO
-	dc.b	"1.0"
+	dc.b	"1.1"
 	IFD BARFLY
 		dc.b	" "
 		INCBIN	"T:date"
@@ -70,7 +71,7 @@ _data   dc.b    0
 _name	dc.b	'Burger Time',0
 _copy	dc.b	'2025 JOTD',0
 _info
-    ;dc.b    "Music by no9",0
+    dc.b    "Music by no9",0
 	dc.b	0
 _kickname   dc.b    0
 ;--- version id

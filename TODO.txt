@@ -1,6 +1,5 @@
 - floppy version flickers
 - use attached sprites for 4 different frames
-- start music, optional ingame music with .mod
 - insert coin => throws pepper
 - remembers previous direction, and if current = previous+another
   then only issue previous
