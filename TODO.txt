@@ -1,2 +1,1 @@
-- remembers previous direction, and if current = previous+another
-  then only issue previous
+

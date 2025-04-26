@@ -396,10 +396,7 @@ _user:
 	btst	#0,d1
 	sne		frameskip
 	btst	#1,d1
-	jeq		0f
-	st		no_main_tune
-	move.b	#-2,sound_indirection_table+4	| cancel main tune when it plays
-0:
+	sne		no_main_tune
 	.ifndef	RELEASE
 	btst	#31,d1
 	sne		break_at_startup_flag
@@ -1710,6 +1707,12 @@ osd_sound_command:
 	lea		sound_indirection_table(pc),a1
 	move.b	(a1,d0.w),d0
 	jmi		1f
+	tst.b	no_main_tune
+	jeq		0f
+	* don't play main tune
+	cmp.b	#MAIN_TUNE_SND,d0
+	jeq		1f
+0:
 	* avoid enemy spray sound repeat (plays continuously)
 	cmp.b	#ENEMY_SPRAYED_SND,d0
 	jne		2f
@@ -2256,6 +2259,30 @@ update_controls:
 	beq.b	0f
 	bclr	#BIT_FIRE,d0
 0:
+	* control hack
+*	move.b	player_1_controls,d3	| old inputs
+*	and.w	#0xF,d3
+*	move.b	d0,d4
+*	and.w	#0xF,d4
+*	cmp.b	d3,d4
+*	jeq		0f
+*	* old/new direction changes
+*	lea		direction_table(pc),a0
+*	not.b	d4
+*	not.b	d3
+*	tst.b	(a0,d4.w)
+*	bpl		0f
+*	* new input is a diagonal, see what old input was
+*	tst.b	(a0,d3.w)
+*	jmi		0f		| diagonal too, give it up!
+*	* new input diagonal, old input not diagonal
+*	* keep only new direction
+*	eor.b	d3,d4
+*	not.b	d4
+*	and.w	#0xF,d4
+*	and.w	#0xF0,d0
+*	or.b	d4,d0
+*0:
 	move.b	d0,player_1_controls
 
 	bsr		is_game_playing
@@ -2270,7 +2297,9 @@ update_controls:
 
 	rts
 	
-
+direction_table:
+	.byte	0x00,0x01,0x01,0x00,0x01,0xff,0xff,0x00	| 0x0000
+	.byte	0x01,0xff,0xff,0x00,0x00,0x00,0x00,0x00	| 0x0008	
 
 	
 osd_read_dsw1:
@@ -2353,6 +2382,12 @@ handle_keyboard:
     seq (a0,d0.w)       | updates keyboard table
     jne   2f     | we don't care about key release
 	
+	cmp.b	#55,d0		| "M" key
+	jne		0f
+	eor.b	#1,no_main_tune
+	jeq		0f
+	jbsr	osd_music_stop
+0:
     cmp.b   #0x19,d0	| "P" key
     bne.b   0f
 
