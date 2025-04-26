@@ -356,6 +356,15 @@ _user:
 	lea		background_palette,a0
 	lea		background_colors,a1
 	bsr		load_palette
+	move.w	#TOTAL_NB_COLORS,d0
+	lea		playfield_palette,a0
+	lea		sprite_colors,a1
+	bsr		load_palette
+	* load same colors again to be safe
+	move.w	#TOTAL_NB_COLORS,d0
+	lea		playfield_palette+32,a0	| skip 8 copper wirtes
+	lea		sprite_colors,a1
+	bsr		load_palette
 	
 
 	move.l	cheat_flags,d0
@@ -2760,8 +2769,8 @@ bobs_bitplanes:
 background_bitplanes:
 	DECL_EVEN_BITPLANES	0,3
 
-*game_sprite_colors:
-*	DECL_COLORS	16,16
+sprite_colors:
+	DECL_COLORS	16,16
 game_sprites:
 	DECL_SPRITES
 game_sprites_end:

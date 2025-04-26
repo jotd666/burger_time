@@ -3,7 +3,9 @@ transcode of Burger Time arcade version for 68000/020 amiga machines
 
 Credits:
 
-- jotd: 6502 to 68000 conversion, amiga graphics conversion, amiga sound effects
+- jotd: game reverse engineering, 6502 to 68000 conversion, 
+        amiga graphics conversion, amiga sound effects
+- no9: music conversion
 - PascalDe73: icon
 
 Highscores & best times are saved (unless cheat is on)
