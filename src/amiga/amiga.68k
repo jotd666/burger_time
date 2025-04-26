@@ -593,110 +593,6 @@ call_bcpl:
 
 
 
-* < D0: sprite X
-* < D1: sprite Y
-* < D2: sprite code & flags
-* < D3: sprite color (clut index, no flip information)
-* > D6: allocated sprite index
-alloc_sprite:
-	* first pass: find a free sprite next to a sprite with
-	* same clut
-	lea		host_sprites(pc),a2
-	moveq	#0,d6
-0:
-	cmp.b	(SPRITE_ATTRIBUTES,a2),d3
-	bne.b	10f
-	* allocated (else would be -1/invalid) + same clut
-	* check even/odd index
-	btst	#0,d6
-	beq.b	1f
-	* odd: check if previous entry is free
-	tst.b	(SPRITE_X-SPRITE_SIZEOF,a2)
-	beq.b	8f
-	tst.b	(SPRITE_Y-SPRITE_SIZEOF,a2)
-	bne.b	10f
-8:
-	* previous entry is free, same clut: we can use that
-	* entry, no color conflict
-	lea		(-SPRITE_SIZEOF,a2),a2
-9:
-	move.b	d0,(a2)+		| X
-	move.b	d1,(a2)+		| Y
-	move.b	d2,(a2)+		| code
-	move.b	d3,(a2)+		| clut (no flip information)
-	rts						| done
-1:
-	* even: check if next entry is free
-	tst.b	(SPRITE_X+SPRITE_SIZEOF,a2)
-	beq.b	2f
-	tst.b	(SPRITE_Y+SPRITE_SIZEOF,a2)
-	bne.b	10f
-2:
-	* next entry is free, same clut: we can use that
-	* entry, no color conflict
-	lea		(SPRITE_SIZEOF,a2),a2
-	bra.b	9b
-10:
-	* next entry
-	addq.w	#SPRITE_SIZEOF,a2
-	addq	#1,d6
-	cmp.w	#NB_HOST_SPRITES,d6
-	bne.b	0b
-	* second pass if first pass failed (could not match
-	* a pair with one occupied slot with compatible clut,
-	* which happens when there are very few sprites
-	* displayed): we have to find 2 consecutive free slots
-
-	lea		host_sprites(pc),a2
-	moveq	#0,d6
-11:
-	* we consider that a sprite is not allocated
-	* if one of the coordinates is zero (real game
-	* doesn't care and sets X to 255, and Y to 0 at times
-	tst.b	(SPRITE_Y,a2)
-	beq.b	12f
-	tst.b	(SPRITE_X,a2)
-	bne.b	20f
-12:
-	* not allocated: test odd sprite
-	tst.b	(SPRITE_Y+SPRITE_SIZEOF,a2)
-	jeq	9b
-	tst.b	(SPRITE_X+SPRITE_SIZEOF,a2)
-	jeq	9b		| ok, both slots are free, allocate the first one
-20:
-	* next sprite pair
-	lea		(2*SPRITE_SIZEOF,a2),a2
-	addq	#2,d6
-	cmp.w	#NB_HOST_SPRITES,d6
-	bne.b	11b
-	
-	* third pass: last chance/emergency: there ARE free slots
-	* but maybe too many different cluts so we can't find a suitable slot.
-	* In that case, pick the first free slot
-	*
-	lea		host_sprites(pc),a2
-	moveq	#0,d6
-21:
-	tst.b	(SPRITE_X,a2)
-	beq.b	9b		| ok, a slot is free, allocate it
-	tst.b	(SPRITE_Y,a2)
-	beq.b	9b		| ok, a slot is free, allocate it
-30:
-	* next sprite
-	lea		(SPRITE_SIZEOF,a2),a2
-	addq	#1,d6
-	cmp.w	#NB_HOST_SPRITES,d6
-	bne.b	21b
-	* just cannot happen
-	* if we reach that point there's a big problem, break if dev mode
-	* hopefully if we save buffer in A1 we can reproduce the issue at will!
-	.ifndef	RELEASE
-	lea			sprite_buffer(pc),a1
-	BREAKPOINT	"sprite allocation error"
-	.endif
-	* in release mode, just discard this sprite, maybe we'll get away with it!
-	rts
-
 
 demo_game:
 		move		#0x4000,_custom+intena						| disable interrupts
@@ -1065,11 +961,45 @@ update_bobs_and_hw_sprites:
 	* super-quick copy of 32 bytes of memory
 	movem.l	(a0),d0-d7
 	movem.l	d0-d7,(a1)
+	* clear frames allocated to hardware sprites
+	move.w	#0x1F,d0
+	lea		hw_sprite_allocated_frames,a0
+0:
+	clr.l	(a0)+
+	dbf		D0,0b
 	
 	*****************************
 	* position hardware sprites *
 	*****************************
-	
+
+	lea	sprite_memory,a0
+	lea	HW_SpriteYTable_16,a1
+	lea	game_sprites+2,a3
+	lea	hw_sprite_allocated_frames,a2
+	lea	sprite_table,a4
+	moveq	#0,d6
+	moveq	#NB_TARGET_SPRITES-1,d7
+1:
+	jbsr	update_one_sprite
+	cmp.b	#4,d6
+	jeq		2f		| used all the slots: exit!
+	addq.w	#CURRENT_SPRITE_SIZE,a0
+	dbf		d7,1b
+	* reached here means that not all sprites have been allocated:
+	* clear the rest of the sprites
+	move.l	#blank_sprite,d1
+	move.l	d1,d2
+	swap 	d2
+11:
+	move.w	d1,(4,a3)
+	move.w	d1,(4+8,a3)
+	move.w	d2,(a3)
+	move.w	d2,(8,a3)
+	add.w	#0x10,a3
+	addq	#1,d6
+	cmp.b	#4,d6
+	jne		11b
+2:
 
 	***********************
 	* erase previous BOBs *
@@ -1117,24 +1047,8 @@ update_bobs_and_hw_sprites:
 	dbf		d7,1b
 
 	rts
-	
-	
-update_one_bob:
-	move.l	A0,-(a7)
-*		int const sx = m_spriteram[0][offs];
-*		int const sy = 240 - m_spriteram[1][offs + 1];
-*
-*		int const code = m_spriteram[0][offs + 1];
-*		int const color = m_spriteram[1][offs] & 0x0f;
-*		int const flipx = ~m_spriteram[1][offs] & 0x40;
-*		int const flipy = m_spriteram[1][offs] & 0x80;
 
-	* code = 0 and clut = 0 => disabled ?? to check
-	
-	move.b	(TARGET_SPRITE_ATTRIBUTES,a0),d3
-	btst	#0,d3
-	jeq	2f			| bit not set: not shown
-	
+compute_sprite_xy_code:
 	moveq	#0,d0
 	move.b	(TARGET_SPRITE_X,a0),d0
 	neg.w	d0
@@ -1151,15 +1065,103 @@ update_one_bob:
 	
 	moveq	#0,d2
 	move.b	(TARGET_SPRITE_CODE,a0),d2
+	rts
+	
+* < A0,A1,A2,A3,A4
+* < A3: pointer on copperlist (updated if slot allocated)
+* < D6: updated if slot has been allocated
+* A3,A5,A6,D0-D5 may be used as scratch registers
+
+update_one_sprite:
+	move.b	(TARGET_SPRITE_ATTRIBUTES,a0),d3
+	btst	#0,d3
+	jeq	2f			| bit not set: not shown
+
+	jbsr	compute_sprite_xy_code
+	* check if this sprite instance is already used. We choose not
+	* to duplicate the sprite data. There are only 4 available slots
+	* and most of the time the sprite frames aren't the same, so really
+	* not worth the trouble and the memory
+	tst.b	(a2,d2.w)
+	jne		2f		| already used in that frame
+	* mark as used, we can't allocate this sprite in the same frame
+	st.b	(a2,d2.w)
+	* mark as cleared: won't try to display a bob there TEMP LEAVE IT
+	**clr.b	(TARGET_SPRITE_ATTRIBUTES,a0)
+	
+	add.w	d2,d2
+	add.w	d2,d2
+	.ifdef	RELEASE
+	move.l	(a4,d2.w),a5		| get pointer from bob table, no checks
+	.else
+	move.l	(a4,d2.w),d4		| get pointer from bob table
+	jne		100f
+	moveq	#0,d2
+	move.b	(TARGET_SPRITE_CODE,a0),d2
+	BREAKPOINT	"unregistered HW sprite clut (D2=code)"
+	jra		2f
+100:
+	move.l	d4,a5
+	.endif
+*	btst	#1,d3
+*	jeq		101f
+	move.l	(a5),a5		| TEMP standard no mirror or such
+
+	bsr		store_sprite_pos
+	
+	* first sprite of couple
+	move.l	d0,(a5)
+	move.l	a5,d1
+	* store sprite pointer in copperlist
+	move.w	d1,(4,a3)
+	swap	d1
+	move.w	d1,(a3)
+	
+	* second sprite of couple
+	BSET	#7,d0		| attach bit set
+	lea		(0x48,a5),a5
+	
+	move.l	d0,(a5)
+	move.l	a5,d1
+	* store sprite pointer in copperlist
+	move.w	d1,(4+8,a3)
+	swap	d1
+	move.w	d1,(8,a3)
+	add.w	#0x10,a3	| advance in sprite copperlist part
+	addq	#1,d6		| count one more sprite
+
+
+2:
+	rts
+	
+update_one_bob:
+	move.l	A0,-(a7)
+*		int const sx = m_spriteram[0][offs];
+*		int const sy = 240 - m_spriteram[1][offs + 1];
+*
+*		int const code = m_spriteram[0][offs + 1];
+*		int const color = m_spriteram[1][offs] & 0x0f;
+*		int const flipx = ~m_spriteram[1][offs] & 0x40;
+*		int const flipy = m_spriteram[1][offs] & 0x80;
+
+	* code = 0 and clut = 0 => disabled ?? to check
+	
+	move.b	(TARGET_SPRITE_ATTRIBUTES,a0),d3
+	btst	#0,d3
+	jeq	2f			| bit not set: not shown
+
+	jbsr	compute_sprite_xy_code
 	add.w	d2,d2
 	add.w	d2,d2
 	move.l	(a4,d2.w),d4		| get pointer from bob table
+	.ifndef	RELEASE
 	jne		100f
 	moveq	#0,d2
 	move.b	(TARGET_SPRITE_CODE,a0),d2
 	BREAKPOINT	"unregistered sprite clut (D2=code)"
 	jra		2f
 100:
+	.endif
 	move.l	d4,a0
 	btst	#1,d3
 	jeq		101f
@@ -1203,7 +1205,7 @@ update_one_bob:
 
 
 
-update_one_hw_sprite:
+update_one_hw_sprite_old:
 	* code = 0 and clut = 0 => disabled ?? to check
 	moveq	#0,d2
 	move.b	(TARGET_SPRITE_CODE,a0),d2
@@ -1437,9 +1439,11 @@ start_process_1_plane:
 
 sprite_memory:
 	.skip	0x20
-	
-sprite_buffer:
-	ds.b	NB_TARGET_SPRITES*CURRENT_SPRITE_SIZE
+hw_sprite_allocated_frames:
+	.skip	0x80
+current_hw_sprite:
+	.word	0
+
 	
 bob_previous_positions_1:
 	ds.b	NB_TARGET_SPRITES*PREVIOUS_SPRITE_SIZE
