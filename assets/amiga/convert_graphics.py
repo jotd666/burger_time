@@ -266,7 +266,7 @@ bob_plane_cache = {}
 bob_table = read_tileset(sprite_set,full_palette,[True,False,True,False], tile_type=TT_BOB,cache=bob_plane_cache)
 
 # force 16 colors for attached HW sprites
-sprite_table = read_tileset(sprite_set,full_palette+full_palette,[True,True,True,True], tile_type=TT_SPRITE)
+sprite_table = read_tileset(sprite_set,full_palette+full_palette,[True,False,True,False], tile_type=TT_SPRITE)
 
 background_plane_cache = {}
 background_table = read_tileset(background_set,background_palette,[True,False,False,False],cache=background_plane_cache, tile_type=TT_TILE)

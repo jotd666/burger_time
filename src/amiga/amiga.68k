@@ -1209,79 +1209,6 @@ update_one_bob:
 	move.l	(a7)+,a0
 	rts
 
-
-
-update_one_hw_sprite_old:
-	* code = 0 and clut = 0 => disabled ?? to check
-	moveq	#0,d2
-	move.b	(TARGET_SPRITE_CODE,a0),d2
-	jeq	2f
-
-	move.b	(TARGET_SPRITE_X,a0),d0
-	add.w	d2,d2
-	add.w	d2,d2
-	btst    #2,(TARGET_SPRITE_ATTRIBUTES,a0)
-	jeq		0f
-	addq	#2,d2
-0:
-	cmp.b	#1,(a6,d2.w)
-	jne		2f		| not a hw sprite: zap
-	* get the actual sprite index for our engine
-	move.b	(1,a6,d2.w),d2
-	and.w	#0xFF,d2
-	* it is a HW sprite all right
-	lsl.w	#4,d2	| 4 pointers for each sprite
-	move.b  (TARGET_SPRITE_ATTRIBUTES,a0),d3
-	btst	#0,d3
-	jeq		10f
-	addq	#8,d2			| mirror sprite couple
-10:
-	lea		(a4,d2.w),a5	| pointer on first sprite
-
-	moveq	#0,d0
-	moveq	#0,d1
-	move.b	(TARGET_SPRITE_Y,a0),d1  | sprite Y
-	beq.b	2f			| Y set to 0: not shown
-	not.b	d1
-
-	move.b	(TARGET_SPRITE_X,a0),d0  | sprite X
-	
-	.ifne	SPRITE_Y_CORRECTION
-	add.b	#SPRITE_Y_CORRECTION,d1
-	.endif
-	.ifne	SPRITE_X_CORRECTION
-	add.b	#SPRITE_X_CORRECTION,d0
-	.endif
-
-	* D0 and D1 are already set
-
-	sub.w	#16,d0	| move each sprite 16 bits to the left
-	bmi.b	2f			| X < 0 after correction: can't show
-	bsr		store_sprite_pos
-
-	
-	* first sprite of couple
-	move.l	(a5)+,a3
-	move.l	d0,(a3)
-	move.l	a3,d1
-	* store sprite pointer in copperlist
-	move.w	d1,(4,a2)
-	swap	d1
-	move.w	d1,(a2)
-	* second sprite of couple
-	BSET	#7,d0		| attach bit set
-	move.l	(a5),a3
-	move.l	d0,(a3)
-	move.l	a3,d1
-	* store sprite pointer in copperlist
-	move.w	d1,(4+8,a2)
-	swap	d1
-	move.w	d1,(8,a2)
-	add.w	#0x10,a2	| advance in sprite copperlist part
-2:
-	
-	rts
-
 * what: blits 16x? data on one plane, cookie cut
 * args:
 * < A0: pointers on 16x? data
@@ -2435,8 +2362,6 @@ handle_keyboard:
 	cmp.b	#5,d0
 	jne	0f
 	jbsr	insert_coin
-	
-
 0:
 	btst	#4,cheat_flags+3
 	jeq		10f

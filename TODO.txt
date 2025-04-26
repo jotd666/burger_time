@@ -1,4 +1,2 @@
-- use attached sprites for 4 different frames
-- insert coin => throws pepper
 - remembers previous direction, and if current = previous+another
   then only issue previous

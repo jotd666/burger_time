@@ -623,8 +623,8 @@ l_c09e:
 	GET_ADDRESS	0x4000                     	| [$c0a0: lda $4000]
 	move.b	(a0),d0                         	| [...]
 	GET_ADDRESS	0x4001                     	| [$c0a3: adc $4001]
-	move.b	(a0),d4	| [...]
-	add.b	d4,d0                         	| [...]
+	add.b	(a0),d0	| [...]
+	                         	| [...]
 	GET_ADDRESS	0x16                       	| [$c0a6: adc $16]
 	move.b	(a0),d4	| [...]
 	addx.b	d4,d0                         	| [...]
@@ -1008,9 +1008,9 @@ l_c31d:
 *	GET_ADDRESS	0x4003                     	| [$c325: sta $4003] prev_crypted c5
 *	move.b	d0,(a0)                         	| [...]
 *	move.b	#0x80,d0                        	| [$c328: lda #$80]
-	GET_ADDRESS	0x27                       	| [$c32a: sta $27] dummy_write_decrypt_trigger
-	move.b	d0,(a0)                         	| [...]
-*	GET_ADDRESS	0x4000                     	| [$c32c: sta $4000] prev_crypted c5  ; dummy_write_decrypt_trigger
+*	GET_ADDRESS	0x27                       	| [$c32a: sta $27] dummy_write_decrypt_trigger
+*	move.b	d0,(a0)                         	| [...]
+*	GET_ADDRESS	0x4000                     	| [$c32c: sta $4000] dummy write
 *	move.b	d0,(a0)                         	| [...]
 	rts                                    	| [$c32f: rts] prev_crypted 28
                                     	| [$c330: nop]
@@ -2803,8 +2803,8 @@ credit_inserted_interrupt_cf3c:
                                     	| [$cf8b: nop] dummy_write_decrypt_trigger
                                     	| [$cf8d: nop] prev_crypted 6e
 l_cf8e:
-	GET_ADDRESS	0x4000                     	| [$cf8e: sta $4000] port 1
-	move.b	d0,(a0)                         	| [...]
+*	GET_ADDRESS	0x4000                     	| [$cf8e: sta $4000] dummy write (but causes issues!)
+*	move.b	d0,(a0)                         	| [...]
 	move.w	(sp)+,d0                       	| [$cf91: pla]
 	move.b	d0,d2                           	| [$cf92: tay]
 	move.w	(sp)+,d0                       	| [$cf93: pla]
@@ -2916,8 +2916,8 @@ l_d015:
 	move.b	(a0),d0                         	| [...]
 	bne	l_d02f                             	| [$d01c: bne $d02f]
 	moveq 	#0,d0
-	GET_ADDRESS	0x4000                     	| [$d01e: sta $4000]
-	move.b	d0,(a0)                         	| [...]
+	*GET_ADDRESS	0x4000                     	| [$d01e: sta $4000]
+	*move.b	d0,(a0)                         	| [...]
 	move.b	#0x01,d0                        	| [$d021: lda #$01]
 	GET_ADDRESS	0x1a                       	| [$d023: sta $1a]
 	move.b	d0,(a0)                         	| [...]
@@ -3141,21 +3141,20 @@ handle_pepper_launch_d17b:
 l_d184:
 	GET_ADDRESS	game_really_playing_001b                       	| [$d184: lda $1b]
 	move.b	(a0),d0                         	| [...]
-	bne	l_d18b                             	| [$d186: bne $d18b]
+	jne	l_d18b                             	| [$d186: bne $d18b]
 	jra	l_d236                             	| [$d188: jmp $d236]
 l_d18b:
 	GET_ADDRESS	current_player_001f        	| [$d18b: ldx current_player_001f]
 	move.b	(a0),d1                         	| [...]
 *   cocktail mode
-*	move.b	(a0),d2                         	| [...]
-*	GET_ADDRESS	0x4003                     	| [$d18f: lda $4003]
-*	move.b	(a0),d0                         	| [...]
-*	and.b	#0x40,d0                         	| [$d192: and #$40]
-*	bne	l_d198                             	| [$d194: bne $d198]
-	clr.b	d2                               	| [$d196: ldy #$00]
-l_d198:
+										| [...]
+										| [$d18f: lda $4003]
+										| [...]
+										| [$d192: and #$40]
+										| [$d194: bne $d198]
+											| [$d196: ldy #$00]
 	GET_ADDRESS	0x4000                     	| [$d198: lda $4000, y]
-	move.b	(a0,d2.w),d0                    	| [...]
+	move.b	(a0),d0                    	| [...]
 	not.b	d0                               	| [$d19b: eor #$ff]
 	and.b	#0x10,d0                         	| [$d19d: and #$10]
 	beq	l_d1e1                             	| [$d19f: beq $d1e1]
@@ -3215,7 +3214,7 @@ l_d1e1:
                                     	| [$d1e7: nop] prev_crypted 6e
 try_to_move_player_d1e8:
 	GET_ADDRESS	0x4000                     	| [$d1e8: lda $4000, y]
-	move.b	(a0,d2.w),d0                    	| [...]
+	move.b	(a0),d0                    	| [...]
 	not.b	d0                               	| [$d1eb: eor #$ff]
 	and.b	#0x0f,d0                         	| [$d1ed: and #$0f]
 	move.b	d0,d2                           	| [$d1ef: tay]
