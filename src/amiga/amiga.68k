@@ -25,6 +25,8 @@ CURRENT_SPRITE_SIZE = 4
 
 SPRITE_X_CORRECTION = 0
 SPRITE_Y_CORRECTION = 0
+HW_SPRITE_X_CORRECTION = 0
+HW_SPRITE_Y_CORRECTION = 8
 
 Y_MAX = 256
 
@@ -362,8 +364,8 @@ _user:
 	bsr		load_palette
 	* load same colors again to be safe
 	move.w	#TOTAL_NB_COLORS,d0
-	lea		playfield_palette+32,a0	| skip 8 copper writes
-	lea		sprite_colors,a1
+	lea		playfield_palette,a0	| skip 8 copper writes
+	lea		sprite_colors+32,a1
 	bsr		load_palette
 	
 
@@ -1087,7 +1089,7 @@ update_one_sprite:
 	* mark as used, we can't allocate this sprite in the same frame
 	st.b	(a2,d2.w)
 	* mark as cleared: won't try to display a bob there TEMP LEAVE IT
-	**clr.b	(TARGET_SPRITE_ATTRIBUTES,a0)
+	clr.b	(TARGET_SPRITE_ATTRIBUTES,a0)
 	
 	add.w	d2,d2
 	add.w	d2,d2
@@ -1103,10 +1105,14 @@ update_one_sprite:
 100:
 	move.l	d4,a5
 	.endif
-*	btst	#1,d3
-*	jeq		101f
+	btst	#1,d3
+	jeq		101f
+	addq	#8,a5
+101:
 	move.l	(a5),a5		| TEMP standard no mirror or such
-
+	.ifne	HW_SPRITE_Y_CORRECTION
+	add.b	#HW_SPRITE_Y_CORRECTION,d1
+	.endif
 	bsr		store_sprite_pos
 	
 	* first sprite of couple
