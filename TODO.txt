@@ -1,9 +1,4 @@
-- floppy version flickers
 - use attached sprites for 4 different frames
 - insert coin => throws pepper
 - remembers previous direction, and if current = previous+another
   then only issue previous
-
-- I would suggest the character to keep moving towards the direction pressed and as soon as they reach a platform that allows left/right to continue to the platform.. in other words there should be no halting on movement while more than one directions are performed on the controller.
-- plays good pistorm lite only pi3 issue is after a
-  high score is made,. sound issue constant squeel

@@ -362,7 +362,7 @@ _user:
 	bsr		load_palette
 	* load same colors again to be safe
 	move.w	#TOTAL_NB_COLORS,d0
-	lea		playfield_palette+32,a0	| skip 8 copper wirtes
+	lea		playfield_palette+32,a0	| skip 8 copper writes
 	lea		sprite_colors,a1
 	bsr		load_palette
 	
@@ -800,13 +800,13 @@ _vblank:
 	addq.b	#1,d0
 	cmp.b	#5,d0
 	bne.b	1f
-	* TODO: clear the sync flag a few lines later
+	* clear the sync flag a few lines later
 	* to simulate an extra vblank
 	st.b	bof_sync_flag
 	clr.b	d0
 1:
 	move.b	d0,mid_screen_interrupt_count
-
+	jra		23f	| no need to update sprites we're in the middle of a frame
 2:
 
 	subq.w	#1,delay_timer
@@ -818,13 +818,14 @@ _vblank:
 	eor.b	#1,flip_flop
 	jeq		23f
 0:
-	bsr		really_update_tiles
-	bsr		really_update_sprites
-	
+
+	jbsr		really_update_tiles
+	jbsr		really_update_sprites
 	
 	.ifne	OPT_ENABLE_DOUBLE_BUFFERING
-	bsr		switch_screen_buffers
+	jbsr		switch_screen_buffers
 	.endif
+	
 	
 23:
 
@@ -1057,7 +1058,13 @@ really_update_tiles:
 
 really_update_sprites:
 update_bobs_and_hw_sprites:
-
+	* make a copy of the sprite memory
+	GET_RAM_START_IN_A6
+	lea	(0x1800,a6),a0
+	lea	sprite_memory,a1
+	* super-quick copy of 32 bytes of memory
+	movem.l	(a0),d0-d7
+	movem.l	d0-d7,(a1)
 	
 	*****************************
 	* position hardware sprites *
@@ -1098,8 +1105,7 @@ update_bobs_and_hw_sprites:
 	* draw current BOBs *
 	*********************
 
-	GET_RAM_START_IN_A6
-	lea	(0x1800,a6),a0
+	lea	sprite_memory,a0
     lea _custom,A5
 	move.l	bob_previous_drawed_sprites(pc),a6
 	lea		bob_table,a4
@@ -1429,7 +1435,9 @@ start_process_1_plane:
 * 2 words: first shift (as bplcon value), then
 * offset in bytes
 
-
+sprite_memory:
+	.skip	0x20
+	
 sprite_buffer:
 	ds.b	NB_TARGET_SPRITES*CURRENT_SPRITE_SIZE
 	
@@ -2238,7 +2246,7 @@ set_bobs_bitplanes:
  	lea	bobs_bitplanes+2,a0
     moveq #NB_PLAYFIELD_PLANES-1,d1
  	move.l	#SCREEN_PLANE_SIZE,d2
-    move.l	playfield_displayed_screen_ptr(pc),d0   | this isn't double-buffered, no need!
+    move.l	playfield_displayed_screen_ptr(pc),d0
 set_bitplanes:
 1:
     swap d0

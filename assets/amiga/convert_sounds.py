@@ -36,7 +36,7 @@ def convert():
 "ENEMY_FALLS_SND"               :{"index":3,"channel":3,"sample_rate":hq_sample_rate,"priority":40},
 "ENEMY_SPRAYED_SND"               :{"index":4,"channel":3,"sample_rate":hq_sample_rate,"priority":40},
 "KILLED_SND"               :{"index":5,"channel":3,"sample_rate":lq_sample_rate,"priority":40},
-"LEVEL_COMPLETED_SND"               :{"index":6,"pattern":1,"volume":32,'ticks':180,'loops':False},
+"LEVEL_COMPLETED_SND"               :{"index":6,"pattern":1,"volume":32,'ticks':190,'loops':False},
 "MAIN_TUNE_SND"               :{"index":0x7,"pattern":0x3,"volume":20,'loops':True},
 "PEPPER_SPRAY_SND"               :{"index":8,"channel":2,"sample_rate":hq_sample_rate,"priority":40},
 "SLICE_FALLS_SND"               :{"index":9,"channel":3,"sample_rate":hq_sample_rate,"priority":40},
