@@ -51,7 +51,7 @@ osd_read_high_scores:
 	lea		high_score_buffer,a1
 	move.w	#SCORE_FILE_SIZE-1,d0
 0:
-	move.b	(a0)+,(a1)+
+	move.b	(a1)+,(a0)+
 	dbf		d0,0b
 1:
 	movem.l	(a7)+,d0-d7/a0-a6
@@ -61,7 +61,7 @@ osd_write_high_scores:
 	movem.l	d0-d7/a0-a6,-(a7)
 	.ifdef	RELEASE
 	tst.b	cheat_used		| don't save score if cheat on
-	bne.b	0f
+	bne.b	2f
 	.endif
 
 	move.l	_resload,d0
@@ -74,7 +74,7 @@ osd_write_high_scores:
 	move.b	(a0)+,(a1)+
 	dbf		d0,0b
 	st.b	highscore_needs_saving
-	jra		0f
+	jra		2f
 1:
 	* whdload
 	move.l	a0,a1
@@ -82,7 +82,7 @@ osd_write_high_scores:
 	move.l	#SCORE_FILE_SIZE,d0
 	bsr		get_hiscore_name
 	jsr		resload_SaveFile(a2)
-0:
+2:
 
 	movem.l	(a7)+,d0-d7/a0-a6
 	rts
@@ -93,10 +93,10 @@ get_hiscore_name:
 	rts
 	
 load_highscores:
-	bsr.b		get_hiscore_name
     move.l  _resload,d0
     bne.b   1f
 
+	bsr.b		get_hiscore_name
     move.l  _dosbase,a6
     move.l  a0,d1
     move.l  #1005,d2

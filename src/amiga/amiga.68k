@@ -24,9 +24,11 @@ CURRENT_SPRITE_SIZE = 4
 
 
 SPRITE_X_CORRECTION = 0
-SPRITE_Y_CORRECTION = 0
+SPRITE_Y_CORRECTION = -1
 HW_SPRITE_X_CORRECTION = 0
 HW_SPRITE_Y_CORRECTION = 8
+
+NTSC_Y_SHIFT = 8
 
 Y_MAX = 256
 
@@ -245,6 +247,11 @@ _user:
 	beq.b	2f
 	* cheat isn't used as long as no cheat key is used
 	or.l	#0x10,cheat_flags
+2:
+	move.l	(A0)+,D0	| NOMAINTUNE/S
+	beq.b	2f
+	* cheat isn't used as long as no cheat key is used
+	st.b	no_main_tune
 2:
 
 	move.l	(A0)+,D0	| STARTLIVES/K/N
@@ -689,11 +696,13 @@ _vblank:
 	* is the source of the interrupt
 	btst	#2,d0
 	beq.b	2f
-	* mid-screen copper interrupt, must occur once every 5 times
-	* to simulate ~60 Hz on 50 Hz display
+	* mid-screen copper interrupt, must occur once every 7 times
+	* to simulate ~57 Hz on 50 Hz display
+	* clocking main character going up the stairs with MAME: 6.7 seconds
+	* roughly the same with the amiga version now, good!!
 	move.b	mid_screen_interrupt_count,d0
 	addq.b	#1,d0
-	cmp.b	#5,d0
+	cmp.b	#7,d0
 	bne.b	1f
 	* clear the sync flag a few lines later
 	* to simulate an extra vblank
@@ -1110,6 +1119,10 @@ update_one_sprite:
 	.ifne	HW_SPRITE_Y_CORRECTION
 	add.b	#HW_SPRITE_Y_CORRECTION,d1
 	.endif
+	tst.b	ntsc_flag
+	jeq		0f
+	sub.w	#NTSC_Y_SHIFT,d1
+0:
 	bsr		store_sprite_pos
 	
 	* first sprite of couple
@@ -1547,18 +1560,24 @@ platform_init:
 	move.l	monitor,d0
 	cmp.l	#NTSC_MONITOR_ID,D0
 	bne		0f
+	st.b	ntsc_flag
 	* disable extra mid-screen interrupt, as it would be too fast (NTSC)
-	move.w	#0x1FE,intreq_block_game
+	move.w	#0x1FE,pal_intreq_block_game
+	move.w	#0x1FE,pal_wait			| else intreq never happens
 0:
     move.w #0x6600,bplcon0(a5)		| dual playfield!
 
  	*         VVHH
-    move.w #0x2489,diwstrt(a5)
-    move.w #0x2479,diwstop(a5)
-*	cmp.l	#NTSC_MONITOR_ID,monitor
-*	jne		0f
-*    move.w #0xFC81,diwstop(a5)
-*0:	
+    move.w #0x2489,d0
+    move.w #0x2479,d1
+	cmp.l	#NTSC_MONITOR_ID,monitor
+	jne		0f
+	sub.w	#NTSC_Y_SHIFT<<8,d0
+	sub.w	#NTSC_Y_SHIFT<<8,d1
+0:	
+     move.w d0,diwstrt(a5)
+     move.w d1,diwstop(a5)
+
     move.w #0x0038,ddfstrt(a5)
     move.w #0x00D0,ddfstop(a5)
 
@@ -2398,8 +2417,11 @@ handle_keyboard:
 	jne	0f
 	jbsr	insert_coin
 0:
+	* cheat keys are always active in dev mode
+	.ifdef	RELEASE
 	btst	#4,cheat_flags+3
 	jeq		10f
+	.endif
 	* cheat keys
 	cmp.b	#0x50,d0	| F1 key: level skip
 	bne.b	0f
@@ -2440,16 +2462,17 @@ handle_keyboard:
 *
 10:
 	.ifndef	RELEASE
-	cmp.b	#0x56,d0	| F7 key: hurry up!
-	bne.b	0f
-	move.w	#0x0FF,_custom+color
-0:
+*	cmp.b	#0x56,d0	| F7 key: hurry up!
+*	bne.b	0f
+*	move.w	#0x0FF,_custom+color
+*0:
 	* last life, if killed, direct game over
 	cmp.b	#0x57,d0	| F8 key: lose all lives
 	bne.b	0f
 	move.w	#0x0FF,_custom+color
 	* last life, if killed, direct game over
 	bsr		lose_all_lives
+	jbsr	force_sound_stop
 0:
 	cmp.b	#0x58,d0	| F9 key crashes game (restarts whdload)
 	bne.b	0f
@@ -2509,7 +2532,7 @@ program_args_end:
 read_args_string:
 	.byte	read_args_string_end-read_args_string
 	.ascii	"INVINCIBLE/S,INFLIVES/S,INFPEPPER/S,"
-	.ascii	"CHEATKEYS/S,STARTLIVES/K/N,SKILL/K/N"
+	.ascii	"CHEATKEYS/S,NOMAINTUNE/S"
 read_args_string_end:
 	.align	2
 
@@ -2563,7 +2586,8 @@ dip_switches_0:
 dsw0_value_high_bit:
 	.byte	0
 
-
+ntsc_flag:
+	.byte 	0
 mid_screen_interrupt_count:
 	.byte	0
 	.align	2
@@ -2766,19 +2790,20 @@ game_colors:
 	
 	* mid-line wait & extra interrupt
 	.word	0x8001,0xFFFE
-intreq_block_game:
+pal_intreq_block_game:
 	.word	 intreq,0x8014  | call copper interrupt in the middle of a frame, also flag so copper interrupt knows that we're going to call copper int
 
 
 
 	* pal limit
     .word  0xFFDF,0xFFFE       | PAL wait
-	.word	0x1601,0xFFFE
-
 	| no bobs from now on, get a LOT of drawing time
+pal_wait:
+	.word	0x0C01,0xFFFE
 	.word	 intreq,0x8010
 
-	
+
+
      .long    -2					
 	.ascii	"ENDCPLST"
 

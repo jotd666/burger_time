@@ -634,8 +634,8 @@ l_c09e:
                                     	| [$c0ac: nop]
 
 wait_for_no_sync_c0ad:
-	jbsr	wait_for_sync
-	* is that useful to wait?? answer is NO
+	*jbsr	wait_for_sync
+	* is that useful to wait?? answer is NO, it makes the game slower
 	*tst.b	bof_sync_flag                     	| [$c0ad: lda $4003]
 	*jmi	wait_for_no_sync_c0ad                   | [$c0b0: bmi $c0ad]
 

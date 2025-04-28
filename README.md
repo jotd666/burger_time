@@ -8,12 +8,20 @@ Credits:
 - no9: music conversion
 - PascalDe73: icon
 
-Highscores & best times are saved (unless cheat is on)
+Features:
+
+- 100% original game code, sound & graphics
+- hardware sprites used for better refresh rate
+- 25fps on A500 with great speed, 50fps on more powerful machines
+- PAL or NTSC supported (NTSC is slightly faster, also bottom of screen
+  is cut, but it runs)
+- Highscores & best times are saved (unless cheat is on)
 
 Controls:
 
 - joystick left/right/up/down: move character
 - joystick fire: pepper
+- "M": toggle annoying in-game music
 
 To start a game (when game not running):
 
