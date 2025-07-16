@@ -4727,14 +4727,7 @@ E8B1: 20 5D EA jsr $ea5d
 E8B4: 85 F5    sta dummy_write_00f5
 E8B6: EA       nop 
 E8B7: 60       rts 
-E8B8: 01 08    ora ($08, x)
-E8BA: 10 18    bpl $e8d4
-E8BC: 20 28 30 jsr $3028
-E8BF: 38       sec 
-E8C0: 40       rti 
-E8C1: 48       pha 
-E8C2: 50 58    bvc $e91c
-E8C4: 60       rts 
+
 
 check_player_picking_bonus_e8f2:
 E8F2: EA       nop
