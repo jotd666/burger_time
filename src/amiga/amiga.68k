@@ -1846,14 +1846,14 @@ mirrored_videoram:
 	sub.w	#0x1800,d7
 	move.w	d7,d1		| save
 	lsr.w	#5,d7		| quotient
-	*add.w	#SCREEN_TILE_ADDRESS,d7
+
 	and.w	#0x1F,d1
 	lsl.w	#5,d1
 	add.w	d1,d7
 	* update A0 as well to unmirrored ram 
 	move.l	a6,a0
 	add.w	d7,a0
-	add.w	#0x1000,a0
+	add.w	#SCREEN_TILE_ADDRESS,a0
 	rts
 	
 * a0=screen address (preserved), d0=tile (preserved)

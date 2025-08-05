@@ -85,6 +85,16 @@
 	POP_SR
 	.endm
 
+
+	.macro OP_R_ON_ZP_ADDRESS	inst,offset,reg
+	\inst\().b	(a6,\offset\().W),\reg
+	.endm
+
+	.macro OP_W_ON_ZP_ADDRESS	inst,offset,reg
+	\inst\().b	\reg,(a6,\offset\().W)
+	.endm
+
+
 * useful to recall C from X (add then move then bcx)
 	.macro	SET_C_FROM_X
 	PUSH_SR
