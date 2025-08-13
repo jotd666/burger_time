@@ -49,13 +49,13 @@ $(AMIGASRC)/sounds.68k: $(ASSETS)/convert_sounds.py $(ASSETS)/../sounds/burgerti
 	del sound_entries.o
 	
 $(MAIN_000): $(OBJS) $(PROGNAME)_000.o
-	$(GCC_BIN)/m68k-amigaos-ld -o $(MAIN_000) $(OBJS) $(PROGNAME)_000.o
+	$(GCC_BIN)/m68k-amigaos-ld $(OPT_RELEASE_LINK) -o $(MAIN_000) $(OBJS) $(PROGNAME)_000.o
 
 $(MAIN_020): $(OBJS) $(PROGNAME)_020.o
-	$(GCC_BIN)/m68k-amigaos-ld -o $(MAIN_020) $(OBJS) $(PROGNAME)_020.o
+	$(GCC_BIN)/m68k-amigaos-ld $(OPT_RELEASE_LINK) -o $(MAIN_020) $(OBJS) $(PROGNAME)_020.o
 
 $(AMIGA_SHELL): shell.o
-	$(GCC_BIN)/m68k-amigaos-ld -o $(AMIGA_SHELL) shell.o
+	$(GCC_BIN)/m68k-amigaos-ld $(OPT_RELEASE_LINK) -o $(AMIGA_SHELL) shell.o
 
 ram.o: ram.68k
 	$(ASM) ram.68k -o ram.o
