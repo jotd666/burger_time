@@ -446,8 +446,6 @@ _user:
 	move.b	d1,dip_switches_1
 	
 	jsr	 _detect_controller_types 
-	clr.b	controller_joypad_0
-	clr.b	controller_joypad_1
 
 	jra		demo_game
 
